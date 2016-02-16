@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 安全设置：访问密码 -->
+    <PreferenceCategory
+        android:key="applock_security"
+        android:title="@string/applock_security">
+        <Preference
+            android:key="applock_password"
+            android:title="@string/applock_password"
+            android:summary="@string/applock_password_summary">
+            <intent
+                android:targetPackage="com.eeontheway.android.applocker"
+                android:targetClass="com.eeontheway.android.applocker.applock.AppLockPasswordSetActivity"/>
+        </Preference>
+    </PreferenceCategory>
+
+    <!-- 应用锁拍照:使能设置，抓拍密码错误限值，位置 -->
+    <PreferenceCategory
+        android:key="unlock_failed_capture"
+        android:title="@string/unlock_failed_capture">
+        <CheckBoxPreference
+            android:key="unlock_failed_capture_enable"
+            android:title="@string/unlock_failed_capture_enable"
+            android:summary="@string/unlock_failed_capture_enable_summary"
+            android:defaultValue="true"
+            android:switchTextOff="@string/close"
+            android:switchTextOn="@string/opene"/>
+        <ListPreference
+            android:key="unlock_failed_capture_errcount"
+            android:title="@string/unlock_failed_capture_errcount"
+            android:dialogTitle="@string/password_err_count"
+            android:entries="@array/unlock_failed_capture_errcount_entries"
+            android:entryValues="@array/unlock_failed_capture_errcount_values"
+            android:dependency="unlock_failed_capture_enable"
+            android:defaultValue="5"
+            android:positiveButtonText="@string/ok"
+            android:negativeButtonText="@string/cancel"/>
+        <CheckBoxPreference
+            android:key="unlock_failed_capture_location"
+            android:title="@string/unlock_failed_capture_location"
+            android:dependency="unlock_failed_capture_enable"
+            android:defaultValue="false"
+            android:summary="@string/unlock_failed_capture_location_summary"
+            android:switchTextOff="@string/close"
+            android:switchTextOn="@string/opene"/>
+        <CheckBoxPreference
+            android:key="add_tag_to_photo"
+            android:title="@string/add_tag_to_photo"
+            android:dependency="unlock_failed_capture_enable"
+            android:summary="@string/add_tag_to_photo_summary"
+            android:defaultValue="true"
+            android:switchTextOff="@string/close"
+            android:switchTextOn="@string/opene"/>
+    </PreferenceCategory>
+
+    <!-- 锁定模式设置: 在何种情况下锁定 -->
+    <PreferenceCategory
+        android:key="lock_mode"
+        android:title="@string/lock_mode">
+        <ListPreference
+            android:key="screen_lock_mode"
+            android:title="@string/lock_mode"
+            android:defaultValue="1"
+            android:entries="@array/screen_lock_mode_name"
+            android:entryValues="@array/screen_lock_mode_values"
+            android:positiveButtonText="@string/ok"
+            android:negativeButtonText="@string/cancel"/>
+        <CheckBoxPreference
+            android:key="autolock_on_app_quit"
+            android:summary="@string/autolock_on_app_quit_summary"
+            android:title="@string/autolock_on_app_quit"
+            android:switchTextOff="@string/close"
+            android:switchTextOn="@string/opene"
+            android:defaultValue="true" />
+        <CheckBoxPreference
+            android:key="one_password_unlock_all"
+            android:title="@string/one_password_unlock_all"
+            android:summary="@string/one_password_unlock_all_summary"
+            android:switchTextOff="@string/close"
+            android:switchTextOn="@string/opene"
+            android:defaultValue="false"/>
+    </PreferenceCategory>
+
+    <!-- 其它辅助工具 -->
+    <PreferenceCategory
+        android:key="assitant_tools"
+        android:title="@string/assitant_tools">
+        <CheckBoxPreference
+            android:key="alert_lock_unlock"
+            android:title="@string/alert_lock_unlock"
+            android:switchTextOff="@string/close"
+            android:switchTextOn="@string/opene"
+            android:defaultValue="true" />
+    </PreferenceCategory>
+</PreferenceScreen>

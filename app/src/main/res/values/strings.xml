@@ -1,0 +1,136 @@
+<resources>
+    <string name="app_name">应用锁</string>
+
+    <string name="version">版本:%s</string>
+    <string name="app_loading">加载中，请稍侯...</string>
+    <string name="checkUpdateFaild">检查更新失败</string>
+    <string name="downloading">正在下载</string>
+    <string name="updating">升级提示</string>
+    <string name="foundNewVersion">发现新版本</string>
+    <string name="ok">确认</string>
+    <string name="cancel">取消</string>
+    <string name="error_serverUrl">无效的服务器地址</string>
+
+    <string name="auto_update">自动更新</string>
+    <string name="opened">已开启</string>
+    <string name="closed">已关闭</string>
+    <string name="opene">开启</string>
+    <string name="close">关闭</string>
+    <string name="noSecurityPhoneNumber">匹配</string>
+
+    <string name="app_locker">应用锁</string>
+
+    <string name="please_set_password">请设置密码</string>
+    <string name="please_input_password">请输入密码</string>
+    <string name="please_input_password_again">请再次输入密码</string>
+    <string name="password_mismatch">错误：两次输入的密码不一致，请检查！</string>
+    <string name="password_match">正确：两次输入的密码一致！</string>
+    <string name="password_empty">错误：密码不能为空！</string>
+    <string name="password_incorrect">错误：密码不正确！</string>
+
+    <string name="set_first_password">请设置初始密码</string>
+    <string name="set_second_password">请再次输入密码</string>
+
+    <string name="exit_confirm_alert">再按一次退出程序</string>
+
+    <string name="addOk">添加完毕</string>
+    <string name="updateOk">更新完毕</string>
+    <string name="deleteOk">删除完毕</string>
+
+    <string name="alterDialogTitle">请确认</string>
+    <string name="confirmDeleteBlackInfo">一旦删除将不可恢复！</string>
+    <string name="noEmpty">不能为空</string>
+    <string name="canBeEmpty">可以为空</string>
+    <string name="confirm">确认</string>
+    <string name="add">添加</string>
+    <string name="edit">编辑</string>
+    <string name="delete">删除</string>
+    <string name="view">查看</string>
+    >
+    <string name="user_software">用户软件</string>
+    <string name="system_software">系统软件</string>
+
+    <string name="app_locker_msg">%s 已经被锁定!</string>
+    <string name="password_error_count_alert">您还有%d次机会!</string>
+    <string name="app_locked">应用已经被锁定</string>
+    <string name="please_input_unlock_password">请输入解锁密码!</string>
+    <string name="locked">已锁定</string>
+    <string name="unlocked">已解锁</string>
+    <string name="unlock">解锁</string>
+    <string name="please_select_lock_apps">请选择需要锁定的应用</string>
+    <string name="app_somebody_access">注意，这个人试图访问您的 %s ！</string>
+    <string name="see_more_applock_log">查看所有的App访问纪录</string>
+    <string name="wait_delay_to_retry">错误，请%d秒后重试!</string>
+
+    <string name="applock_security">安全设置</string>
+    <string name="applock_password">安全密码</string>
+    <string name="applock_password_summary">修改安全密码</string>
+    <string name="unlock_failed_capture">入侵抓拍</string>
+    <string name="unlock_failed_capture_enable">解锁失败拍照</string>
+    <string name="unlock_failed_capture_enable_summary">在解锁应用输错密码时拍照</string>
+    <string name="unlock_failed_capture_errcount">输错密码多少次时抓拍</string>
+    <string name="password_err_count">密码输错次数</string>
+    <string-array name="unlock_failed_capture_errcount_entries">
+        <item>一次</item>
+        <item>二次</item>
+        <item>三次</item>
+        <item>四次</item>
+        <item>五次</item>
+    </string-array>
+    <string-array name="unlock_failed_capture_errcount_values">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+    </string-array>
+    <string name="unlock_failed_capture_location">照片保存位置</string>
+    <string name="unlock_failed_capture_location_summary">将照片保存到相册</string>
+    <string name="add_tag_to_photo">添加拍摄标记到照片</string>
+
+    <string name="lock_mode">锁定模式</string>
+    <string-array name="screen_lock_mode_name">
+        <item>锁屏后不重新锁定所有应用</item>
+        <item>锁屏后重新锁定所有应用</item>
+        <item>锁屏3分钟后重新锁定所有应用</item>
+    </string-array>
+    <string-array name="screen_lock_mode_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+    <string name="autolock_on_app_quit">应用退出后自动锁定</string>
+    <string name="autolock_on_app_quit_summary">发现应用退出再次打开需要重新解锁</string>
+    <string name="one_password_unlock_all">一次解锁全部</string>
+    <string name="one_password_unlock_all_summary">输入一次密码解锁全部应用</string>
+    <string name="assitant_tools">辅助设置</string>
+    <string name="alert_lock_unlock">显示锁定提示</string>
+    <string name="appLocker_password_err_detect" formatted="false">这个人想访问您的%s, 密码输错:%d次, 时间:%s</string>
+    <string name="error_logs">访问纪录</string>
+    <string name="clear_list">清空列表</string>
+    <string name="total_applock_log_count">共拦截到%d次访问纪录</string>
+    <string name="select_all">全选</string>
+    <string name="password_err_counter">密码输错次数：%d</string>
+    <string name="applock_logs">访问日志</string>
+    <string name="already_deleted_count">%d项已删除</string>
+    <string name="time_args">时间:%s</string>
+    <string name="appLocker_err_detect">这个人想访问您的%s</string>
+    <string name="add_tag_to_photo_summary">添加时间、应用名称、密码错误次数等标记</string>
+    <string name="child_selected_count" formatted="false">(%d/%d)</string>
+
+    <string name="smsBlockCountFormatString">共拦截%d条垃圾短信</string>
+    <string name="phoneBlockCountFormatString">共拦截%d条骚扰电话</string>
+    <string name="title_activity_app_locker_settings">应用锁设置</string>
+    <string name="total_delete_count">%d项等待删除</string>
+    <string name="no_item_exist">恭喜，纪录为空！</string>
+    <string name="loading">正在加载</string>
+    <string name="location">位置:%s</string>
+    <string name="name">名称</string>
+    <string name="settings">设置</string>
+    <string name="access_logs">访问日志</string>
+    <string name="applock_list">应用列表</string>
+    <string name="rom">内部存储器</string>
+    <string name="sdcard">外部SD卡</string>
+    <string name="unable_start">无法启动</string>
+    <string name="unable_uninstall">无法移除</string>
+</resources>
