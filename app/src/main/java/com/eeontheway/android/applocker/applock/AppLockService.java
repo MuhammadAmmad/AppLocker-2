@@ -15,6 +15,9 @@ import android.util.Log;
 
 import com.eeontheway.android.applocker.app.AppInfoManager;
 import com.eeontheway.android.applocker.app.BaseAppInfo;
+import com.eeontheway.android.applocker.db.LockConfigDao;
+import com.eeontheway.android.applocker.main.LockLogActivity;
+import com.eeontheway.android.applocker.main.PasswordVerifyActivity;
 import com.eeontheway.android.applocker.utils.ServiceUtils;
 
 import java.io.ByteArrayOutputStream;
@@ -30,7 +33,7 @@ import java.util.List;
  * @Time 2016-12-15
  */
 public class AppLockService extends Service {
-    private AppLockConfigDao dao;
+    private LockConfigDao dao;
     private AppLockUnlockedList appLockUnlockedList;
     private Handler screenUnlockAllHandler;
     private Runnable clearAppLockedRunnable;
@@ -260,7 +263,7 @@ public class AppLockService extends Service {
         appInfoList = appInfoManager.queryAllAppInfo(AppInfoManager.AppType.ALL_APP);
 
         // 当数据库发生变化时，重新加载所有的配置项
-        dao = new AppLockConfigDao(this);
+        dao = new LockConfigDao(this);
         dao.registerDataChangeReveiver(new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -296,15 +299,15 @@ public class AppLockService extends Service {
      */
     public void loadAllLockConfigList () {
         // 生成自己的锁定信息，即对于自己总是锁定的
-        AppLockConfigInfo configInfo = new AppLockConfigInfo();
-        configInfo.setLocked(true);
-        configInfo.setPackageName(getPackageName());
+//        AppLockConfigInfo configInfo = new AppLockConfigInfo();
+//        configInfo.setLocked(true);
+//        configInfo.setPackageName(getPackageName());
 
         // 加入到锁定配置对列中
         synchronized (appLockConfigInfoList) {
             appLockConfigInfoList.clear();
             appLockConfigInfoList.addAll(dao.queryAllLockInfo());
-            appLockConfigInfoList.add(configInfo);
+            //appLockConfigInfoList.add(configInfo);
         }
     }
 
@@ -405,8 +408,8 @@ public class AppLockService extends Service {
         private boolean isNeedLock () {
             // 顶层显示解锁界面时，不需要加锁定
             topActivityName = appInfoManager.queryFirstAppActivityName();
-            if (AppLockPasswordVerifyActivity.class.getName().equals(topActivityName)
-                    || AppLockLogActivity.class.getName().equals(topActivityName)) {
+            if (PasswordVerifyActivity.class.getName().equals(topActivityName)
+                    || LockLogActivity.class.getName().equals(topActivityName)) {
                 return false;
             }
             // 已经解锁过
@@ -496,7 +499,7 @@ public class AppLockService extends Service {
                                     Bitmap bitmap = ((BitmapDrawable) appInfo.getIcon()).getBitmap();
                                     bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
 
-                                    AppLockPasswordVerifyActivity.startActivity(AppLockService.this,
+                                    PasswordVerifyActivity.startActivity(AppLockService.this,
                                             packageName,
                                             appName,
                                             stream.toByteArray(),
@@ -517,7 +520,7 @@ public class AppLockService extends Service {
             }
 
             // 线程结束时，释放Activity
-            AppLockPasswordVerifyActivity.finishActivity();
+            PasswordVerifyActivity.finishActivity();
         }
     }
 }

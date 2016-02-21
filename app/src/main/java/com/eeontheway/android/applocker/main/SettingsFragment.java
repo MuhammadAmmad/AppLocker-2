@@ -1,4 +1,4 @@
-package com.eeontheway.android.applocker.applock;
+package com.eeontheway.android.applocker.main;
 
 
 import android.app.Activity;
@@ -11,7 +11,7 @@ import android.preference.PreferenceScreen;
 import android.text.TextUtils;
 
 import com.eeontheway.android.applocker.R;
-import com.eeontheway.android.applocker.app.AppInfoManager;
+import com.eeontheway.android.applocker.applock.AppLockSettingsManager;
 
 /**
  * 应用锁配置界面Fragment
@@ -20,7 +20,7 @@ import com.eeontheway.android.applocker.app.AppInfoManager;
  * @version v1.0
  * @Time 2016-2-8
  */
-public class AppLockSettingsFragment extends PreferenceFragment {
+public class SettingsFragment extends PreferenceFragment {
     private static final String unlockFailedCaptureErrcountKey = "unlock_failed_capture_errcount";
     private static final String screenLockModeKey = "screen_lock_mode";
 
@@ -129,7 +129,7 @@ public class AppLockSettingsFragment extends PreferenceFragment {
     @Override
     public boolean onPreferenceTreeClick(PreferenceScreen preferenceScreen, Preference preference) {
         if (preference.getKey().equals(AppLockSettingsManager.applock_password_key)) {
-            AppLockPasswordSetActivity.statActivity(parentActivity);
+            PasswordSetActivity.statActivity(parentActivity);
             return true;
         } else {
             return super.onPreferenceTreeClick(preferenceScreen, preference);

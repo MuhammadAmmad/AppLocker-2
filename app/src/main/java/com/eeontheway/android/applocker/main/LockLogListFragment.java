@@ -1,4 +1,4 @@
-package com.eeontheway.android.applocker.applock;
+package com.eeontheway.android.applocker.main;
 
 import android.app.Activity;
 import android.app.Fragment;
@@ -26,6 +26,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.eeontheway.android.applocker.R;
+import com.eeontheway.android.applocker.applock.AppLockLogInfo;
+import com.eeontheway.android.applocker.applock.AppLockLogViewInfo;
+import com.eeontheway.android.applocker.db.AppLockLogDao;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,7 +42,7 @@ import java.util.List;
  * @version v1.0
  * @Time 2016-2-9
  */
-public class AppLockLogListFragment extends Fragment {
+public class LockLogListFragment extends Fragment {
     private ListView lv_logs;
     private Button bt_remove;
     private TextView tv_count;
@@ -411,7 +414,6 @@ public class AppLockLogListFragment extends Fragment {
                 }
             }
         }
-
         return bitmap;
     }
 }

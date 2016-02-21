@@ -1,4 +1,4 @@
-package com.eeontheway.android.applocker.applock;
+package com.eeontheway.android.applocker.main;
 
 import android.app.FragmentManager;
 import android.content.Context;
@@ -8,9 +8,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 
 import com.eeontheway.android.applocker.R;
+import com.eeontheway.android.applocker.applock.AppLockSettingsManager;
 
 /**
  * 应用锁配置界面Activity
@@ -19,7 +19,7 @@ import com.eeontheway.android.applocker.R;
  * @version v1.0
  * @Time 2016-2-8
  */
-public class AppLockSettingsActivity extends AppCompatActivity {
+public class SettingsActivity extends AppCompatActivity {
     private ActionBar actionBar;
 
     /**
@@ -27,7 +27,7 @@ public class AppLockSettingsActivity extends AppCompatActivity {
      * @param context 上下文
      */
     public static void start (Context context) {
-        Intent intent = new Intent(context, AppLockSettingsActivity.class);
+        Intent intent = new Intent(context, SettingsActivity.class);
         context.startActivity(intent);
     }
 
@@ -50,7 +50,7 @@ public class AppLockSettingsActivity extends AppCompatActivity {
      */
     private void initViews() {
         // 配置Fragment
-        AppLockSettingsFragment fragment = new AppLockSettingsFragment();
+        SettingsFragment fragment = new SettingsFragment();
         FragmentManager fm = getFragmentManager();
         fm.beginTransaction().replace(R.id.fg_settings, fragment).commit();
     }
@@ -100,7 +100,7 @@ public class AppLockSettingsActivity extends AppCompatActivity {
         if (resultCode == RESULT_OK) {
             // 密码设置正确，保存密码
             AppLockSettingsManager asm = AppLockSettingsManager.getInstance(this);
-            asm.savePassword(data.getStringExtra(AppLockPasswordSetActivity.RETURN_PARAM_PASS));
+            asm.savePassword(data.getStringExtra(PasswordSetActivity.RETURN_PARAM_PASS));
         }
     }
 }

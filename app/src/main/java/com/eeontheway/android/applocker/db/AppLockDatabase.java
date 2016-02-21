@@ -1,4 +1,4 @@
-package com.eeontheway.android.applocker.applock;
+package com.eeontheway.android.applocker.db;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;

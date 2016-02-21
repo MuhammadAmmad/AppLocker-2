@@ -1,11 +1,9 @@
-package com.eeontheway.android.applocker.applock;
+package com.eeontheway.android.applocker.main;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.widget.TextView;
 
 import com.eeontheway.android.applocker.R;
 import com.eeontheway.android.applocker.view.NumberPasswordView;
@@ -17,7 +15,7 @@ import com.eeontheway.android.applocker.view.NumberPasswordView;
  * @version v1.0
  * @Time 2016-12-15
  */
-public class AppLockPasswordSetActivity extends AppCompatActivity {
+public class PasswordSetActivity extends AppCompatActivity {
     public static String RETURN_PARAM_PASS = "password";
     private NumberPasswordView cv_password;
 
@@ -26,7 +24,7 @@ public class AppLockPasswordSetActivity extends AppCompatActivity {
      * @param activity 上下文
      */
     public static void statActivity (Activity activity) {
-        Intent intent = new Intent(activity, AppLockPasswordSetActivity.class);
+        Intent intent = new Intent(activity, PasswordSetActivity.class);
         activity.startActivityForResult(intent, 0);
     }
 

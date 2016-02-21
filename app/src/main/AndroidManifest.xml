@@ -2,12 +2,32 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.eeontheway.android.applocker">
 
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="getui.permission.GetuiService.com.eeontheway.android.applocker" /> <!-- 替换为第三方应用的包名 -->
+    <permission
+        android:name="getui.permission.GetuiService.com.eeontheway.android.applocker"
+        android:protectionLevel="normal"></permission> <!-- 替换为第三方应用的包名 -->
+
+    <uses-permission android:name="android.permission.READ_LOGS" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.MANAGE_ACCOUNTS" />
+    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.GET_TASKS" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.RECEIVE_USER_PRESENT" />
 
     <uses-feature
         android:name="android.hardware.camera"
@@ -20,8 +40,7 @@
         android:theme="@style/AppTheme">
         <activity
             android:name=".main.StartupActivity"
-            android:autoRemoveFromRecents="true"
-            android:excludeFromRecents="true"
+            android:screenOrientation="portrait"
             android:theme="@style/Activity.NoTitleFullScreen">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -29,9 +48,40 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".main.MainActivity" />
-        <activity android:name=".applock.AppLockLogListActivity" />
-        <activity android:name=".applock.AppLockSettingsActivity" />
+        <activity
+            android:name=".main.MainActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".main.LockLogListActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".main.SettingsActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".main.PasswordVerifyActivity"
+            android:launchMode="singleInstance"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".main.LockLogActivity"
+            android:launchMode="singleInstance"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".main.PasswordSetActivity"
+            android:screenOrientation="portrait" />
+
+        <!-- About页的Activity -->
+        <activity
+            android:name=".main.AboutActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".main.WebViewActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".main.FeedBackActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".main.PaySupportActivity"
+            android:screenOrientation="portrait" />
 
         <service
             android:name=".applock.AppLockService"
@@ -39,26 +89,121 @@
             android:exported="true"
             android:priority="1000" />
 
-        <activity
-            android:name=".applock.AppLockPasswordVerifyActivity"
-            android:launchMode="singleInstance"
-            android:theme="@style/Activity.NoTitle" />
-        <activity
-            android:name=".applock.AppLockLogActivity"
-            android:launchMode="singleInstance"
-            android:theme="@style/Activity.NoTitle"></activity>
-
         <receiver
             android:name=".reciever.BootCompleteReceiver"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </receiver>
 
-        <activity android:name=".applock.AppLockPasswordSetActivity"></activity>
+        <!-- 个推SDK配置开始 -->
+        <!-- 配置的第三方参数属性 -->
+        <meta-data
+            android:name="PUSH_APPID"
+            android:value="DIB5qDDshd8SnmEUcDGaU" /> <!-- 替换为第三方应用的APPID -->
+        <meta-data
+            android:name="PUSH_APPKEY"
+            android:value="6a8QobLFBg75RSzDoAaBp3" /> <!-- 替换为第三方应用的APPKEY -->
+        <meta-data
+            android:name="PUSH_APPSECRET"
+            android:value="jdeADN6EzN9I0ckcyVT7v4" /> <!-- 替换为第三方应用的APPSECRET -->
+        <!-- 配置SDK核心服务 -->
+        <service
+            android:name="com.igexin.sdk.PushService"
+            android:exported="true"
+            android:label="NotificationCenter"
+            android:process=":pushservice" />
+        <service
+            android:name="com.igexin.sdk.PushServiceUser"
+            android:exported="true"
+            android:label="NotificationCenterUser" />
+
+        <receiver android:name="com.igexin.sdk.PushReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
+                <action android:name="android.intent.action.USER_PRESENT" />
+                <action android:name="com.igexin.sdk.action.refreshls" />
+                <action android:name="android.intent.action.MEDIA_MOUNTED" />
+                <action android:name="android.intent.action.ACTION_POWER_CONNECTED" />
+                <action android:name="android.intent.action.ACTION_POWER_DISCONNECTED" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name="com.igexin.sdk.PushManagerReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.igexin.sdk.action.pushmanager" />
+            </intent-filter>
+        </receiver>
+
+        <activity
+            android:name="com.igexin.sdk.PushActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:process=":pushservice"
+            android:taskAffinity="com.igexin.sdk.PushActivityTask"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+        <activity
+            android:name="com.igexin.sdk.GActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:process=":pushservice"
+            android:taskAffinity="com.igexin.sdk.PushActivityTask"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
+        <service
+            android:name="com.igexin.download.DownloadService"
+            android:process=":pushservice" />
+
+        <receiver android:name="com.igexin.download.DownloadReceiver">
+            <intent-filter>
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
+            </intent-filter>
+        </receiver>
+
+        <provider
+            android:name="com.igexin.download.DownloadProvider"
+            android:authorities="downloads.com.eeontheway.android.applocker"
+            android:exported="true"
+            android:process=":pushservice" /> <!-- 替换为第三方应用的包名 -->
+
+        <activity
+            android:name="com.igexin.getuiext.activity.GetuiExtActivity"
+            android:configChanges="orientation|keyboard|keyboardHidden"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:process=":pushservice"
+            android:taskAffinity="android.task.myServicetask"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
+        <receiver
+            android:name="com.igexin.getuiext.service.PayloadReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.igexin.sdk.action.7fjUl2Z3LH6xYy7NQK4ni4" />
+                <action android:name="com.igexin.sdk.action.DIB5qDDshd8SnmEUcDGaU" />
+            </intent-filter>
+        </receiver>
+
+        <service
+            android:name="com.igexin.getuiext.service.GetuiExtService"
+            android:process=":pushservice" />
+
+        <receiver
+            android:name=".sdk.getui.PushMessageReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.igexin.sdk.action.DIB5qDDshd8SnmEUcDGaU" />
+            </intent-filter>
+        </receiver>
+        <!-- 个推SDK配置结束 -->
+
+        <activity android:name=".main.FeedBackListActivity"></activity>
     </application>
 
 </manifest>

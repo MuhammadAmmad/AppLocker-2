@@ -1,9 +1,12 @@
-package com.eeontheway.android.applocker.applock;
+package com.eeontheway.android.applocker.db;
 
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+
+import com.eeontheway.android.applocker.applock.AppLockLogInfo;
+import com.eeontheway.android.applocker.db.AppLockDatabase;
 
 import java.util.ArrayList;
 import java.util.List;

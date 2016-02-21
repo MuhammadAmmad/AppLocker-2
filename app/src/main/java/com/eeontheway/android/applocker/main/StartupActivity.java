@@ -10,7 +10,7 @@ import android.view.animation.Animation;
 import android.widget.RelativeLayout;
 
 import com.eeontheway.android.applocker.R;
-import com.eeontheway.android.applocker.utils.SystemInfoUtils;
+import com.eeontheway.android.applocker.utils.SystemUtils;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -132,7 +132,7 @@ public class StartupActivity extends AppCompatActivity {
         }
 
         // 遍历执行文件复制过程
-        long appInstalledTime = SystemInfoUtils.getAppInstalledTime(this);
+        long appInstalledTime = SystemUtils.getAppInstalledTime(this);
         for (Map.Entry entry : copyConfigMap.entrySet()) {
             String rootPath = getFilesDir().getPath();
             String sourcePath = (String) entry.getKey();

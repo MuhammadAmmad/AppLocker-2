@@ -1,4 +1,4 @@
-package com.eeontheway.android.applocker.applock;
+package com.eeontheway.android.applocker.db;
 
 import android.content.BroadcastReceiver;
 import android.content.ContentValues;
@@ -10,6 +10,9 @@ import android.database.sqlite.SQLiteDatabase;
 import android.support.v4.content.LocalBroadcastManager;
 
 import com.eeontheway.android.applocker.app.AppInfo;
+import com.eeontheway.android.applocker.applock.AppLockConfigInfo;
+import com.eeontheway.android.applocker.applock.AppLockInfo;
+import com.eeontheway.android.applocker.db.AppLockDatabase;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,10 +23,10 @@ import java.util.List;
  * @version v1.0
  * @Time 2016-12-15
  */
-public class AppLockConfigDao {
+public class LockConfigDao {
     private LocalBroadcastManager lm;
 
-    private static final String BroadcastAction = "AppLockConfigDao.Changed";
+    private static final String BroadcastAction = "LockConfigDao.Changed";
 
     private AppLockDatabase lockListDatabase;
     private SQLiteDatabase db;
@@ -32,7 +35,7 @@ public class AppLockConfigDao {
      * 构造函数
      * @param context 上下文
      */
-    public AppLockConfigDao(Context context) {
+    public LockConfigDao(Context context) {
         lm = LocalBroadcastManager.getInstance(context);
         lockListDatabase = new AppLockDatabase(context);
         db = lockListDatabase.getReadableDatabase();

@@ -1,4 +1,4 @@
-package com.eeontheway.android.applocker.applock;
+package com.eeontheway.android.applocker.main;
 
 import android.content.Context;
 import android.content.Intent;
@@ -16,7 +16,7 @@ import com.eeontheway.android.applocker.R;
  * @version v1.0
  * @Time 2016-2-9
  */
-public class AppLockLogListActivity extends AppCompatActivity {
+public class LockLogListActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,7 +33,7 @@ public class AppLockLogListActivity extends AppCompatActivity {
      * @param context 上下文
      */
     public static void startActivity (Context context) {
-        Intent intent = new Intent(context, AppLockLogListActivity.class);
+        Intent intent = new Intent(context, LockLogListActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         context.startActivity(intent);
     }

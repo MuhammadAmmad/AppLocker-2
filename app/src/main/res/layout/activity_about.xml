@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:background="@color/colorSecondaryBackground"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <include
+        android:id="@+id/tl_header"
+        layout="@layout/item_activity_header" />
+
+    <ImageView
+        android:id="@+id/iv_logo"
+        android:src="@drawable/app_lanucher"
+        android:layout_margin="@dimen/view_common_padding"
+        android:layout_below="@id/tl_header"
+        android:layout_centerHorizontal="true"
+        android:layout_width="150dp"
+        android:layout_height="150dp" />
+    <TextView
+        android:id="@+id/tv_copyright"
+        android:text="@string/copyright"
+        android:textSize="12dp"
+        android:layout_margin="@dimen/view_common_padding"
+        android:layout_alignParentBottom="true"
+        android:gravity="center"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+    <ListView
+        android:id="@+id/lv_menu"
+        android:background="@color/colorFirstBackground"
+        android:layout_margin="@dimen/view_common_padding"
+        android:layout_above="@id/tv_copyright"
+        android:layout_below="@id/iv_logo"
+        android:layout_centerInParent="true"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <TextView
+        android:id="@+id/tv_version"
+        android:text="@string/about_version"
+        android:textSize="12dp"
+        android:layout_below="@id/iv_logo"
+        android:gravity="center"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+</RelativeLayout>

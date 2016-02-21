@@ -1,8 +1,10 @@
 package com.eeontheway.android.applocker.utils;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 
 /**
  * 系统信息工具
@@ -10,7 +12,7 @@ import android.content.pm.PackageManager;
  * @version v1.0
  * @Time 2016-12-15
  */
-public class SystemInfoUtils {
+public class SystemUtils {
     /**
      * 获取当前App安装的时间
      *

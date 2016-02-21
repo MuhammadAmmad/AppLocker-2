@@ -118,19 +118,52 @@
     <string name="add_tag_to_photo_summary">添加时间、应用名称、密码错误次数等标记</string>
     <string name="child_selected_count" formatted="false">(%d/%d)</string>
 
-    <string name="smsBlockCountFormatString">共拦截%d条垃圾短信</string>
-    <string name="phoneBlockCountFormatString">共拦截%d条骚扰电话</string>
     <string name="title_activity_app_locker_settings">应用锁设置</string>
     <string name="total_delete_count">%d项等待删除</string>
-    <string name="no_item_exist">恭喜，纪录为空！</string>
+    <string name="no_item_exist">恭喜，纪录为空</string>
+    <string name="no_more_items">没有更多纪录了</string>
     <string name="loading">正在加载</string>
     <string name="location">位置:%s</string>
     <string name="name">名称</string>
     <string name="settings">设置</string>
+    <string name="about">关于</string>
     <string name="access_logs">访问日志</string>
     <string name="applock_list">应用列表</string>
     <string name="rom">内部存储器</string>
     <string name="sdcard">外部SD卡</string>
     <string name="unable_start">无法启动</string>
     <string name="unable_uninstall">无法移除</string>
+
+
+    <string name="mode_list">模式列表</string>
+    <string name="default_mode">缺省模式</string>
+    <string name="normal_mode">普通模式</string>
+    <string name="visitor_mode">访客模式</string>
+    <string name="child_mode">儿童模式</string>
+    <string name="group_mode">组合模式</string>
+    <string name="location_mode">位置模式</string>
+
+    <string name="help">帮助</string>
+    <string name="share">分享</string>
+
+    <string name="copyright">Copyright@2015-2016 \n eeontheway.com 版本所有</string>
+    <string name="about_version">版本 %s</string>
+    <string name="goto_vote">给个好评</string>
+    <string name="check_update">检查更新</string>
+    <string name="app_website">官方网站</string>
+    <string name="feed_back">意见反馈</string>
+    <string name="feed_back_list">反馈纪录</string>
+    <string name="pay_support">捐赠支持</string>
+    <string name="submit">提交</string>
+    <string name="leave_msg">请留下您的反馈意见，我们将为您不断改进</string>
+    <string name="leave_contact">联系方式：邮箱/QQ/电话，选填</string>
+    <string name="no_send_feedback_again">请勿重复提交反馈</string>
+    <string name="feedback_send_ok">您的反馈信息已发送,感谢您的反馈!</string>
+    <string name="feedback_send_fail">反馈信息发送失败:%s!</string>
+    <string name="please_add_feedback">请填写反馈内容</string>
+    <string name="please_add_contact">衣填写联系方式</string>
+    <string name="menu_feedback_list">历史反馈</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

@@ -151,7 +151,8 @@
     <color name="colorPrimary">#0081c5</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
-
+    <color name="colorFirstBackground">@color/white</color>
+    <color name="colorSecondaryBackground">@color/whitesmoke</color>
     <color name="light_blue">#6892da</color>
     <color name="tooBarBackgroud">#e3e4e7</color>
 

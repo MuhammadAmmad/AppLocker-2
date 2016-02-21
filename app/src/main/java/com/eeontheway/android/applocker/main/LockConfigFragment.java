@@ -1,4 +1,4 @@
-package com.eeontheway.android.applocker.applock;
+package com.eeontheway.android.applocker.main;
 
 import android.app.Activity;
 import android.app.Fragment;
@@ -23,6 +23,9 @@ import com.eeontheway.android.applocker.R;
 import com.eeontheway.android.applocker.app.AppInfo;
 import com.eeontheway.android.applocker.app.AppInfoManager;
 import com.eeontheway.android.applocker.app.BaseAppInfo;
+import com.eeontheway.android.applocker.db.LockConfigDao;
+import com.eeontheway.android.applocker.applock.AppLockInfo;
+import com.eeontheway.android.applocker.applock.AppLockSettingsManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +37,7 @@ import java.util.List;
  * @version v1.0
  * @Time 2016-12-15
  */
-public class AppLockConfigFragment extends Fragment {
+public class LockConfigFragment extends Fragment {
     private View rl_loading;
     private Activity parentActivity;
     private ExpandableListView el_listview;
@@ -42,7 +45,7 @@ public class AppLockConfigFragment extends Fragment {
     private BaseExpandableListAdapter el_adapter;
 
     private AppInfoManager appInfoManager;
-    private AppLockConfigDao databaseDao;
+    private LockConfigDao databaseDao;
     private BroadcastReceiver packageRemoveReceiver;
     private BroadcastReceiver packageInstallReceiver;
     private AppLockSettingsManager appLockSettingsManager;
@@ -63,7 +66,7 @@ public class AppLockConfigFragment extends Fragment {
 
         parentActivity = getActivity();
         appInfoManager = new AppInfoManager(parentActivity);
-        databaseDao = new AppLockConfigDao(parentActivity);
+        databaseDao = new LockConfigDao(parentActivity);
         appLockSettingsManager = AppLockSettingsManager.getInstance(parentActivity);
         el_adapter = createAdapter();
 
@@ -105,7 +108,7 @@ public class AppLockConfigFragment extends Fragment {
         lv_header.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                AppLockLogListActivity.startActivity(parentActivity);
+                LockLogListActivity.startActivity(parentActivity);
             }
         });
 

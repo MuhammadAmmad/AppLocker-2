@@ -114,8 +114,8 @@ public class ApkUpdater {
                     }
                 } else {
                     // 发现错误，提示
-                    String msg = activity.getResources().getString(R.string.checkUpdateFaild);
-                    Log.e("Download", msg + ":" + message);
+                    String msg = activity.getString(R.string.checkUpdateFaild);
+                    Toast.makeText(activity, "更新失败:" + msg + "-" + message, Toast.LENGTH_SHORT).show();
                 }
             }
         });

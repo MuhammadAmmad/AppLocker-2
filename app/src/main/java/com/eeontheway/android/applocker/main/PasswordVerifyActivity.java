@@ -1,4 +1,4 @@
-package com.eeontheway.android.applocker.applock;
+package com.eeontheway.android.applocker.main;
 
 import android.content.Context;
 import android.content.Intent;
@@ -19,6 +19,10 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.eeontheway.android.applocker.R;
+import com.eeontheway.android.applocker.applock.AppLockLogInfo;
+import com.eeontheway.android.applocker.applock.AppLockService;
+import com.eeontheway.android.applocker.applock.AppLockSettingsManager;
+import com.eeontheway.android.applocker.db.AppLockLogDao;
 import com.eeontheway.android.applocker.utils.CameraUtils;
 import com.eeontheway.android.applocker.utils.DisplayUtil;
 import com.eeontheway.android.applocker.view.NumberPasswordView;
@@ -38,7 +42,7 @@ import java.util.Date;
  * @version v1.0
  * @Time 2016-12-15
  */
-public class AppLockPasswordVerifyActivity extends AppCompatActivity {
+public class PasswordVerifyActivity extends AppCompatActivity {
     private final static String PARAM_PACKAGE_NAME = "packageName";
     private final static String PARAM_APP_NAME = "appName";
     private final static String PARAM_ICON_NAME = "iconName";
@@ -192,7 +196,7 @@ public class AppLockPasswordVerifyActivity extends AppCompatActivity {
         AppLockLogInfo logInfo = appLockLogDao.queryLatestLockerLog(lastPasswordErrorPackageName);
         if (logInfo != null) {
             // 启动日志显示界面
-            AppLockLogActivity.startActivity(this, logInfo);
+            LockLogActivity.startActivity(this, logInfo);
         }
     }
 
@@ -366,7 +370,7 @@ public class AppLockPasswordVerifyActivity extends AppCompatActivity {
      * 通知外界密码输入正确
      */
     private void notifyPasswordOk () {
-        AppLockService.broadcastAppUnlocked(AppLockPasswordVerifyActivity.this, packageName);
+        AppLockService.broadcastAppUnlocked(PasswordVerifyActivity.this, packageName);
     }
 
     /**
@@ -377,7 +381,7 @@ public class AppLockPasswordVerifyActivity extends AppCompatActivity {
      */
     public static void startActivity (Context context, String packageName,
                                       String appName, byte [] icon, int flag) {
-        Intent intent = new Intent(context, AppLockPasswordVerifyActivity.class);
+        Intent intent = new Intent(context, PasswordVerifyActivity.class);
         intent.putExtra(PARAM_PACKAGE_NAME, packageName);
         intent.putExtra(PARAM_APP_NAME, appName);
         intent.putExtra(PARAM_ICON_NAME, icon);

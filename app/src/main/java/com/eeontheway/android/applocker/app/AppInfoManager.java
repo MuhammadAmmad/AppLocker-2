@@ -295,48 +295,4 @@ public class AppInfoManager {
             context.startActivity(intent);
         }
     }
-
-    /**
-     * 获取所有的App信息列表
-     *
-     * @param appType 待获取的App类型
-     * @return App信息列表
-     */
-    public List<BaseAppInfo> queryAllTrafficInfo(AppType appType) {
-        List<BaseAppInfo> infoList = new ArrayList<>();
-        List<PackageInfo> packageInfos = packageManager.getInstalledPackages(PackageManager.GET_PERMISSIONS);
-
-        // 遍历所有的包
-        for (PackageInfo info : packageInfos) {
-            AppType type = ((info.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0) ?
-                    AppType.USER_APP : AppType.SYSTEM_APP;
-
-            if ((appType == AppType.ALL_APP) || (appType == type)) {
-                // 遍历App所具有的权限，查看是否有联网权限
-                String[] permissionList = info.requestedPermissions;
-                if (permissionList == null) {
-                    continue;
-                }
-
-                for (String permission : permissionList) {
-                    if (permission.equals("android.permission.INTERNET")) {
-                        // 如果有联网权限，才显示；否则不显示
-                        TrafficInfo trafficInfo = new TrafficInfo();
-                        trafficInfo.setPackageName(info.applicationInfo.packageName);
-                        trafficInfo.setIcon(info.applicationInfo.loadIcon(packageManager));
-                        trafficInfo.setName(info.applicationInfo.loadLabel(packageManager).toString());
-                        trafficInfo.setUsedSize(new File(info.applicationInfo.sourceDir).length());
-                        trafficInfo.setUserApp(type == AppType.USER_APP);
-                        trafficInfo.setRxBytes(TrafficStats.getUidRxBytes(info.applicationInfo.uid));
-                        trafficInfo.setTxBytes(TrafficStats.getUidTxPackets(info.applicationInfo.uid));
-                        Log.d("Traffice", trafficInfo.getPackageName() + trafficInfo.getTxBytes() + trafficInfo.getRxBytes());
-                        infoList.add(trafficInfo);
-                        break;
-                    }
-                }
-            }
-        }
-
-        return infoList;
-    }
 }

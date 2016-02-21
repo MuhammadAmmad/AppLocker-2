@@ -1,4 +1,4 @@
-package com.eeontheway.android.applocker.applock;
+package com.eeontheway.android.applocker.main;
 
 import android.content.Context;
 import android.content.Intent;
@@ -14,6 +14,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.eeontheway.android.applocker.R;
+import com.eeontheway.android.applocker.applock.AppLockLogInfo;
 
 import java.io.IOException;
 
@@ -24,7 +25,7 @@ import java.io.IOException;
  * @version v1.0
  * @Time 2016-12-15
  */
-public class AppLockLogActivity extends AppCompatActivity {
+public class LockLogActivity extends AppCompatActivity {
     private static final String PARAM_LOGINFO = "param_loginfo";
     private AppLockLogInfo lockLogInfo;
 
@@ -38,7 +39,7 @@ public class AppLockLogActivity extends AppCompatActivity {
      * @param logInfo 锁定日志信息
      */
     public static void startActivity (Context context, AppLockLogInfo logInfo) {
-        Intent intent = new Intent(context, AppLockLogActivity.class);
+        Intent intent = new Intent(context, LockLogActivity.class);
         intent.putExtra(PARAM_LOGINFO, logInfo);
         context.startActivity(intent);
     }
@@ -93,7 +94,7 @@ public class AppLockLogActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 // 启动查看更多，然后关闭自己
-                AppLockLogListActivity.startActivity(AppLockLogActivity.this);
+                LockLogListActivity.startActivity(LockLogActivity.this);
                 finish();
             }
         });
