@@ -5,6 +5,7 @@ import android.widget.Toast;
 
 import com.eeontheway.android.applocker.R;
 import com.eeontheway.android.applocker.utils.Configuration;
+import com.eeontheway.android.applocker.wxapi.WXEntryActivity;
 import com.tencent.mm.sdk.modelmsg.SendMessageToWX;
 import com.tencent.mm.sdk.modelmsg.WXMediaMessage;
 import com.tencent.mm.sdk.modelmsg.WXWebpageObject;
@@ -18,15 +19,11 @@ import com.tencent.tauth.Tencent;
  * @version v1.0
  * @Time 2016-12-15
  */
-public class WXShareBase implements IShare {
-    private static final int TIMELINE_SUPPORTED_VERSION = 0x21020001;   // 分享到朋友圈的最低版本
-
+public class WXShareBase extends ShareBase implements IShare {
     protected static IWXAPI api;
     private static int instanceCount;
 
-    protected boolean toFriend;
     protected Context context;
-
 
     /**
      * 获取WX对像
@@ -75,13 +72,8 @@ public class WXShareBase implements IShare {
      * @param info 待分享的信息
      */
     public void share (ShareInfo info) {
-        // 检查是否支持发送朋友圈
-        if (toFriend) {
-            if (api.getWXAppSupportAPI() < TIMELINE_SUPPORTED_VERSION) {
-                Toast.makeText(context, R.string.wx_share_timeline_notsupport, Toast.LENGTH_SHORT).show();
-                return;
-            }
-        }
+        // 配置回调监听器
+        WXEntryActivity.setListener(getListener());
 
         // 构造一个网页对像
         WXWebpageObject webpage = new WXWebpageObject();
@@ -97,7 +89,7 @@ public class WXShareBase implements IShare {
         SendMessageToWX.Req req = new SendMessageToWX.Req();
         req.transaction = String.valueOf(System.currentTimeMillis());
         req.message = msg;
-        req.scene = toFriend ? req.WXSceneSession : req.WXSceneTimeline;
+        req.scene = isToFriend() ? req.WXSceneSession : req.WXSceneTimeline;
         api.sendReq(req);
     }
 }

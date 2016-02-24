@@ -16,7 +16,6 @@ public class QQShareFriend extends QQShareBase {
     @Override
     public void init(Context context) {
         super.init(context);
-
-        toFriend = true;
+        setToFriend(true);
     }
 }

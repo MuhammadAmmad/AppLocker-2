@@ -11,10 +11,8 @@ import com.tencent.tauth.Tencent;
  * @version v1.0
  * @Time 2016-12-15
  */
-public class QQShareBase implements IShare {
+public class QQShareBase extends ShareBase implements IShare {
     protected Context context;
-    protected boolean toFriend;
-
     protected static Tencent tencent;
     private static int instanceCount;
 
@@ -24,14 +22,6 @@ public class QQShareBase implements IShare {
      */
     public static Tencent getTencent () {
         return tencent;
-    }
-
-    /**
-     * 是否分享到朋友
-     * @return true 分享到朋友; false 否
-     */
-    public boolean isToFriend() {
-        return toFriend;
     }
 
     /**
@@ -58,7 +48,7 @@ public class QQShareBase implements IShare {
                 tencent.releaseResource();
                 tencent = null;
             }
-        }
+         }
     }
 
     /**
@@ -74,6 +64,6 @@ public class QQShareBase implements IShare {
      * @param info 待分享的信息
      */
     public void share (ShareInfo info) {
-        QQShareActivity.startActivity(context, info, toFriend);
+        QQShareActivity.startActivity(context, info, isToFriend(), getListener());
     }
 }

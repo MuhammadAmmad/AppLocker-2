@@ -33,11 +33,16 @@ public class QQShareActivity extends AppCompatActivity {
     private ShareListener listener;
     private String imageUrl;
 
+    private static IShare.OnFinishListener finishListener;
+
     /**
      * 启动Activity
      * @param info 分享信息
      */
-    public static void startActivity (Context context, ShareInfo info, boolean toFriend) {
+    public static void startActivity (Context context, ShareInfo info, boolean toFriend,
+                                      IShare.OnFinishListener listener) {
+        finishListener = listener;
+
         Intent intent = new Intent(context, QQShareActivity.class);
         intent.putExtra(PARAM_SHARE_INFO, info);
         intent.putExtra(PARAM_TO_FRIEND, toFriend);
@@ -63,6 +68,7 @@ public class QQShareActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        finishListener = null;
     }
 
     /**
@@ -133,21 +139,27 @@ public class QQShareActivity extends AppCompatActivity {
         @Override
         public void onCancel() {
             cleanCacheData();
-            Toast.makeText(QQShareActivity.this, R.string.share_cancel, Toast.LENGTH_SHORT).show();
+            if (finishListener != null) {
+                finishListener.onFinish(-1, getString(R.string.share_cancel));
+            }
             finish();
         }
 
         @Override
         public void onComplete(Object arg0) {
             cleanCacheData();
-            Toast.makeText(QQShareActivity.this, R.string.share_success, Toast.LENGTH_SHORT).show();
+            if (finishListener != null) {
+                finishListener.onFinish(-1, getString(R.string.share_success));
+            }
             finish();
         }
 
         @Override
         public void onError(UiError arg0) {
             cleanCacheData();
-            Toast.makeText(QQShareActivity.this, R.string.share_error, Toast.LENGTH_SHORT).show();
+            if (finishListener != null) {
+                finishListener.onFinish(-1, getString(R.string.share_error));
+            }
             finish();
         }
     }

@@ -16,6 +16,13 @@ public interface IShare {
     int SHARE_TYPE_SYSTEM = 4;          // 使用系统分享
 
     /**
+     * 操作结果监听器
+     */
+    interface OnFinishListener {
+        void onFinish (int code, String msg);
+    }
+
+    /**
      * 初始化分享接口
      *
      */

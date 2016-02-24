@@ -104,16 +104,19 @@ public class ShareActivity extends AppCompatActivity {
      * 分享信息
      */
     private void shareInfo(int type) {
-        IShare iShare = ShareFactory.create(type);
+        final IShare iShare = ShareFactory.create(ShareActivity.this, type);
+        ((ShareBase)iShare).setListener(new IShare.OnFinishListener() {
+            @Override
+            public void onFinish(int code, String msg) {
+                iShare.uninit();
 
-        iShare.init(ShareActivity.this);
-        if (iShare.isSupported() == false) {
-            Toast.makeText(ShareActivity.this, R.string.share_not_unsupported,
-                    Toast.LENGTH_SHORT).show();
-        } else {
+                Toast.makeText(ShareActivity.this, msg, Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        if (iShare.isSupported()) {
             iShare.share((ShareInfo) getIntent().getParcelableExtra(PARAM_SHARE_INFO));
         }
-        iShare.uninit();
     }
 
     /**

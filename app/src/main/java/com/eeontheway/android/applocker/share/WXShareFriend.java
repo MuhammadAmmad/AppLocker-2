@@ -16,7 +16,6 @@ public class WXShareFriend extends WXShareBase {
     @Override
     public void init(Context context) {
         super.init(context);
-
-        toFriend = true;
+        setToFriend(true);
     }
 }

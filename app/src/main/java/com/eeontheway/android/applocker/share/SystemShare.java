@@ -6,7 +6,6 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Environment;
 import com.eeontheway.android.applocker.R;
-import com.tencent.tauth.Tencent;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -20,7 +19,7 @@ import java.util.ArrayList;
  * @version v1.0
  * @Time 2016-12-15
  */
-public class SystemShare implements IShare {
+public class SystemShare extends ShareBase implements IShare {
     private Context context;
 
     /**
@@ -52,6 +51,8 @@ public class SystemShare implements IShare {
      * @param info 待分享的信息
      */
     public void share (ShareInfo info) {
+        info.thumbBitmap = null;        // 目前只支持文本分享
+
         if (info.thumbBitmap != null) {
             // 作为图片分享
             Intent intent = new Intent(Intent.ACTION_SEND_MULTIPLE);
