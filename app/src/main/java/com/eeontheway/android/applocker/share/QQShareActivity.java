@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.widget.Toast;
 
 import com.eeontheway.android.applocker.R;
+import com.tencent.connect.share.QQShare;
 import com.tencent.tauth.IUiListener;
 import com.tencent.tauth.Tencent;
 import com.tencent.tauth.UiError;
@@ -25,8 +26,9 @@ import java.io.OutputStream;
  * @Time 2016-12-15
  */
 public class QQShareActivity extends AppCompatActivity {
-    private static final String PARAM_INFO = "ShareInfo";
-    private QQShare shareSDK;
+    private static final String PARAM_SHARE_INFO = "ShareInfo";
+    private static final String PARAM_TO_FRIEND = "toFriend";
+
     private Tencent tencent;
     private ShareListener listener;
     private String imageUrl;
@@ -35,9 +37,10 @@ public class QQShareActivity extends AppCompatActivity {
      * 启动Activity
      * @param info 分享信息
      */
-    public static void startActivity (Context context, ShareInfo info) {
+    public static void startActivity (Context context, ShareInfo info, boolean toFriend) {
         Intent intent = new Intent(context, QQShareActivity.class);
-        intent.putExtra(PARAM_INFO, info);
+        intent.putExtra(PARAM_SHARE_INFO, info);
+        intent.putExtra(PARAM_TO_FRIEND, toFriend);
         context.startActivity(intent);
     }
 
@@ -50,12 +53,16 @@ public class QQShareActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_qqshare);
 
-        // 获取Tencent对像
-        shareSDK = (QQShare) QQShare.getInstance(this, true);
-        tencent = shareSDK.getTencent();
-
-        // 分享出去
+        tencent = QQShareBase.getTencent();
         share();
+    }
+
+    /**
+     * Activity的onDestroy回调
+     */
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
     }
 
     /**
@@ -63,27 +70,29 @@ public class QQShareActivity extends AppCompatActivity {
      */
     public void share () {
         // 创建分享消息
-        ShareInfo info = getIntent().getParcelableExtra(PARAM_INFO);
+        ShareInfo info = getIntent().getParcelableExtra(PARAM_SHARE_INFO);
         final Bundle params = new Bundle();
-        params.putInt(com.tencent.connect.share.QQShare.SHARE_TO_QQ_KEY_TYPE, com.tencent.connect.share.QQShare.SHARE_TO_QQ_TYPE_DEFAULT);
-        if (shareSDK.isToFriend()) {
-            params.putInt(com.tencent.connect.share.QQShare.SHARE_TO_QQ_EXT_INT, com.tencent.connect.share.QQShare.SHARE_TO_QQ_FLAG_QZONE_ITEM_HIDE);
+        params.putInt(QQShare.SHARE_TO_QQ_KEY_TYPE, QQShare.SHARE_TO_QQ_TYPE_DEFAULT);
+        if (getIntent().getBooleanExtra(PARAM_TO_FRIEND, false)) {
+            params.putInt(QQShare.SHARE_TO_QQ_EXT_INT, QQShare.SHARE_TO_QQ_FLAG_QZONE_ITEM_HIDE);
         } else {
-            params.putInt(com.tencent.connect.share.QQShare.SHARE_TO_QQ_EXT_INT, com.tencent.connect.share.QQShare.SHARE_TO_QQ_FLAG_QZONE_AUTO_OPEN);
+            params.putInt(QQShare.SHARE_TO_QQ_EXT_INT, QQShare.SHARE_TO_QQ_FLAG_QZONE_AUTO_OPEN);
         }
-        params.putString(com.tencent.connect.share.QQShare.SHARE_TO_QQ_TITLE, info.title);
-        params.putString(com.tencent.connect.share.QQShare.SHARE_TO_QQ_SUMMARY, info.content);
-        params.putString(com.tencent.connect.share.QQShare.SHARE_TO_QQ_TARGET_URL, info.url);
-        params.putString(com.tencent.connect.share.QQShare.SHARE_TO_QQ_APP_NAME, getString(R.string.app_name));
-        try {
-            // 保存图像文件，需要存储到SD卡上，因为文件将会被QQ访问，否则QQ无权限
-            imageUrl = Environment.getExternalStorageDirectory() + File.separator + "share_thumb.png";
-            OutputStream os = new FileOutputStream(imageUrl);
-            info.thumbBitmap.compress(Bitmap.CompressFormat.PNG, 100, os);
+        params.putString(QQShare.SHARE_TO_QQ_TITLE, info.title);
+        params.putString(QQShare.SHARE_TO_QQ_SUMMARY, info.content);
+        params.putString(QQShare.SHARE_TO_QQ_TARGET_URL, info.url);
+        params.putString(QQShare.SHARE_TO_QQ_APP_NAME, getString(R.string.app_name));
+        if (info.thumbBitmap != null) {
+            try {
+                // 保存图像文件，需要存储到SD卡上，因为文件将会被QQ访问，否则QQ无权限
+                imageUrl = Environment.getExternalStorageDirectory() + File.separator + "share_thumb.png";
+                OutputStream os = new FileOutputStream(imageUrl);
+                info.thumbBitmap.compress(Bitmap.CompressFormat.PNG, 100, os);
 
-            params.putString(com.tencent.connect.share.QQShare.SHARE_TO_QQ_IMAGE_LOCAL_URL, imageUrl);
-        } catch (IOException e) {
-            e.printStackTrace();
+                params.putString(QQShare.SHARE_TO_QQ_IMAGE_LOCAL_URL, imageUrl);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
         // 分享出去
@@ -99,7 +108,7 @@ public class QQShareActivity extends AppCompatActivity {
      */
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (null != tencent) {
-            Tencent.onActivityResultData(requestCode,resultCode,data, listener);
+            Tencent.onActivityResultData(requestCode, 0, data, listener);
         }
     }
 

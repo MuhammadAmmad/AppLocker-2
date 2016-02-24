@@ -4,11 +4,13 @@ import android.content.Context;
 import android.widget.Toast;
 
 import com.eeontheway.android.applocker.R;
+import com.eeontheway.android.applocker.utils.Configuration;
 import com.tencent.mm.sdk.modelmsg.SendMessageToWX;
 import com.tencent.mm.sdk.modelmsg.WXMediaMessage;
 import com.tencent.mm.sdk.modelmsg.WXWebpageObject;
 import com.tencent.mm.sdk.openapi.IWXAPI;
 import com.tencent.mm.sdk.openapi.WXAPIFactory;
+import com.tencent.tauth.Tencent;
 
 /**
  * 微信分享接口
@@ -16,51 +18,35 @@ import com.tencent.mm.sdk.openapi.WXAPIFactory;
  * @version v1.0
  * @Time 2016-12-15
  */
-public class WXShare implements IShare {
-    private static final String WX_APPID = "wxb1f98f7e3d3563a9";
+public class WXShareBase implements IShare {
     private static final int TIMELINE_SUPPORTED_VERSION = 0x21020001;   // 分享到朋友圈的最低版本
 
-    private Context context;
-    private IWXAPI api;
-    private boolean toFriend;
+    protected static IWXAPI api;
+    private static int instanceCount;
 
-    private static IShare instance;
+    protected boolean toFriend;
+    protected Context context;
 
-    /**
-     * 构迼函数，无用
-     */
-    protected WXShare() {}
 
     /**
-     * 获取微信分享接口实例
-     *
-     * @param context 上下文
-     * @return 实例
+     * 获取WX对像
+     * @return WX对像
      */
-    public static IShare getInstance (Context context, boolean toFriend) {
-        if (instance == null) {
-            WXShare wxShareSDK = new WXShare();
-            wxShareSDK.context = context;
-            wxShareSDK.toFriend = toFriend;
-            instance = wxShareSDK;
-        }
-        return instance;
-    }
-
-    /**
-     * 释放实例
-     */
-    public static void freeInstance () {
-        instance = null;
+    public static IWXAPI getAPI () {
+        return api;
     }
 
     /**
      * 初始化分享接口
      */
     @Override
-    public void init () {
-        api = WXAPIFactory.createWXAPI(context, WX_APPID, false);
-        api.registerApp(WX_APPID);
+    public void init (Context context) {
+        this.context = context;
+        if (api == null) {
+            api = WXAPIFactory.createWXAPI(context, Configuration.WX_APPID, false);
+            api.registerApp(Configuration.WX_APPID);
+        }
+        instanceCount++;
     }
 
     /**
@@ -68,14 +54,12 @@ public class WXShare implements IShare {
      */
     @Override
     public void uninit() {
-        api.unregisterApp();
-    }
-
-    /**
-     * 获取api
-     */
-    public IWXAPI getApi() {
-        return api;
+        if (instanceCount > 0) {
+            if (--instanceCount == 0) {
+                api.unregisterApp();
+                api = null;
+            }
+        }
     }
 
     /**
@@ -83,7 +67,7 @@ public class WXShare implements IShare {
      * @return true 支持分享; false 不支持分享
      */
     public boolean isSupported () {
-        return api.isWXAppInstalled();
+        return true;
     }
 
     /**

@@ -1,5 +1,7 @@
 package com.eeontheway.android.applocker.share;
 
+import android.content.Context;
+
 /**
  * 第三方分享接口
  * @author lishutong
@@ -17,7 +19,7 @@ public interface IShare {
      * 初始化分享接口
      *
      */
-    void init ();
+    void init (Context context);
 
     /**
      * 反初始化微信
