@@ -1,4 +1,4 @@
-package com.eeontheway.android.applocker.main;
+package com.eeontheway.android.applocker.feedback;
 
 import android.content.Context;
 import android.content.Intent;
@@ -10,13 +10,11 @@ import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.eeontheway.android.applocker.R;
-import com.eeontheway.android.applocker.sdk.FeedBackManagerFactory;
 
 /**
  * 用户反馈Activity
@@ -25,11 +23,9 @@ import com.eeontheway.android.applocker.sdk.FeedBackManagerFactory;
  * @version v1.0
  * @Time 2016-2-8
  */
-public class FeedBackActivity extends AppCompatActivity {
+public class FeedBackSubmitActivity extends AppCompatActivity {
     private EditText et_content;
     private EditText et_contact;
-    private Button bt_submit;
-    private ClickListener clickListener;
     private ProgressBar pb_progress;
 
     private String lastContent;
@@ -41,7 +37,7 @@ public class FeedBackActivity extends AppCompatActivity {
      * @param context 上下文
      */
     public static void start(Context context) {
-        Intent intent = new Intent(context, FeedBackActivity.class);
+        Intent intent = new Intent(context, FeedBackSubmitActivity.class);
         context.startActivity(intent);
     }
 
@@ -62,6 +58,15 @@ public class FeedBackActivity extends AppCompatActivity {
     }
 
     /**
+     * Activity的onDestroy回调
+     */
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        feedBackManager.unInit();
+    }
+
+    /**
      * 初始化ToolBar
      */
     private void initToolBar() {
@@ -77,22 +82,19 @@ public class FeedBackActivity extends AppCompatActivity {
      * 初始化各种View
      */
     private void initViews() {
-        clickListener = new ClickListener();
-
         pb_progress = (ProgressBar)findViewById(R.id.pb_progress);
+        pb_progress.setVisibility(View.GONE);
         et_content = (EditText)findViewById(R.id.et_content);
         et_contact = (EditText)findViewById(R.id.et_contact);
-        bt_submit = (Button)findViewById(R.id.bt_submit);
-        bt_submit.setOnClickListener(clickListener);
     }
 
     /**
      * 初始化反馈模块
      */
     private void initFeedBack () {
-        feedBackManager = FeedBackManagerFactory.create(FeedBackActivity.this);
         feedbackListener = new FeedBackSendListener();
-        feedBackManager.init();
+        feedBackManager = FeedBackManagerFactory.create(this);
+        feedBackManager.init(this);
         feedBackManager.setSendListener(feedbackListener);
     }
 
@@ -104,7 +106,7 @@ public class FeedBackActivity extends AppCompatActivity {
      */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_feedback_list, menu);
+        getMenuInflater().inflate(R.menu.menu_feedback_sumbit, menu);
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -120,8 +122,8 @@ public class FeedBackActivity extends AppCompatActivity {
             case android.R.id.home:
                 finish();
                 return true;
-            case R.id.menu_feedback_history:
-                FeedBackListActivity.start(this);
+            case R.id.action_submit:
+                submitFeedBack();
                 return true;
             default:
                 return super.onContextItemSelected(item);
@@ -129,27 +131,25 @@ public class FeedBackActivity extends AppCompatActivity {
     }
 
     /**
-     * 点击事件处理器
+     * 提交反馈信息
      */
-    class ClickListener implements View.OnClickListener {
-        @Override
-        public void onClick(View v) {
-            String content = et_content.getText().toString();
-            if(!TextUtils.isEmpty(content)){
-                if((lastContent != null) && content.equals(lastContent)){
-                    Toast.makeText(FeedBackActivity.this,
-                            getString(R.string.no_send_feedback_again), Toast.LENGTH_SHORT).show();
-                }else {
-                    // 发送反馈信息
-                    FeedBackInfo feedBackInfo = new FeedBackInfo();
-                    feedBackInfo.setContent(content);
-                    feedBackInfo.setContact(et_contact.getText().toString());
-                    feedBackManager.sendFeedBack(feedBackInfo);
-                }
+    private void submitFeedBack () {
+        String content = et_content.getText().toString();
+        if(!TextUtils.isEmpty(content)){
+            if((lastContent != null) && content.equals(lastContent)){
+                Toast.makeText(FeedBackSubmitActivity.this,
+                        getString(R.string.no_send_feedback_again), Toast.LENGTH_SHORT).show();
             }else {
-                Toast.makeText(FeedBackActivity.this,
-                        getString(R.string.please_add_feedback), Toast.LENGTH_SHORT).show();
+                // 发送反馈信息
+                FeedBackInfo feedBackInfo = new FeedBackInfo();
+                feedBackInfo.setContent(content);
+                feedBackInfo.setContact(et_contact.getText().toString());
+                feedBackInfo.setTopic(true);
+                feedBackManager.sendFeedBack(feedBackInfo);
             }
+        }else {
+            Toast.makeText(FeedBackSubmitActivity.this,
+                    getString(R.string.please_add_feedback), Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -168,16 +168,18 @@ public class FeedBackActivity extends AppCompatActivity {
             lastContent = et_content.getText().toString();
 
             // 提示用户成功
-            Toast.makeText(FeedBackActivity.this, getString(R.string.feedback_send_ok),
+            Toast.makeText(FeedBackSubmitActivity.this, getString(R.string.feedback_send_ok),
                     Toast.LENGTH_SHORT).show();
-
             pb_progress.setVisibility(View.INVISIBLE);
+
+            // 提交成功后退出
+            finish();
         }
 
         @Override
         public void onFail(String msg) {
             // 提示用户失败
-            Toast.makeText(FeedBackActivity.this, getString(R.string.feedback_send_fail, msg),
+            Toast.makeText(FeedBackSubmitActivity.this, getString(R.string.feedback_send_fail, msg),
                     Toast.LENGTH_SHORT).show();
 
             pb_progress.setVisibility(View.INVISIBLE);

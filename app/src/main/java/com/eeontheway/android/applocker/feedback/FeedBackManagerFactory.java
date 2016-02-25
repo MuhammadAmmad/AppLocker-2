@@ -1,9 +1,7 @@
-package com.eeontheway.android.applocker.sdk;
+package com.eeontheway.android.applocker.feedback;
 
 import android.content.Context;
 
-import com.eeontheway.android.applocker.main.IFeedBack;
-import com.eeontheway.android.applocker.sdk.bmob.BombFeedBackManager;
 import com.eeontheway.android.applocker.utils.Configuration;
 
 import java.security.InvalidParameterException;
@@ -25,7 +23,7 @@ public class FeedBackManagerFactory {
 
         switch (Configuration.FeedBackMangerType) {
             case Configuration.BMOB_FEEDBACK:
-                feedBackManager = new BombFeedBackManager(context);
+                feedBackManager = new BombFeedBackManager();
                 break;
             default:
                 throw new InvalidParameterException("Unkown Manger type");

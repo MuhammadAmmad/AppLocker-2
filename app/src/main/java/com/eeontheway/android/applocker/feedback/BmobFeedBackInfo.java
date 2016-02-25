@@ -1,6 +1,4 @@
-package com.eeontheway.android.applocker.sdk.bmob;
-
-import com.eeontheway.android.applocker.main.FeedBackInfo;
+package com.eeontheway.android.applocker.feedback;
 
 import cn.bmob.v3.BmobObject;
 
@@ -13,21 +11,27 @@ import cn.bmob.v3.BmobObject;
  * @Time 2016-2-8
  */
 public class BmobFeedBackInfo extends BmobObject {
+    private String parentId;
     private String content;
     private String contact;
+    private boolean responsed;
+    private boolean isTopic;
+    private String from;
 
     /**
      * 构造函数
      * @param baseInfo
      */
     public BmobFeedBackInfo(FeedBackInfo baseInfo) {
-        // 设置表名与FeedBack的类名一致
-        setTableName(FeedBackInfo.class.getSimpleName());
-
         // Bmob要求信息域必须定义在BmobObject的子类中
-        // 所以，只能重复定义下，重复使用了
+        // 所以，只能重复定义下，重复使用
         contact = baseInfo.getContact();
         content = baseInfo.getContent();
+        responsed = baseInfo.isResponsed();
+        setObjectId(baseInfo.getId());
+        parentId = baseInfo.getParentId();
+        isTopic = baseInfo.isTopic();
+        from = baseInfo.getFrom();
     }
 
     /**
@@ -38,6 +42,12 @@ public class BmobFeedBackInfo extends BmobObject {
         FeedBackInfo info = new FeedBackInfo();
         info.setContent(content);
         info.setContact(contact);
+        info.setCreateTime(super.getCreatedAt());
+        info.setResponsed(responsed);
+        info.setParentId(parentId);
+        info.setTopic(isTopic);
+        info.setId(getObjectId());
+        info.setFrom(from);
         return info;
     }
 }
