@@ -34,6 +34,10 @@ public class ShareFactory {
                 shareSDK = new QQShareQzone();
                 shareSDK.init(context);
                 break;
+            case IShare.SHARE_TYPE_ALIPAY:          // 支付宝分享
+                shareSDK = new AlipayShare();
+                shareSDK.init(context);
+                break;
             case IShare.SHARE_TYPE_SYSTEM:          // 使用系统分享
                 shareSDK = new SystemShare();
                 shareSDK.init(context);

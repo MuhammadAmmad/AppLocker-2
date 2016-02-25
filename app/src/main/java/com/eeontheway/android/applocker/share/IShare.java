@@ -13,7 +13,8 @@ public interface IShare {
     int SHARE_TYPE_WX_TIMELINE = 1;     // 微信朋友圈分享
     int SHARE_TYPE_QQ_FRIEND = 2;       // QQ好友分享
     int SHARE_TYPE_QZONE = 3;           // QQ空间分享
-    int SHARE_TYPE_SYSTEM = 4;          // 使用系统分享
+    int SHARE_TYPE_ALIPAY = 4;          // 支付宝分享
+    int SHARE_TYPE_SYSTEM = 5;          // 使用系统分享
 
     /**
      * 操作结果监听器
