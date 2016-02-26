@@ -45,4 +45,28 @@ public interface IShare {
      * @param info 待分享的信息
      */
     void share (ShareInfo info);
+
+    /**
+     * 是否分享到朋友
+     * @return true 分享到朋友; false 否
+     */
+    boolean isToFriend ();
+
+    /**
+     * 设置接受的对像为朋友
+     * @param toFriend
+     */
+    void setToFriend (boolean toFriend);
+
+    /**
+     * 设置分享结束时的监听器
+     * @param listener 监听器
+     */
+    void setListener(IShare.OnFinishListener listener);
+
+    /**
+     * 获取分享结束时，应当调用的监听器
+     * @return 监听器
+     */
+    IShare.OnFinishListener getListener();
 }

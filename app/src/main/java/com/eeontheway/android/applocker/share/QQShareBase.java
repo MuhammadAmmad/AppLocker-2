@@ -3,6 +3,7 @@ package com.eeontheway.android.applocker.share;
 import android.content.Context;
 
 import com.eeontheway.android.applocker.utils.Configuration;
+import com.eeontheway.android.applocker.utils.SystemUtils;
 import com.tencent.tauth.Tencent;
 
 /**
@@ -56,7 +57,7 @@ public class QQShareBase extends ShareBase implements IShare {
      * @return true 支持分享; false 不支持分享
      */
     public boolean isSupported () {
-        return true;
+        return SystemUtils.isAppInstalled(context, Configuration.QQ_PACKAGE_NAME);
     }
 
     /**

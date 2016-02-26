@@ -20,12 +20,8 @@ import cn.bmob.v3.listener.UpdateListener;
  * @version v1.0
  * @Time 2016-2-8
  */
-public class BombFeedBackManager implements IFeedBack {
+public class BombFeedBackManager extends FeedBackBase {
     private Context context;
-    private SendStatusListener sendListener;
-    private SendStatusListener updateListener;
-    private QueryTopicStatusListener queryTopicListener;
-    private QueryResponseStatusListener queryResponseListener;
 
     private static BombFeedBackManager manager;
     private static int instanceCount;
@@ -165,14 +161,14 @@ public class BombFeedBackManager implements IFeedBack {
 
                 // 调用回调接口
                 if (queryTopicListener != null) {
-                    queryTopicListener.onSuccess(IFeedBack.QUERY_TIME_OLDER, infoList);
+                    queryTopicListener.onSuccess(FeedBackBase.QUERY_TIME_OLDER, infoList);
                 }
             }
 
             @Override
             public void onError(int i, String s) {
                 if (queryTopicListener != null) {
-                    queryTopicListener.onFail(IFeedBack.QUERY_TIME_OLDER, s);
+                    queryTopicListener.onFail(FeedBackBase.QUERY_TIME_OLDER, s);
                 }
             }
         });
@@ -221,14 +217,14 @@ public class BombFeedBackManager implements IFeedBack {
 
                 // 调用回调接口
                 if (queryTopicListener != null) {
-                    queryTopicListener.onSuccess(IFeedBack.QUERY_TIME_NEWER, infoList);
+                    queryTopicListener.onSuccess(FeedBackBase.QUERY_TIME_NEWER, infoList);
                 }
             }
 
             @Override
             public void onError(int i, String s) {
                 if (queryTopicListener != null) {
-                    queryTopicListener.onFail(IFeedBack.QUERY_TIME_NEWER, s);
+                    queryTopicListener.onFail(FeedBackBase.QUERY_TIME_NEWER, s);
                 }
             }
         });
@@ -261,14 +257,14 @@ public class BombFeedBackManager implements IFeedBack {
 
                 // 调用回调接口
                 if (queryTopicListener != null) {
-                    queryTopicListener.onSuccess(IFeedBack.QUERY_TIME_NEWER, infoList);
+                    queryTopicListener.onSuccess(FeedBackBase.QUERY_TIME_NEWER, infoList);
                 }
             }
 
             @Override
             public void onError(int i, String s) {
                 if (queryTopicListener != null) {
-                    queryTopicListener.onFail(IFeedBack.QUERY_TIME_NEWER, s);
+                    queryTopicListener.onFail(FeedBackBase.QUERY_TIME_NEWER, s);
                 }
             }
         });
@@ -309,40 +305,5 @@ public class BombFeedBackManager implements IFeedBack {
             }
         });
     }
-
-    /**
-     * 设置发送状态的监听器
-     * @param listener
-     */
-    @Override
-    public void setSendListener(SendStatusListener listener) {
-        sendListener = listener;
-    }
-
-    /**
-     * 设置更新状态的监听器
-     * @param listener
-     */
-    @Override
-    public void setUpdateListener(SendStatusListener listener) {
-        updateListener = listener;
-    }
-
-    /**
-     * 设置查询状态的监听器
-     * @param listener
-     */
-    @Override
-    public void setQueryTopicListener(QueryTopicStatusListener listener) {
-        queryTopicListener = listener;
-    }
-
-    /**
-     * 设置查询状态的监听器
-     * @param listener
-     */
-    @Override
-    public void setQueryResponseicListener(QueryResponseStatusListener listener) {
-        queryResponseListener = listener;
-    }
 }
+

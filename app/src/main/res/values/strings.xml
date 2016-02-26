@@ -3,8 +3,8 @@
 
     <string name="version">版本:%s</string>
     <string name="app_loading">加载中，请稍侯...</string>
-    <string name="checkUpdateFaild">检查更新失败</string>
-    <string name="downloading">正在下载</string>
+    <string name="checkUpdateFaild">检查更新失败:%s</string>
+    <string name="downloading">正在下载，请稍后</string>
     <string name="updating">升级提示</string>
     <string name="foundNewVersion">发现新版本</string>
     <string name="ok">确认</string>
@@ -122,7 +122,7 @@
     <string name="total_delete_count">%d项等待删除</string>
     <string name="no_item_exist">恭喜，纪录为空</string>
     <string name="no_more_items">没有更多纪录了</string>
-    <string name="loading">正在加载</string>
+    <string name="loading">正在加载...</string>
     <string name="location">位置:%s</string>
     <string name="name">名称</string>
     <string name="settings">设置</string>
@@ -144,25 +144,58 @@
     <string name="location_mode">位置模式</string>
 
     <string name="help">帮助</string>
-    <string name="share">分享</string>
+    <string name="share_to_friend">分享给朋友</string>
 
     <string name="copyright">Copyright@2015-2016 \n eeontheway.com 版本所有</string>
     <string name="about_version">版本 %s</string>
     <string name="goto_vote">给个好评</string>
     <string name="check_update">检查更新</string>
     <string name="app_website">官方网站</string>
-    <string name="feed_back">意见反馈</string>
+    <string name="feed_back">我要反馈</string>
     <string name="feed_back_list">反馈纪录</string>
     <string name="pay_support">捐赠支持</string>
     <string name="submit">提交</string>
-    <string name="leave_msg">请留下您的反馈意见，我们将为您不断改进</string>
-    <string name="leave_contact">联系方式：邮箱/QQ/电话，选填</string>
+    <string name="leave_msg">请留下您的宝贵意见，我们将为您不断改进</string>
+    <string name="write_response">请填写反馈回复</string>
+    <string name="leave_contact">邮箱/QQ/电话等，可不填</string>
+    <string name="submit_feedback">写完提交</string>
     <string name="no_send_feedback_again">请勿重复提交反馈</string>
     <string name="feedback_send_ok">您的反馈信息已发送,感谢您的反馈!</string>
     <string name="feedback_send_fail">反馈信息发送失败:%s!</string>
-    <string name="please_add_feedback">请填写反馈内容</string>
-    <string name="please_add_contact">衣填写联系方式</string>
+    <string name="please_add_feedback">您还没有填写反馈内容!</string>
+    <string name="please_add_contact">联系方式</string>
     <string name="menu_feedback_list">历史反馈</string>
+    <string name="recv_feedback">您的反馈信息已回复!</string>
+    <string name="share_success">分享成功，感谢您的无限支持!</string>
+    <string name="share_cancel">很遗憾，分享被取消!</string>
+    <string name="share_deny">分享被拒绝</string>
+    <string name="share_error">分享出错</string>
+    <string name="wx_share_timeline_notsupport">很遗憾，您的微信版本过低，不支持分享到朋友圈!</string>
+    <string name="share_from_app">来自应用锁的分享</string>
+    <string name="please_choose">请选择</string>
+    <string name="wx_friend">微信朋友</string>
+    <string name="wx_timeline">微信朋友圈</string>
+    <string name="qq_friend">QQ朋友</string>
+    <string name="qzone">QQ空间</string>
+    <string name="alipay">支付宝</string>
+    <string name="share_more">更多分享类型</string>
+    <string name="feed_back_content">反馈内容</string>
+    <string name="feed_back_response">内容回复</string>
+    <string name="replyed">已回复</string>
+    <string name="not_replyed">未回复</string>
+    <string name="feed_back_time">%s</string>
+    <string name="empty_please_add_feedback">空空如也，请留下点什么吧！</string>
+    <string name="no_feedback_response_yet">暂时未收到任何回复</string>
+    <string name="feed_back_details">详细信息</string>
+    <string name="unknwon">未知</string>
+    <string name="app_author">App作者</string>
+    <string name="write_error">错误：写入失败!</string>
+    <string name="share_app_to_friend">好东西，要分享</string>
+    <string name="feedback_content">反馈内容</string>
+    <string name="share_not_unsupported">分享失败：不支持该类型的分享，或未安装相应App!</string>
+    <string name="download_failed">下载失败:%s</string>
+
+    <string name="no_updateinfo">错误，不存在升级信息!</string>
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>

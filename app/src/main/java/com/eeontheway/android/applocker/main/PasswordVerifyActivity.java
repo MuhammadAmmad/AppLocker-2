@@ -19,13 +19,13 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.eeontheway.android.applocker.R;
-import com.eeontheway.android.applocker.applock.AppLockLogInfo;
-import com.eeontheway.android.applocker.applock.AppLockService;
-import com.eeontheway.android.applocker.applock.AppLockSettingsManager;
-import com.eeontheway.android.applocker.db.AppLockLogDao;
+import com.eeontheway.android.applocker.lock.LockLogInfo;
+import com.eeontheway.android.applocker.lock.LockService;
+import com.eeontheway.android.applocker.lock.SettingsManager;
+import com.eeontheway.android.applocker.db.LockLogDao;
 import com.eeontheway.android.applocker.utils.CameraUtils;
 import com.eeontheway.android.applocker.utils.DisplayUtil;
-import com.eeontheway.android.applocker.view.NumberPasswordView;
+import com.eeontheway.android.applocker.ui.NumberPasswordView;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -47,11 +47,11 @@ public class PasswordVerifyActivity extends AppCompatActivity {
     private final static String PARAM_APP_NAME = "appName";
     private final static String PARAM_ICON_NAME = "iconName";
 
-    private AppLockSettingsManager appLockSettingsManager;
-    private AppLockLogDao appLockLogDao;
+    private SettingsManager settingsManager;
+    private LockLogDao lockLogDao;
     private CameraUtils cameraUtils;
     private String photoName;
-    private AppLockLogInfo appLockLogInfo = new AppLockLogInfo();
+    private LockLogInfo lockLogInfo = new LockLogInfo();
 
     private static AppCompatActivity activity;
     private static String lastPasswordErrorPackageName;
@@ -74,8 +74,8 @@ public class PasswordVerifyActivity extends AppCompatActivity {
         setContentView(R.layout.activity_app_locker_password);
 
         activity = this;
-        appLockSettingsManager = AppLockSettingsManager.getInstance(this);
-        appLockLogDao = new AppLockLogDao(this);
+        settingsManager = SettingsManager.getInstance(this);
+        lockLogDao = new LockLogDao(this);
 
         initViews ();
         initCameraCapture();
@@ -152,14 +152,14 @@ public class PasswordVerifyActivity extends AppCompatActivity {
 
         // 确认按钮
         cv_password = (NumberPasswordView)findViewById(R.id.cv_password);
-        cv_password.setMaxRetryCount(appLockSettingsManager.getCaptureOnFailCount());
+        cv_password.setMaxRetryCount(settingsManager.getCaptureOnFailCount());
         cv_password.setPasswordCallback(new NumberPasswordView.PasswordCallback() {
             @Override
             public boolean verifyPassword (String password) {
                 // 检查密码是否匹配
                 if (password.isEmpty()) {
                     return false;
-                } else if (password.equals(appLockSettingsManager.getPassword())) {
+                } else if (password.equals(settingsManager.getPassword())) {
                     // 如果密码相符，通知服务暂停对某个App的管控，并关闭自己
                     notifyPasswordOk();
 
@@ -178,12 +178,12 @@ public class PasswordVerifyActivity extends AppCompatActivity {
             }
 
             @Override
-            public void maxErrorAccuor() {
+            public void onMaxErrorAccuor() {
                 savePasswordErrorLog();
             }
 
             @Override
-            public void passwordSetOk(String password) {
+            public void onPasswordSetOk(String password) {
                 // 不必实现
             }
         });
@@ -193,7 +193,7 @@ public class PasswordVerifyActivity extends AppCompatActivity {
      * 显示最近密码错误的信息
      */
     private void showLatestPasswordErrorInfo() {
-        AppLockLogInfo logInfo = appLockLogDao.queryLatestLockerLog(lastPasswordErrorPackageName);
+        LockLogInfo logInfo = lockLogDao.queryLatestLockerLog(lastPasswordErrorPackageName);
         if (logInfo != null) {
             // 启动日志显示界面
             LockLogActivity.startActivity(this, logInfo);
@@ -226,7 +226,7 @@ public class PasswordVerifyActivity extends AppCompatActivity {
      */
     private String savePhotoToInternal(byte [] imgData, String fileName) {
         // 直接在Data目录下的创建图像存储目录
-        File dir = new File(getFilesDir().getPath() + File.separator + AppLockLogInfo.PHOTO_PATH_PREFIX);
+        File dir = new File(getFilesDir().getPath() + File.separator + LockLogInfo.PHOTO_PATH_PREFIX);
         if (!dir.exists() || !dir.isDirectory()) {
             dir.delete();
             dir.mkdir();
@@ -250,8 +250,8 @@ public class PasswordVerifyActivity extends AppCompatActivity {
      * 将日志信息保存到数据库中
      * @param logInfo 日志信息
      */
-    private void saveLogInfoToDatabase (AppLockLogInfo logInfo) {
-        appLockLogDao.addLogInfo(logInfo);
+    private void saveLogInfoToDatabase (LockLogInfo logInfo) {
+        lockLogDao.addLogInfo(logInfo);
     }
 
     /**
@@ -273,22 +273,22 @@ public class PasswordVerifyActivity extends AppCompatActivity {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd HH_mm");
         Date date = new Date();
         photoName = packageName + "_" + dateFormat.format(date) + "_" +
-                appLockSettingsManager.getCaptureOnFailCount();
+                settingsManager.getCaptureOnFailCount();
 
         // 生成日志信息
-        appLockLogInfo.setPackageName(packageName);
-        appLockLogInfo.setAppName(appName);
-        appLockLogInfo.setPasswordErrorCount(appLockSettingsManager.getCaptureOnFailCount());
+        lockLogInfo.setPackageName(packageName);
+        lockLogInfo.setAppName(appName);
+        lockLogInfo.setPasswordErrorCount(settingsManager.getCaptureOnFailCount());
         dateFormat.applyPattern("yyyy-MM-dd KK:mm:ss");
-        appLockLogInfo.setTime(dateFormat.format(date));
+        lockLogInfo.setTime(dateFormat.format(date));
 
         // 先启动照相并保存后，才能获取最近路径
-        if (appLockSettingsManager.isCaptureOnFailEnable()) {
+        if (settingsManager.isCaptureOnFailEnable()) {
             startCapturePhoto();
         }
 
         // 获取最新路径后，才能保存至数据库中
-        saveLogInfoToDatabase(appLockLogInfo);
+        saveLogInfoToDatabase(lockLogInfo);
 
         // 纪录超过错误次数的包名
         lastPasswordErrorPackageName = packageName;
@@ -331,22 +331,22 @@ public class PasswordVerifyActivity extends AppCompatActivity {
         canvas.drawBitmap(rotatedBitmap, 0, 0, paint);
 
         // 再打上标记
-        if (appLockSettingsManager.isAddTagToPhoto()) {
+        if (settingsManager.isAddTagToPhoto()) {
             float textSize = DisplayUtil.sp2px(this, 20.0f);
             paint.setTextSize(textSize);
             paint.setColor(getResources().getColor(R.color.red));
             float startX = 10, startY = 10;
-            canvas.drawText(getString(R.string.appLocker_err_detect, appLockLogInfo.getAppName()),
+            canvas.drawText(getString(R.string.appLocker_err_detect, lockLogInfo.getAppName()),
                     startX, 1 * textSize + startY, paint);
-            canvas.drawText(getString(R.string.password_err_counter, appLockLogInfo.getPasswordErrorCount()),
+            canvas.drawText(getString(R.string.password_err_counter, lockLogInfo.getPasswordErrorCount()),
                     startX, 2 * textSize + startY, paint);
-            canvas.drawText(getString(R.string.time_args, appLockLogInfo.getTime()),
+            canvas.drawText(getString(R.string.time_args, lockLogInfo.getTime()),
                     startX, 3 * textSize + startY, paint);
         }
 
         // 保存图像
         String path;
-        if (!appLockSettingsManager.isCaptureOnFailPhotoInGallray()) {
+        if (!settingsManager.isCaptureOnFailPhotoInGallray()) {
             ByteArrayOutputStream stream = new ByteArrayOutputStream();
             newBitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
             path = savePhotoToInternal(stream.toByteArray(), photoName);
@@ -356,8 +356,8 @@ public class PasswordVerifyActivity extends AppCompatActivity {
         }
 
         // 刷新照片存储路径
-        appLockLogInfo.setPhotoPath(path);
-        appLockLogDao.updateLogInfo(appLockLogInfo);
+        lockLogInfo.setPhotoPath(path);
+        lockLogDao.updateLogInfo(lockLogInfo);
 
         // 释放资源
         newBitmap.recycle();
@@ -370,7 +370,7 @@ public class PasswordVerifyActivity extends AppCompatActivity {
      * 通知外界密码输入正确
      */
     private void notifyPasswordOk () {
-        AppLockService.broadcastAppUnlocked(PasswordVerifyActivity.this, packageName);
+        LockService.broadcastAppUnlocked(PasswordVerifyActivity.this, packageName);
     }
 
     /**

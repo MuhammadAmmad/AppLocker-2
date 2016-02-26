@@ -255,44 +255,4 @@ public class AppInfoManager {
         return processInfoList;
     }
 
-    /**
-     * 查看应用的详细信息
-     *
-     * @param packageName 应用的包名
-     */
-    public void viewAppInfo(String packageName) {
-        // 查看应用的详细信息
-        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-        intent.setData(Uri.parse("package:" + packageName));
-        context.startActivity(intent);
-    }
-
-    /**
-     * 启动应用
-     *
-     * @param packageName 应用的包名
-     */
-    public void startApp(String packageName) {
-        Intent intent = packageManager.getLaunchIntentForPackage(packageName);
-        if (intent == null) {
-            Toast.makeText(context, R.string.unable_start, Toast.LENGTH_SHORT).show();
-        } else {
-            context.startActivity(intent);
-        }
-    }
-
-    /**
-     * 移除应用
-     *
-     * @param packageName 应用的包名
-     */
-    public void uninstallApp(String packageName) {
-        Intent intent = new Intent(Intent.ACTION_DELETE);
-        if (intent == null) {
-            Toast.makeText(context, R.string.unable_uninstall, Toast.LENGTH_SHORT).show();
-        } else {
-            intent.setData(Uri.parse("package:" + packageName));
-            context.startActivity(intent);
-        }
-    }
 }

@@ -4,7 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
-import com.eeontheway.android.applocker.applock.AppLockService;
+import com.eeontheway.android.applocker.lock.LockService;
 
 /**
  * 开机启动广播接受器
@@ -20,7 +20,7 @@ public class BootCompleteReceiver extends BroadcastReceiver {
         this.context = context;
 
         // 启动应用锁服务
-        AppLockService.startBlockService(context);
+        LockService.startBlockService(context);
     }
 
 }

@@ -11,6 +11,9 @@ import android.widget.RelativeLayout;
 
 import com.eeontheway.android.applocker.R;
 import com.eeontheway.android.applocker.utils.SystemUtils;
+import com.igexin.sdk.PushManager;
+import com.tencent.mm.sdk.openapi.IWXAPI;
+import com.tencent.mm.sdk.openapi.WXAPIFactory;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -22,6 +25,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
+
+import cn.bmob.v3.Bmob;
+import cn.bmob.v3.BmobInstallation;
 
 /**
  * 系统启动时显示的Activiy
@@ -41,6 +47,9 @@ public class StartupActivity extends AppCompatActivity {
     private boolean animationPlayOver = false;
     private boolean copyAssertFileOk = false;
 
+    // 第三方SDK
+    private static final String BMOB_APPID = "46120064d8e98adb870a67247a102485";
+
     /**
      * OnCreate
      *
@@ -51,8 +60,22 @@ public class StartupActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
 
+        initSDK();
         initViews();
         startLoadAllResource();
+    }
+
+    /**
+     * 初始化Bmob SDK
+     */
+    private void initSDK () {
+
+        // 初始化基础SDK
+        Bmob.initialize(this, BMOB_APPID);
+        BmobInstallation.getCurrentInstallation(this).save();
+
+        // 初始化个推的推送服务
+        PushManager.getInstance().initialize(getApplicationContext());
     }
 
     /**

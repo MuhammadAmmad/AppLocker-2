@@ -30,6 +30,9 @@ public class WXShareTimeLine extends WXShareBase {
      * @return true 支持分享; false 不支持分享
      */
     public boolean isSupported () {
+        boolean support = super.isSupported();
+        if (support == false) return false;
+
         if (api.getWXAppSupportAPI() < TIMELINE_SUPPORTED_VERSION) {
             Toast.makeText(context, R.string.wx_share_timeline_notsupport, Toast.LENGTH_SHORT).show();
             return false;

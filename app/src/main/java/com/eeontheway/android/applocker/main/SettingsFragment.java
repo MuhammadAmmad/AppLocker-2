@@ -11,7 +11,7 @@ import android.preference.PreferenceScreen;
 import android.text.TextUtils;
 
 import com.eeontheway.android.applocker.R;
-import com.eeontheway.android.applocker.applock.AppLockSettingsManager;
+import com.eeontheway.android.applocker.lock.SettingsManager;
 
 /**
  * 应用锁配置界面Fragment
@@ -88,7 +88,7 @@ public class SettingsFragment extends PreferenceFragment {
         @Override
         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
             // 一旦监听到任何配置发生变化，通知管理器重新加载配置
-            AppLockSettingsManager asm = AppLockSettingsManager.getInstance(parentActivity);
+            SettingsManager asm = SettingsManager.getInstance(parentActivity);
             asm.updateSetting(key, sharedPreferences);
         }
     }
@@ -128,7 +128,7 @@ public class SettingsFragment extends PreferenceFragment {
      */
     @Override
     public boolean onPreferenceTreeClick(PreferenceScreen preferenceScreen, Preference preference) {
-        if (preference.getKey().equals(AppLockSettingsManager.applock_password_key)) {
+        if (preference.getKey().equals(SettingsManager.applock_password_key)) {
             PasswordSetActivity.statActivity(parentActivity);
             return true;
         } else {

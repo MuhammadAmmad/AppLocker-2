@@ -10,6 +10,13 @@ import com.eeontheway.android.applocker.R;
 import com.eeontheway.android.applocker.share.AlipayShare;
 import com.eeontheway.android.applocker.share.IShare;
 
+/**
+ * 支付宝分享接口
+ *
+ * @author lishutong
+ * @version v1.0
+ * @Time 2016-12-15
+ */
 public class ShareEntryActivity extends AppCompatActivity {
     private static IShare.OnFinishListener listener;
 

@@ -26,9 +26,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.eeontheway.android.applocker.R;
-import com.eeontheway.android.applocker.applock.AppLockLogInfo;
-import com.eeontheway.android.applocker.applock.AppLockLogViewInfo;
-import com.eeontheway.android.applocker.db.AppLockLogDao;
+import com.eeontheway.android.applocker.lock.LockLogInfo;
+import com.eeontheway.android.applocker.lock.LockLogViewInfo;
+import com.eeontheway.android.applocker.db.LockLogDao;
 
 import java.io.File;
 import java.io.IOException;
@@ -51,8 +51,8 @@ public class LockLogListFragment extends Fragment {
     private CheckBox cb_select_all;
 
     private Activity parentActivity;
-    private List<AppLockLogViewInfo> logViewInfoList = new ArrayList<>();
-    private AppLockLogDao logDao;
+    private List<LockLogViewInfo> logViewInfoList = new ArrayList<>();
+    private LockLogDao logDao;
     private BaseAdapter logListAdapter;
     private CompoundButton.OnCheckedChangeListener cb_all_listener;
     private Animation animationRemoveButtonIn;
@@ -67,7 +67,7 @@ public class LockLogListFragment extends Fragment {
         super.onCreate(savedInstanceState);
 
         parentActivity = getActivity();
-        logDao = new AppLockLogDao(parentActivity);
+        logDao = new LockLogDao(parentActivity);
         logListAdapter = createAdapter();
 
         // 开始加载日志列表
@@ -132,7 +132,7 @@ public class LockLogListFragment extends Fragment {
                 int totalCount = logViewInfoList.size();
                 int deletedCount = 0;
                 for (int i = 0, index = 0; i < totalCount; i++) {
-                    AppLockLogViewInfo info = logViewInfoList.get(index);
+                    LockLogViewInfo info = logViewInfoList.get(index);
                     if (info.isSelected()) {
                         // 从文件系统中删除照片
                         removePhoto(info);
@@ -161,7 +161,7 @@ public class LockLogListFragment extends Fragment {
         lv_logs.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                AppLockLogViewInfo logViewInfo = logViewInfoList.get(position);
+                LockLogViewInfo logViewInfo = logViewInfoList.get(position);
                 showDetailLogInfoInDialog(logViewInfo);
             }
         });
@@ -172,7 +172,7 @@ public class LockLogListFragment extends Fragment {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 boolean selectAll = cb_select_all.isChecked();
-                for (AppLockLogViewInfo info : logViewInfoList) {
+                for (LockLogViewInfo info : logViewInfoList) {
                     info.setSelected(selectAll);
                 }
                 logListAdapter.notifyDataSetChanged();
@@ -192,7 +192,7 @@ public class LockLogListFragment extends Fragment {
      * 显示锁定日志的详细信息
      * @param logViewInfo 锁定日志信息
      */
-    private void showDetailLogInfoInDialog (AppLockLogViewInfo logViewInfo) {
+    private void showDetailLogInfoInDialog (LockLogViewInfo logViewInfo) {
         // 渲染界面
         View view = View.inflate(parentActivity, R.layout.dialog_app_lock_log_list, null);
         ImageView iv_photo = (ImageView)view.findViewById(R.id.iv_photo);
@@ -201,7 +201,7 @@ public class LockLogListFragment extends Fragment {
         TextView tv_error_count = (TextView)view.findViewById(R.id.tv_error_count);
 
         // 界面设置
-        AppLockLogInfo logInfo = logViewInfo.getLogInfo();
+        LockLogInfo logInfo = logViewInfo.getLogInfo();
         iv_photo.setImageBitmap(loadPhoto(logInfo));
         tv_appName.setText(logInfo.getAppName());
         tv_time.setText(logInfo.getTime());
@@ -218,9 +218,9 @@ public class LockLogListFragment extends Fragment {
      * 从文件系统中删除指定日志信息对应的照片
      * @param logViewInfo 日志信息
      */
-    private void removePhoto (AppLockLogViewInfo logViewInfo) {
+    private void removePhoto (LockLogViewInfo logViewInfo) {
         // 只删除内部的照片，存储在相册中的不删除
-        AppLockLogInfo logInfo = logViewInfo.getLogInfo();
+        LockLogInfo logInfo = logViewInfo.getLogInfo();
         if (logInfo.getPhotoPath() != null) {
             if (logInfo.isPhotoInInternal()) {
                 String path = logInfo.getPhotoPath();
@@ -235,7 +235,7 @@ public class LockLogListFragment extends Fragment {
     private void updateRemoveButtonState () {
         // 检查选中计数
         int count = 0;
-        for (AppLockLogViewInfo info : logViewInfoList) {
+        for (LockLogViewInfo info : logViewInfoList) {
             if (info.isSelected()) {
                 count++;
             }
@@ -275,11 +275,11 @@ public class LockLogListFragment extends Fragment {
             @Override
             protected Void doInBackground(Void... params) {
                 // 查询数据库，获取需要的数据
-                List<AppLockLogInfo> logInfoList= logDao.queryAllLockerLog();
+                List<LockLogInfo> logInfoList= logDao.queryAllLockerLog();
 
                 // 将获取的对像转换成界面处理需要的
-                for (AppLockLogInfo info : logInfoList) {
-                    AppLockLogViewInfo viewInfo = new AppLockLogViewInfo();
+                for (LockLogInfo info : logInfoList) {
+                    LockLogViewInfo viewInfo = new LockLogViewInfo();
                     viewInfo.setLogInfo(info);
 
                     logViewInfoList.add(viewInfo);
@@ -309,7 +309,7 @@ public class LockLogListFragment extends Fragment {
             class SelectCheckBoxChanged implements CompoundButton.OnCheckedChangeListener {
                 @Override
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                    AppLockLogViewInfo logViewInfo = (AppLockLogViewInfo)buttonView.getTag();
+                    LockLogViewInfo logViewInfo = (LockLogViewInfo)buttonView.getTag();
 
                     // 切换选中状态,如果有任意一项未选中，则去掉全选状态
                     logViewInfo.setSelected(isChecked);
@@ -371,11 +371,11 @@ public class LockLogListFragment extends Fragment {
                 }
 
                 // 关联下ViewHolder和对应的数据，以便于在CheckBox的事件监听器中取出对应的数据
-                AppLockLogViewInfo viewInfo = logViewInfoList.get(position);
+                LockLogViewInfo viewInfo = logViewInfoList.get(position);
                 viewHolder.cb_selected.setTag(viewInfo);
 
                 // 界面重新设置
-                AppLockLogInfo logInfo = viewInfo.getLogInfo();
+                LockLogInfo logInfo = viewInfo.getLogInfo();
                 viewHolder.cb_selected.setChecked(viewInfo.isSelected());
                 viewHolder.iv_photo.setImageBitmap(loadPhoto(logInfo));
                 viewHolder.tv_appName.setText(logInfo.getAppName());
@@ -392,7 +392,7 @@ public class LockLogListFragment extends Fragment {
      * @param logInfo 日志信息
      * @return 拍摄的照片
      */
-    private Bitmap loadPhoto (AppLockLogInfo logInfo) {
+    private Bitmap loadPhoto (LockLogInfo logInfo) {
         Bitmap bitmap = null;
 
         if (logInfo.getPhotoPath() != null) {

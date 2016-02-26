@@ -1,6 +1,7 @@
 package com.eeontheway.android.applocker.main;
 
 import android.app.Activity;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -9,11 +10,17 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewStub;
 import android.widget.BaseExpandableListAdapter;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.ExpandableListView;
 import android.widget.ImageView;
 import android.widget.TextView;
 import com.eeontheway.android.applocker.R;
+import com.eeontheway.android.applocker.feedback.FeedBackListActivity;
+import com.eeontheway.android.applocker.feedback.FeedBackSubmitActivity;
+import com.eeontheway.android.applocker.share.ShareActivity;
+import com.eeontheway.android.applocker.share.ShareInfo;
+import com.eeontheway.android.applocker.utils.Configuration;
 
 /**
  * 主界面左侧滑动页面显示的内容
@@ -28,9 +35,9 @@ public class MainLeftFragment extends Fragment {
     private static final int SETTING_ROW = 1;
     private static final int ABOUT_ROW = 2;
     private static final MenuInfo [] topMenuInfos = {
-            new MenuInfo(R.string.mode_list, MenuInfo.ICON_INVALID),        // 模式列表
+            new MenuInfo(R.string.mode_list, MenuInfo.ICON_INVALID),                // 模式列表
             new MenuInfo(R.string.settings, R.drawable.ic_settings_black_24dp),       // 设置
-            new MenuInfo(R.string.about, MenuInfo.ICON_INVALID)             // 关于
+            new MenuInfo(R.string.about, MenuInfo.ICON_INVALID)                     // 关于
     };
 
     // 模式列表菜单项
@@ -46,6 +53,8 @@ public class MainLeftFragment extends Fragment {
     private TextView tv_date;
     private TextView tv_city;
     private TextView tv_weather;
+    private Button bt_share;
+    private Button bt_feedback;
 
     private Activity parentActivity;
 
@@ -75,6 +84,8 @@ public class MainLeftFragment extends Fragment {
         tv_date = (TextView)view.findViewById(R.id.tv_date);
         tv_city = (TextView)view.findViewById(R.id.tv_city);
         tv_weather = (TextView)view.findViewById(R.id.tv_weather);
+        bt_feedback = (Button)view.findViewById(R.id.bt_feedback);
+        bt_share = (Button)view.findViewById(R.id.bt_share);
 
         // 初始化菜单
         initMenus();
@@ -94,26 +105,69 @@ public class MainLeftFragment extends Fragment {
      * 初始化各种UI的Listener
      */
     private void initListener() {
-        ev_menu.setOnGroupClickListener(new ExpandableListView.OnGroupClickListener() {
-            @Override
-            public boolean onGroupClick(ExpandableListView parent, View v, int groupPosition, long id) {
-                switch (groupPosition) {
-                    case MODE_LIST_ROW:
-                        // 修改修改选中状态，以便切换菜单的指示器
-                        MenuInfo menuInfo = topMenuInfos[groupPosition];
-                        menuInfo.setSelected(!menuInfo.isSelected());
-                        ev_adapter.notifyDataSetChanged();
-                        break;
-                    case SETTING_ROW:
-                        SettingsActivity.start(parentActivity);
-                        break;
-                    case ABOUT_ROW:
-                        AboutActivity.start(parentActivity);
-                        break;
-                }
-                return false;
+        // 配置菜单列表
+        ev_menu.setOnGroupClickListener(new ExpandListGroupClickListener());
+
+        // 配置普通点击事件处理
+        ClickListener clickListener = new ClickListener();
+        bt_feedback.setOnClickListener(clickListener);
+        bt_share.setOnClickListener(clickListener);
+    }
+
+    /**
+     * 按钮点击事件处理
+     */
+    private class ClickListener implements View.OnClickListener {
+        @Override
+        public void onClick(View v) {
+            switch (v.getId()) {
+                case R.id.bt_share:     // 启动分享机制
+                    startShareApp();
+                    break;
+                case R.id.bt_feedback:  // 启动反馈机制
+                    FeedBackListActivity.start(parentActivity);
+                    break;
             }
-        });
+        }
+    }
+
+    /**
+     * 启动App分享功能
+     */
+    private void startShareApp () {
+        // 创建App分享信息
+        ShareInfo shareInfo = new ShareInfo();
+        shareInfo.url = Configuration.webSiteUrl;
+        shareInfo.title = Configuration.SHARE_APP_TITLE;
+        shareInfo.content = Configuration.APP_DESCRIPTION;
+        shareInfo.thumbBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.app_lanucher);
+
+        // 启动分享界面
+        ShareActivity.start(parentActivity, shareInfo);
+    }
+
+    /**
+     * 列表的组项点击事件处理
+     */
+    private class ExpandListGroupClickListener implements ExpandableListView.OnGroupClickListener {
+        @Override
+        public boolean onGroupClick(ExpandableListView parent, View v, int groupPosition, long id) {
+            switch (groupPosition) {
+                case MODE_LIST_ROW:
+                    // 修改修改选中状态，以便切换菜单的指示器
+                    MenuInfo menuInfo = topMenuInfos[groupPosition];
+                    menuInfo.setSelected(!menuInfo.isSelected());
+                    ev_adapter.notifyDataSetChanged();
+                    break;
+                case SETTING_ROW:
+                    SettingsActivity.start(parentActivity);
+                    break;
+                case ABOUT_ROW:
+                    AboutActivity.start(parentActivity);
+                    break;
+            }
+            return false;
+        }
     }
 
     /**

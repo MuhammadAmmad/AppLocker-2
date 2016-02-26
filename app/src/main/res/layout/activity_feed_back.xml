@@ -9,7 +9,7 @@
 
     <TextView
         android:id="@+id/tv_content"
-        android:text="@string/please_add_feedback"
+        android:text="@string/feedback_content"
         android:padding="@dimen/view_common_padding"
         android:layout_below="@id/tl_header"
         android:layout_width="match_parent"
@@ -17,11 +17,8 @@
     <EditText
         android:id="@+id/et_content"
         android:hint="@string/leave_msg"
-        android:minLines="5"
-        android:gravity="left|top"
-        android:background="@drawable/edittext_background_selector"
+        style="@style/FeedBack.EditText"
         android:layout_margin="@dimen/view_common_margin"
-        android:padding="@dimen/view_common_padding"
         android:layout_below="@id/tv_content"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
@@ -35,28 +32,19 @@
     <EditText
         android:id="@+id/et_contact"
         android:hint="@string/leave_contact"
+        style="@style/FeedBack.EditText"
+        android:minLines="1"
         android:maxLines="1"
-        android:background="@drawable/edittext_background_selector"
         android:layout_below="@id/tv_contact"
         android:layout_margin="@dimen/view_common_margin"
-        android:padding="@dimen/view_common_padding"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
-    <Button
-        android:id="@+id/bt_submit"
-        android:text="@string/submit"
-        android:layout_margin="@dimen/view_common_margin"
-        android:background="@drawable/function_button_selector"
-        android:layout_below="@id/et_contact"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
     <ProgressBar
         android:id="@+id/pb_progress"
-        android:visibility="invisible"
         style="?android:progressBarStyle"
         android:layout_marginTop="10dp"
         android:layout_centerHorizontal="true"
-        android:layout_below="@id/bt_submit"
+        android:layout_below="@id/et_contact"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
 </RelativeLayout>

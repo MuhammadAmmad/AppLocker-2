@@ -6,11 +6,12 @@ import android.content.Intent;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 
 import com.eeontheway.android.applocker.R;
-import com.eeontheway.android.applocker.applock.AppLockSettingsManager;
+import com.eeontheway.android.applocker.lock.SettingsManager;
 
 /**
  * 应用锁配置界面Activity
@@ -20,7 +21,6 @@ import com.eeontheway.android.applocker.applock.AppLockSettingsManager;
  * @Time 2016-2-8
  */
 public class SettingsActivity extends AppCompatActivity {
-    private ActionBar actionBar;
 
     /**
      * 启动应用锁配置界面
@@ -41,7 +41,7 @@ public class SettingsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_app_locker_settings);
 
         setTitle(R.string.settings);
-        initActionBar();
+        initToolBar();
         initViews();
     }
 
@@ -56,11 +56,15 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     /**
-     * 配置ActionBar
+     * 初始化ToolBar
      */
-    private void initActionBar() {
-        actionBar = getSupportActionBar();
+    private void initToolBar() {
+        Toolbar toolbar = (Toolbar)findViewById(R.id.tl_header);
+        setSupportActionBar(toolbar);
+
+        ActionBar actionBar = getSupportActionBar();
         actionBar.setDisplayHomeAsUpEnabled(true);
+        actionBar.setHomeButtonEnabled(true);
     }
 
     /**
@@ -99,7 +103,7 @@ public class SettingsActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode == RESULT_OK) {
             // 密码设置正确，保存密码
-            AppLockSettingsManager asm = AppLockSettingsManager.getInstance(this);
+            SettingsManager asm = SettingsManager.getInstance(this);
             asm.savePassword(data.getStringExtra(PasswordSetActivity.RETURN_PARAM_PASS));
         }
     }

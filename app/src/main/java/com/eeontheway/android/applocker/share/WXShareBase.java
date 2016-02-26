@@ -64,7 +64,9 @@ public class WXShareBase extends ShareBase implements IShare {
      * @return true 支持分享; false 不支持分享
      */
     public boolean isSupported () {
-        return true;
+        boolean isInstalled = api.isWXAppInstalled();
+        boolean isSupportApi = api.isWXAppSupportAPI();
+        return isInstalled && isSupportApi;
     }
 
     /**

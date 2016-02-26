@@ -24,8 +24,8 @@ import com.eeontheway.android.applocker.app.AppInfo;
 import com.eeontheway.android.applocker.app.AppInfoManager;
 import com.eeontheway.android.applocker.app.BaseAppInfo;
 import com.eeontheway.android.applocker.db.LockConfigDao;
-import com.eeontheway.android.applocker.applock.AppLockInfo;
-import com.eeontheway.android.applocker.applock.AppLockSettingsManager;
+import com.eeontheway.android.applocker.lock.LockInfo;
+import com.eeontheway.android.applocker.lock.SettingsManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,12 +48,12 @@ public class LockConfigFragment extends Fragment {
     private LockConfigDao databaseDao;
     private BroadcastReceiver packageRemoveReceiver;
     private BroadcastReceiver packageInstallReceiver;
-    private AppLockSettingsManager appLockSettingsManager;
+    private SettingsManager settingsManager;
 
     private String locationSD;
     private String locationRom;
-    private List<AppLockInfo> userInfoList = new ArrayList<>();
-    private List<AppLockInfo> systemInfoList = new ArrayList<>();
+    private List<LockInfo> userInfoList = new ArrayList<>();
+    private List<LockInfo> systemInfoList = new ArrayList<>();
 
     /**
      * Activity的OnCreate()回调
@@ -67,7 +67,7 @@ public class LockConfigFragment extends Fragment {
         parentActivity = getActivity();
         appInfoManager = new AppInfoManager(parentActivity);
         databaseDao = new LockConfigDao(parentActivity);
-        appLockSettingsManager = AppLockSettingsManager.getInstance(parentActivity);
+        settingsManager = SettingsManager.getInstance(parentActivity);
         el_adapter = createAdapter();
 
         // 获取位置字符串
@@ -124,17 +124,17 @@ public class LockConfigFragment extends Fragment {
         el_listview.setOnChildClickListener(new ExpandableListView.OnChildClickListener() {
             @Override
             public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
-                List<AppLockInfo> listInfo = (List<AppLockInfo>)el_adapter.getGroup(groupPosition);
+                List<LockInfo> listInfo = (List<LockInfo>)el_adapter.getGroup(groupPosition);
 
                 // 按下后，切换CheckBox状态
-                AppLockInfo info = listInfo.get(childPosition);
+                LockInfo info = listInfo.get(childPosition);
                 AppInfo appInfo = info.getAppInfo();
                 info.setLocked(!info.isLocked());
                 databaseDao.setPackageLocked(appInfo.getPackageName(), info.isLocked());
 
                 // 通知数据发生改变，重刷界面，通知用户
                 el_adapter.notifyDataSetChanged();
-                if (appLockSettingsManager.isAlertLockUnlockEnabled()) {
+                if (settingsManager.isAlertLockUnlockEnabled()) {
                     String message = appInfo.getName() + " ";
                     message += info.isLocked() ? getString(R.string.locked) : getString(R.string.unlocked);
                     Toast.makeText(parentActivity, message, Toast.LENGTH_SHORT).show();
@@ -168,7 +168,7 @@ public class LockConfigFragment extends Fragment {
 
             @Override
             public Object getChild(int groupPosition, int childPosition) {
-                List<AppLockInfo> listInfo = (List<AppLockInfo>)el_adapter.getGroup(groupPosition);
+                List<LockInfo> listInfo = (List<LockInfo>)el_adapter.getGroup(groupPosition);
                 return listInfo.get(childPosition);
             }
 
@@ -193,8 +193,8 @@ public class LockConfigFragment extends Fragment {
             public long getChildSelectedCount (int groupPosition) {
                 long count = 0;
 
-                List<AppLockInfo> listInfo = (List<AppLockInfo>)getGroup(groupPosition);
-                for (AppLockInfo info : listInfo) {
+                List<LockInfo> listInfo = (List<LockInfo>)getGroup(groupPosition);
+                for (LockInfo info : listInfo) {
                     if (info.isLocked()) {
                         count++;
                     }
@@ -261,7 +261,7 @@ public class LockConfigFragment extends Fragment {
                 }
 
                 // 界面重新设置
-                AppLockInfo lockerInfo = (AppLockInfo)getChild(groupPosition, childPosition);
+                LockInfo lockerInfo = (LockInfo)getChild(groupPosition, childPosition);
                 AppInfo appInfo = lockerInfo.getAppInfo();
                 viewHolder.cb_lock.setChecked(lockerInfo.isLocked());
                 viewHolder.iv_icon.setImageDrawable(appInfo.getIcon());
@@ -301,7 +301,7 @@ public class LockConfigFragment extends Fragment {
 
                 // 为界面添加数据，以刷新界面
                 AppInfo appInfo = appInfoManager.queryAppInfo(packageName);
-                AppLockInfo lockInfo = new AppLockInfo();
+                LockInfo lockInfo = new LockInfo();
                 lockInfo.setAppInfo(appInfo);
                 lockInfo.setLocked(false);
                 if (appInfo.isUserApp()) {
@@ -333,7 +333,7 @@ public class LockConfigFragment extends Fragment {
                 databaseDao.deleteLockInfo(packageName);
 
                 // 有安装包移除时，刷新UI
-                for (AppLockInfo info : userInfoList) {
+                for (LockInfo info : userInfoList) {
                     AppInfo appInfo = info.getAppInfo();
                     if (appInfo.getPackageName().equals(packageName)) {
                         userInfoList.remove(info);
@@ -342,7 +342,7 @@ public class LockConfigFragment extends Fragment {
                     }
                 }
 
-                for (AppLockInfo info : systemInfoList) {
+                for (LockInfo info : systemInfoList) {
                     AppInfo appInfo = info.getAppInfo();
                     if (appInfo.getPackageName().equals(packageName)) {
                         systemInfoList.remove(info);
@@ -384,7 +384,7 @@ public class LockConfigFragment extends Fragment {
 
             @Override
             protected void onPostExecute(List<BaseAppInfo> appInfoList) {
-                List<AppLockInfo> lockerInfoList = new ArrayList<>();
+                List<LockInfo> lockerInfoList = new ArrayList<>();
 
                 // 转换为AppInfo
                 for (BaseAppInfo info : appInfoList) {
@@ -393,7 +393,7 @@ public class LockConfigFragment extends Fragment {
                         continue;
                     }
 
-                    AppLockInfo lockerInfo = new AppLockInfo();
+                    LockInfo lockerInfo = new LockInfo();
                     lockerInfo.setAppInfo((AppInfo)info);
                     lockerInfoList.add(lockerInfo);
 

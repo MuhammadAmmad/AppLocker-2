@@ -1,9 +1,16 @@
 apply plugin: 'com.android.application'
 
 android {
+    signingConfigs {
+        config {
+            keyPassword '9835624'
+            storeFile file('/home/guoguo/workspace/work/app.lks.jks')
+            storePassword '9835624'
+            keyAlias 'keykey'
+        }
+    }
     compileSdkVersion 23
     buildToolsVersion "23.0.2"
-
     defaultConfig {
         applicationId "com.eeontheway.android.applocker"
         minSdkVersion 13
@@ -13,8 +20,11 @@ android {
     }
     buildTypes {
         release {
-            minifyEnabled true
+            minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            signingConfig signingConfigs.config
         }
     }
 }
@@ -38,4 +48,9 @@ dependencies {
     compile files('libs/okio-1.4.0.jar')
     compile files('libs/GetuiExt-2.0.3.jar')
     compile files('libs/GetuiSDK2.7.0.0.jar')
+    compile files('libs/libammsdk.jar')
+    compile files('libs/mta-sdk-1.6.2.jar')
+    compile files('libs/open_sdk_r5509.jar')
+    compile files('libs/json_simple-1.1.jar')
+    compile files('libs/libapshare.jar')
 }

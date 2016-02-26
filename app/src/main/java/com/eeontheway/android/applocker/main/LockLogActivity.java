@@ -14,7 +14,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.eeontheway.android.applocker.R;
-import com.eeontheway.android.applocker.applock.AppLockLogInfo;
+import com.eeontheway.android.applocker.lock.LockLogInfo;
 
 import java.io.IOException;
 
@@ -27,7 +27,7 @@ import java.io.IOException;
  */
 public class LockLogActivity extends AppCompatActivity {
     private static final String PARAM_LOGINFO = "param_loginfo";
-    private AppLockLogInfo lockLogInfo;
+    private LockLogInfo lockLogInfo;
 
     private ImageView iv_photo;
     private View view_see_more;
@@ -38,7 +38,7 @@ public class LockLogActivity extends AppCompatActivity {
      * 启动Activity
      * @param logInfo 锁定日志信息
      */
-    public static void startActivity (Context context, AppLockLogInfo logInfo) {
+    public static void startActivity (Context context, LockLogInfo logInfo) {
         Intent intent = new Intent(context, LockLogActivity.class);
         intent.putExtra(PARAM_LOGINFO, logInfo);
         context.startActivity(intent);
@@ -56,7 +56,7 @@ public class LockLogActivity extends AppCompatActivity {
         setTitle(R.string.app_locker);
 
         // 获取传递的参数，并显示到界面上
-        lockLogInfo = (AppLockLogInfo)getIntent().getSerializableExtra(PARAM_LOGINFO);
+        lockLogInfo = (LockLogInfo)getIntent().getSerializableExtra(PARAM_LOGINFO);
         showLockLogInfo(lockLogInfo);
     }
 
@@ -64,7 +64,7 @@ public class LockLogActivity extends AppCompatActivity {
      * 显示完整的日志信息
      * @param lockLogInfo 日志信息
      */
-    private void showLockLogInfo(AppLockLogInfo lockLogInfo) {
+    private void showLockLogInfo(LockLogInfo lockLogInfo) {
         iv_photo = (ImageView)findViewById(R.id.iv_photo);
         view_see_more = findViewById(R.id.view_see_more);
         bt_ok = (Button)findViewById(R.id.bt_ok);

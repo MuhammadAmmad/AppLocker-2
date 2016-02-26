@@ -2,7 +2,6 @@ package com.eeontheway.android.applocker.feedback;
 
 import android.content.Context;
 import android.content.Intent;
-import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBar;
@@ -24,8 +23,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import cn.bmob.v3.datatype.BmobDate;
-
 /**
  * 用户历史反馈列表Activity
  *
@@ -44,7 +41,7 @@ public class FeedBackListActivity extends AppCompatActivity {
 
     private FeedBackListAdapter rcv_adapter;
     private List<FeedBackTopic> feedBackTopicList = new ArrayList<>();
-    private IFeedBack feedBackManager;
+    private FeedBackBase feedBackManager;
     private Date lastUpdateDate;
 
     /**
@@ -110,7 +107,7 @@ public class FeedBackListActivity extends AppCompatActivity {
     private void initFeedbackManager () {
         feedBackManager = FeedBackManagerFactory.create(this);
         feedBackManager.init(this);
-        feedBackManager.setQueryTopicListener(new IFeedBack.QueryTopicStatusListener() {
+        feedBackManager.setQueryTopicListener(new FeedBackBase.QueryTopicStatusListener() {
             @Override
             public void onStart() {
             }
@@ -145,11 +142,11 @@ public class FeedBackListActivity extends AppCompatActivity {
                         } else {
                             // 否则，则说明是新创建的回复，插入到相应的位置
                             // 按时间降序顺序，逐步插入到队列中
-                            if (type == IFeedBack.QUERY_TIME_NEWER) {
+                            if (type == FeedBackBase.QUERY_TIME_NEWER) {
                                 int insertPos = i;
                                 feedBackTopicList.add(insertPos, topic);
                                 rcv_adapter.notifyItemRangeInserted(insertPos, 1);
-                            } else if (type == IFeedBack.QUERY_TIME_OLDER){
+                            } else if (type == FeedBackBase.QUERY_TIME_OLDER){
                                 int insertPos = feedBackTopicList.size();
                                 feedBackTopicList.add(insertPos, topic);
                                 rcv_adapter.notifyItemRangeInserted(insertPos, 1);

@@ -6,7 +6,7 @@ package com.eeontheway.android.applocker.share;
  * @version v1.0
  * @Time 2016-12-15
  */
-public class ShareBase {
+public abstract class ShareBase implements IShare {
     private boolean toFriend;
     private IShare.OnFinishListener listener;
 

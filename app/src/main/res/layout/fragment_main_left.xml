@@ -49,24 +49,38 @@
         </LinearLayout>
     </RelativeLayout>
 
+
     <LinearLayout
         android:id="@+id/rl_bottom"
         android:orientation="horizontal"
         android:layout_alignParentBottom="true"
-        android:layout_marginLeft="10dp"
+        android:layout_marginLeft="@dimen/view_common_margin"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
+
         <Button
-            android:id="@+id/iv_share"
+            android:id="@+id/bt_share"
             android:drawableLeft="@drawable/ic_share_black_18dp"
-            android:text="@string/share"
-            style="@style/mainLeftDrawerButton"/>
+            android:text="@string/share_to_friend"
+            style="@style/mainLeftDrawerButton"
+            android:textColor="@color/colorSecondTextColor"/>
         <Button
-            android:id="@+id/iv_feedback"
+            android:id="@+id/bt_feedback"
             android:drawableLeft="@drawable/ic_email_black_18dp"
             android:text="@string/feed_back"
-            style="@style/mainLeftDrawerButton"/>
+            style="@style/mainLeftDrawerButton"
+            android:textColor="@color/colorSecondTextColor"/>
     </LinearLayout>
+
+    <ImageView
+        android:id="@+id/iv_divider"
+        android:src="@drawable/list_divider"
+        android:layout_marginTop="@dimen/view_common_margin"
+        android:layout_marginLeft="@dimen/view_common_margin"
+        android:layout_marginRight="@dimen/view_common_margin"
+        android:layout_above="@id/rl_bottom"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
 
     <ExpandableListView
         android:id="@+id/ev_menu"
@@ -74,7 +88,7 @@
         android:groupIndicator="@null"
         android:padding="@dimen/view_common_margin"
         android:layout_below="@id/rl_header"
-        android:layout_above="@id/rl_bottom"
+        android:layout_above="@id/iv_divider"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 

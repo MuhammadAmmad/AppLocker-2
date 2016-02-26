@@ -15,3 +15,13 @@
 #-keepclassmembers class fqcn.of.javascript.interface.for.webview {
 #   public *;
 #}
+
+# 保证微信SDK能正常使用
+-keep class com.tencent.mm.sdk.** {
+   *;
+}
+
+# 保证支付宝SDK能正常使用
+-keep class  com.alipay.share.sdk.** {
+   *;
+}

@@ -110,13 +110,14 @@ public class ShareActivity extends AppCompatActivity {
             @Override
             public void onFinish(int code, String msg) {
                 iShare.uninit();
-
                 Toast.makeText(ShareActivity.this, msg, Toast.LENGTH_SHORT).show();
             }
         });
 
         if (iShare.isSupported()) {
             iShare.share((ShareInfo) getIntent().getParcelableExtra(PARAM_SHARE_INFO));
+        } else {
+            Toast.makeText(ShareActivity.this, R.string.share_not_unsupported, Toast.LENGTH_SHORT).show();
         }
     }
 

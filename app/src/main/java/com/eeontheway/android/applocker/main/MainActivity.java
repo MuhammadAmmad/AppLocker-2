@@ -17,13 +17,10 @@ import android.view.MenuItem;
 import android.widget.Toast;
 
 import com.eeontheway.android.applocker.R;
-import com.eeontheway.android.applocker.applock.AppLockService;
-import com.eeontheway.android.applocker.applock.AppLockSettingsManager;
-import com.eeontheway.android.applocker.update.ApkUpdater;
-import com.igexin.sdk.PushManager;
-
-import cn.bmob.v3.Bmob;
-import cn.bmob.v3.BmobInstallation;
+import com.eeontheway.android.applocker.feedback.FeedBackListActivity;
+import com.eeontheway.android.applocker.lock.LockService;
+import com.eeontheway.android.applocker.lock.SettingsManager;
+import com.eeontheway.android.applocker.updater.UpdaterManager;
 
 /**
  * 主Activity
@@ -39,7 +36,7 @@ public class MainActivity extends AppCompatActivity {
     private ActionBarDrawerToggle actionBarDrawerToggle;
 
     private long lastBackKeyPressTime = 0;
-    private AppLockSettingsManager settingsManager;
+    private SettingsManager settingsManager;
 
     /**
      * Activity的onCreate函数
@@ -50,14 +47,15 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        settingsManager = AppLockSettingsManager.getInstance(this);
+        settingsManager = SettingsManager.getInstance(this);
 
-        initSDK();
         initViews();
         setTitle(R.string.app_locker);
 
         // 检查密码是否设置，只有当设置后，才能启动
         checkPassword();
+
+        AboutActivity.start(this);
     }
 
     /**
@@ -66,22 +64,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-    }
-
-    /**
-     * 初始化Bmob SDK
-     */
-    private void initSDK () {
-        final String APPID = "46120064d8e98adb870a67247a102485";
-
-        // 初始化基础SDK
-        Bmob.initialize(this, APPID);
-
-        // 保存设备信息
-        BmobInstallation.getCurrentInstallation(this).save();
-
-        // 初始化个推的推送服务
-        PushManager.getInstance().initialize(getApplicationContext());
     }
 
     /**
@@ -116,7 +98,7 @@ public class MainActivity extends AppCompatActivity {
             PasswordSetActivity.statActivity(this);
         } else {
             startCheckUpdate();
-            AppLockService.startBlockService(this);
+            LockService.startBlockService(this);
         }
     }
 
@@ -134,7 +116,7 @@ public class MainActivity extends AppCompatActivity {
 
             // 正常启动
             startCheckUpdate();
-            AppLockService.startBlockService(this);
+            LockService.startBlockService(this);
         } else {
             // 取消设置，结束应用
             finish();
@@ -197,8 +179,8 @@ public class MainActivity extends AppCompatActivity {
 
         // 如果要更新，则调用更新管理器
         if (checkUpdateEnable) {
-            ApkUpdater apkupdater = new ApkUpdater(MainActivity.this);
-            apkupdater.start(getResources().getString(R.string.updateInfoUrl));
+            UpdaterManager updaterManager = new UpdaterManager(MainActivity.this);
+            updaterManager.startAppUpdate(getString(R.string.updateInfoUrl));
         }
     }
 }

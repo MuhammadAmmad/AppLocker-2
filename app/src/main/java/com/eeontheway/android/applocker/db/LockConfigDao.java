@@ -10,9 +10,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.support.v4.content.LocalBroadcastManager;
 
 import com.eeontheway.android.applocker.app.AppInfo;
-import com.eeontheway.android.applocker.applock.AppLockConfigInfo;
-import com.eeontheway.android.applocker.applock.AppLockInfo;
-import com.eeontheway.android.applocker.db.AppLockDatabase;
+import com.eeontheway.android.applocker.lock.LockConfigInfo;
+import com.eeontheway.android.applocker.lock.LockInfo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +27,7 @@ public class LockConfigDao {
 
     private static final String BroadcastAction = "LockConfigDao.Changed";
 
-    private AppLockDatabase lockListDatabase;
+    private LockDatabase lockListDatabase;
     private SQLiteDatabase db;
 
     /**
@@ -37,7 +36,7 @@ public class LockConfigDao {
      */
     public LockConfigDao(Context context) {
         lm = LocalBroadcastManager.getInstance(context);
-        lockListDatabase = new AppLockDatabase(context);
+        lockListDatabase = new LockDatabase(context);
         db = lockListDatabase.getReadableDatabase();
     }
 
@@ -78,19 +77,19 @@ public class LockConfigDao {
      * 注意，不要单独将用户应用或系统应用同步，否则会在同步某种类型的应用配置时删除另一种类型应用配置
      * @return 实际各应用的锁定列表
      */
-    public void syncWithAppInfoList (List<AppLockInfo> appLockInfoList) {
-        List<AppLockConfigInfo> configInfoList = queryAllLockInfo();
+    public void syncWithAppInfoList (List<LockInfo> lockInfoList) {
+        List<LockConfigInfo> configInfoList = queryAllLockInfo();
 
         // 扫描所有锁定配置信息
-        for (AppLockConfigInfo configInfo : configInfoList) {
+        for (LockConfigInfo configInfo : configInfoList) {
             boolean found = false;
 
             // 以其中各项为依据，在已有的软件列表中查找
-            for (AppLockInfo appLockInfo : appLockInfoList) {
-                AppInfo appInfo = appLockInfo.getAppInfo();
+            for (LockInfo lockInfo : lockInfoList) {
+                AppInfo appInfo = lockInfo.getAppInfo();
                 if (configInfo.getPackageName().equals(appInfo.getPackageName())) {
                     // 记录下锁定信息
-                    appLockInfo.setLocked(configInfo.isLocked());
+                    lockInfo.setLocked(configInfo.isLocked());
                     found = true;
                     break;
                 }
@@ -115,9 +114,9 @@ public class LockConfigDao {
             // 如果包不在配置列表中，添加一条纪录，缺省为不锁定
             addLockInfo(packageName, false);
         } else {
-            Cursor cursor = db.query(AppLockDatabase.appLockListTableName,
-                    new String[] {AppLockDatabase.packageColumnName, AppLockDatabase.lockColumnName},
-                    AppLockDatabase.packageColumnName + " like ?",
+            Cursor cursor = db.query(LockDatabase.appLockListTableName,
+                    new String[] {LockDatabase.packageColumnName, LockDatabase.lockColumnName},
+                    LockDatabase.packageColumnName + " like ?",
                     new String[] {packageName}, null, null, null);
             if (cursor.moveToFirst()) {
                 locked = (cursor.getInt(1) == 1)? true : false;
@@ -147,9 +146,9 @@ public class LockConfigDao {
      */
     public boolean isPackageExist (String packageName) {
         boolean exist = false;
-        Cursor cursor = db.query(AppLockDatabase.appLockListTableName,
-                new String[]{AppLockDatabase.packageColumnName},
-                AppLockDatabase.packageColumnName + " like ?",
+        Cursor cursor = db.query(LockDatabase.appLockListTableName,
+                new String[]{LockDatabase.packageColumnName},
+                LockDatabase.packageColumnName + " like ?",
                 new String[] {packageName}, null, null, null);
         if (cursor.moveToFirst()) {
             exist = true;
@@ -167,9 +166,9 @@ public class LockConfigDao {
      */
     public boolean addLockInfo (String packageName, boolean lock) {
         ContentValues values = new ContentValues();
-        values.put(AppLockDatabase.packageColumnName, packageName);
-        values.put(AppLockDatabase.lockColumnName, lock ? 1 : 0);
-        long newRow = db.insert(AppLockDatabase.appLockListTableName, null, values);
+        values.put(LockDatabase.packageColumnName, packageName);
+        values.put(LockDatabase.lockColumnName, lock ? 1 : 0);
+        long newRow = db.insert(LockDatabase.appLockListTableName, null, values);
         if (newRow == -1) {
             return false;
         }
@@ -186,8 +185,8 @@ public class LockConfigDao {
      */
     public boolean deleteLockInfo (String packageName) {
         db.delete(
-                AppLockDatabase.appLockListTableName,
-                AppLockDatabase.packageColumnName + " like ?",
+                LockDatabase.appLockListTableName,
+                LockDatabase.packageColumnName + " like ?",
                 new String[] {packageName});
 
         // 通知外界数据发生改变
@@ -203,11 +202,11 @@ public class LockConfigDao {
      */
     public boolean updateLockInfo (String packageName, boolean lock) {
         ContentValues values = new ContentValues();
-        values.put(AppLockDatabase.packageColumnName, packageName);
-        values.put(AppLockDatabase.lockColumnName, lock ? 1 : 0);
-        int rows = db.update(AppLockDatabase.appLockListTableName,
+        values.put(LockDatabase.packageColumnName, packageName);
+        values.put(LockDatabase.lockColumnName, lock ? 1 : 0);
+        int rows = db.update(LockDatabase.appLockListTableName,
                 values,
-                AppLockDatabase.packageColumnName + " like ?",
+                LockDatabase.packageColumnName + " like ?",
                 new String[] {packageName});
 
         // 通知外界数据发生改变
@@ -219,16 +218,16 @@ public class LockConfigDao {
      * 获取所有的锁定信息
      * @return 锁定配置列表
      */
-    public List<AppLockConfigInfo> queryAllLockInfo() {
-        List<AppLockConfigInfo> list = new ArrayList<>();
+    public List<LockConfigInfo> queryAllLockInfo() {
+        List<LockConfigInfo> list = new ArrayList<>();
 
         // 查询数据库
-        Cursor cursor = db.query(AppLockDatabase.appLockListTableName,
-                new String[] {AppLockDatabase.packageColumnName, AppLockDatabase.lockColumnName},
+        Cursor cursor = db.query(LockDatabase.appLockListTableName,
+                new String[] {LockDatabase.packageColumnName, LockDatabase.lockColumnName},
                 null, null, null, null, null);
         if (cursor.moveToFirst()) {
             do {
-                AppLockConfigInfo info = new AppLockConfigInfo();
+                LockConfigInfo info = new LockConfigInfo();
                 info.setPackageName(cursor.getString(0));
                 info.setLocked(cursor.getInt(1) == 1);
                 list.add(info);
@@ -244,9 +243,9 @@ public class LockConfigDao {
      * @return true 是; false 否
      */
     public boolean isAnyPackageNeedLock () {
-        Cursor cursor = db.query(AppLockDatabase.appLockListTableName,
-                new String[] {AppLockDatabase.packageColumnName, AppLockDatabase.lockColumnName},
-                AppLockDatabase.lockColumnName + " like 1",
+        Cursor cursor = db.query(LockDatabase.appLockListTableName,
+                new String[] {LockDatabase.packageColumnName, LockDatabase.lockColumnName},
+                LockDatabase.lockColumnName + " like 1",
                 null, null, null, null);
         if (cursor.moveToFirst()) {
             return true;

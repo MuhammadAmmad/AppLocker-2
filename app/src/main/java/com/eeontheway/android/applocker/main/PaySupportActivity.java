@@ -10,6 +10,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import com.eeontheway.android.applocker.R;
+import com.eeontheway.android.applocker.feedback.FeedBackSubmitActivity;
 
 /**
  * 捐赠支持Activity
@@ -24,7 +25,7 @@ public class PaySupportActivity extends AppCompatActivity {
      * @param context 上下文
      */
     public static void start(Context context) {
-        Intent intent = new Intent(context, FeedBackActivity.class);
+        Intent intent = new Intent(context, FeedBackSubmitActivity.class);
         context.startActivity(intent);
     }
 

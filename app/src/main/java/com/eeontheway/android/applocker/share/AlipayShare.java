@@ -9,6 +9,7 @@ import com.alipay.share.sdk.openapi.IAPApi;
 import com.alipay.share.sdk.openapi.SendMessageToZFB;
 import com.eeontheway.android.applocker.apshare.ShareEntryActivity;
 import com.eeontheway.android.applocker.utils.Configuration;
+import com.eeontheway.android.applocker.utils.SystemUtils;
 
 /**
  * 微信分享接口
@@ -39,7 +40,7 @@ public class AlipayShare extends ShareBase implements IShare {
         if (api == null) {
             api = APAPIFactory.createZFBApi(context.getApplicationContext(),
                                 Configuration.ALIPAY_APPID, false);
-            //api.registerApp(Configuration.WX_APPID);
+            api.registerApp(Configuration.ALIPAY_APPID);
         }
         instanceCount++;
     }
@@ -51,7 +52,7 @@ public class AlipayShare extends ShareBase implements IShare {
     public void uninit() {
         if (instanceCount > 0) {
             if (--instanceCount == 0) {
-                //api.unregisterApp();
+                api.unregisterApp();
                 api = null;
             }
         }
@@ -62,7 +63,9 @@ public class AlipayShare extends ShareBase implements IShare {
      * @return true 支持分享; false 不支持分享
      */
     public boolean isSupported () {
-        return true;
+        boolean isZFBInstalled = api.isZFBSupportAPI();
+        boolean isZFBSupportApi = api.isZFBSupportAPI();
+        return isZFBInstalled && isZFBSupportApi;
     }
 
     /**
@@ -81,11 +84,21 @@ public class AlipayShare extends ShareBase implements IShare {
         webMessage.title = info.title;
         webMessage.description = info.content;
         webMessage.mediaObject = webPageObject;
-        webMessage.setThumbImage(info.thumbBitmap);
+        //webMessage.setThumbImage(info.thumbBitmap);
 
         SendMessageToZFB.Req webReq = new SendMessageToZFB.Req();
         webReq.message = webMessage;
-        webReq.transaction = String.valueOf(System.currentTimeMillis());
+        webReq.transaction = buildTransaction("webpage");
         api.sendReq(webReq);
+    }
+
+    /**
+     * 创建传输类型
+     * @param type 传输类型
+     * @return 字符串，带时间
+     */
+    private String buildTransaction(final String type) {
+        return (type == null) ? String.valueOf(System.currentTimeMillis())
+                                        : type + System.currentTimeMillis();
     }
 }

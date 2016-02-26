@@ -2,8 +2,6 @@ package com.eeontheway.android.applocker.feedback;
 
 import android.content.Context;
 
-import com.eeontheway.android.applocker.feedback.FeedBackInfo;
-
 import java.util.Date;
 import java.util.List;
 
@@ -15,10 +13,6 @@ import java.util.List;
  * @Time 2016-2-8
  */
 public interface IFeedBack {
-    int QUERY_TIME_OLDER = 0;           // 查找类型，更早的时间
-    int QUERY_TIME_NEWER = 1;           // 查询类型，更新的时间
-    int QUERY_TYPE_UDPATED = 2;         // 查询类型，有更新的内容
-
     /**
      * 发送回调接口
      */
@@ -47,10 +41,34 @@ public interface IFeedBack {
     }
 
     /**
+     * 设置发送状态的监听器
+     * @param listener
+     */
+    void setSendListener(SendStatusListener listener);
+
+    /**
+     * 设置更新状态的监听器
+     * @param listener
+     */
+    void setUpdateListener(SendStatusListener listener);
+
+    /**
+     * 设置查询状态的监听器
+     * @param listener
+     */
+    void setQueryTopicListener(QueryTopicStatusListener listener);
+
+    /**
+     * 设置查询状态的监听器
+     * @param listener
+     */
+    void setQueryResponseicListener(QueryResponseStatusListener listener);
+
+    /**
      * 初始化反馈接口
      * @return true 成功; false 失败
      */
-     boolean init(Context context);
+    boolean init(Context context);
 
     /**
      * 反初始化反馈接口
@@ -92,28 +110,4 @@ public interface IFeedBack {
      * 获取指定主题的所有回复
      */
     void queryAllTopicResponse (final FeedBackTopic topic);
-
-    /**
-     * 设置发送状态的监听器
-     * @param listener
-     */
-    void setSendListener(SendStatusListener listener);
-
-    /**
-     * 设置更新状态的监听器
-     * @param listener
-     */
-    void setUpdateListener(SendStatusListener listener);
-
-    /**
-     * 设置查询主题状态的监听器
-     * @param listener
-     */
-    void setQueryTopicListener(QueryTopicStatusListener listener);
-
-    /**
-     * 设置查询回复状态的监听器
-     * @param listener
-     */
-    void setQueryResponseicListener(QueryResponseStatusListener listener);
 }

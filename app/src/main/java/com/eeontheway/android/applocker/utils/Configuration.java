@@ -1,5 +1,7 @@
 package com.eeontheway.android.applocker.utils;
 
+import com.eeontheway.android.applocker.push.IPush;
+
 /**
  * App配置类
  *
@@ -8,6 +10,11 @@ package com.eeontheway.android.applocker.utils;
  * @Time 2016-12-15
  */
 public final class Configuration {
+    /**
+     * 是否是开发者模式
+     */
+    public static final boolean isDevelop = true;
+
     /**
      * App官方网站
      */
@@ -36,4 +43,55 @@ public final class Configuration {
      * 反馈管理器所用的SDK组件
      */
     public static final int FeedBackMangerType = BMOB_FEEDBACK;
+
+    /**
+     * Log显示的TAG
+     */
+    public static final String LOG_TAG = "applocker";
+
+    /**
+     * APP的描述信息
+     */
+    public static final String APP_DESCRIPTION = "智能应用锁是一款用于保护App免于被其它人查看的锁软件。" +
+                                                 "当用户打开被锁定的特定应用时，会弹出密码输入界面，只有" +
+                                                 "当密码输入正确时，才能打开App。";
+
+    /**
+     * 分享APP给其它人的标题
+     */
+    public static final String SHARE_APP_TITLE = "亲，给你介绍一款好用的App!";
+
+    /**
+     * 推送服务提供端
+     */
+    public static final int PUSH_SERVICE_PROVIDER = IPush.PUSH_TYPE_GETUI;  // 个推
+
+    /**
+     * 微信的APPID
+     */
+    public static final String WX_APPID = "wxb1f98f7e3d3563a9";
+
+    /**
+     * QQ的APPID和包名
+     */
+    public static final String QQ_APPID = "1105120437";
+    public static final String QQ_PACKAGE_NAME = "com.tencent.mobileqq";
+
+    /**
+     * 支付宝APPID
+     */
+    public static final String ALIPAY_APPID = "2016022101154813";
+
+    /**
+     * 升级的方式和配置
+     */
+    public static final int UPDATE_INFOGET_METHOD_BMOB = 0;     // 通过BMOB升级
+    public static final int UPDATE_INFOGET_METHOD = UPDATE_INFOGET_METHOD_BMOB;
+
+    public static final int UPDATE_WRITE_LOG_METHOD_BMOB = 0;
+    public static final int UPDATE_WRITE_LOG_METHOD = UPDATE_WRITE_LOG_METHOD_BMOB;
+
+    public static final int UPDATE_DOWNLOAD_METHOD_BMOB = 0;
+    public static final int UPDATE_DOWNLOAD_METHOD = UPDATE_DOWNLOAD_METHOD_BMOB;
+
 }

@@ -7,8 +7,12 @@
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
         <item name="android:textColor">#161515</item>
-        <item name="android:textSize">15dp</item>
+        <item name="android:textSize">15sp</item>
         <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="ToolBarTextStyle" parent="AppTheme">
+        <item name="actionMenuTextColor">@color/white</item>
     </style>
 
     <style name="Activity.NoTitleFullScreen" parent="AppTheme">
@@ -29,7 +33,7 @@
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 
     <style name="Common.EditText" parent="AppTheme">
-        <item name="android:background">@android:drawable/editbox_background</item>
+        <item name="android:background">@drawable/edittext_background_selector</item>
         <item name="android:singleLine">true</item>
     </style>
 
@@ -42,6 +46,20 @@
 
     <style name="Common.TinyTextView" parent="AppTheme">
         <item name="android:textSize">10dp</item>
+    </style>
+
+    <style name="FeedBack.EditText" parent="AppTheme">
+        <item name="android:background">@drawable/edittext_background_selector</item>
+        <item name="android:inputType">textMultiLine</item>
+        <item name="android:minLines">5</item>
+        <item name="android:padding">@dimen/view_common_padding</item>
+        <item name="android:gravity">left|top</item>
+    </style>
+
+    <style name="FeedBack.CardView" parent="AppTheme">
+        <item name="cardElevation">5dp</item>
+        <item name="cardCornerRadius">5dp</item>
+        <item name="cardBackgroundColor">@color/colorFirstBackground</item>
     </style>
 
     <style name="Password.Pad" parent="AppTheme">
@@ -60,5 +78,10 @@
         <item name="android:gravity">left|center</item>
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
+    </style>
+
+    <style name="dialogActivity_bottom" parent="Base.Theme.AppCompat.Light.Dialog">
+        <item name="windowNoTitle">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
     </style>
 </resources>

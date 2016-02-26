@@ -29,7 +29,7 @@ public class FeedBackSubmitActivity extends AppCompatActivity {
     private ProgressBar pb_progress;
 
     private String lastContent;
-    private IFeedBack feedBackManager;
+    private FeedBackBase feedBackManager;
     private FeedBackSendListener feedbackListener;
 
     /**
@@ -156,7 +156,7 @@ public class FeedBackSubmitActivity extends AppCompatActivity {
     /**
      * 反馈管理器发送反馈时的回调
      */
-    private class FeedBackSendListener implements IFeedBack.SendStatusListener {
+    private class FeedBackSendListener implements FeedBackBase.SendStatusListener {
         @Override
         public void onStart() {
             pb_progress.setVisibility(View.VISIBLE);

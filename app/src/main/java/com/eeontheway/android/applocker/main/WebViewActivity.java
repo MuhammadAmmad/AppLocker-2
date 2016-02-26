@@ -79,7 +79,7 @@ public class WebViewActivity extends AppCompatActivity {
      * 初始化ToolBar
      */
     private void initToolBar() {
-        Toolbar toolbar = (Toolbar)findViewById(R.id.tl_main);
+        Toolbar toolbar = (Toolbar)findViewById(R.id.tl_header);
         toolbar.setNavigationIcon(R.drawable.ic_close_black_24dp);
         setSupportActionBar(toolbar);
 
@@ -141,6 +141,8 @@ public class WebViewActivity extends AppCompatActivity {
                 // 加载完成时，隐藏进度条
                 if (newProgress == 100) {
                     pb_progress.setVisibility(View.GONE);
+                } else {
+                    pb_progress.setVisibility(View.VISIBLE);
                 }
             }
         });
@@ -149,9 +151,6 @@ public class WebViewActivity extends AppCompatActivity {
         webView.setWebViewClient(new WebViewClient() {
             public boolean shouldOverrideUrlLoading(final WebView view, final String url) {
                 view.loadUrl(url);
-
-                // 重新加载，显示进度条
-                pb_progress.setVisibility(View.VISIBLE);
                 return true;
             }
         });

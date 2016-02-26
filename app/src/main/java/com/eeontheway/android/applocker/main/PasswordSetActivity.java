@@ -6,7 +6,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
 import com.eeontheway.android.applocker.R;
-import com.eeontheway.android.applocker.view.NumberPasswordView;
+import com.eeontheway.android.applocker.ui.NumberPasswordView;
 
 /**
  * App密码设置Activity
@@ -53,12 +53,12 @@ public class PasswordSetActivity extends AppCompatActivity {
             }
 
             @Override
-            public void maxErrorAccuor() {
+            public void onMaxErrorAccuor() {
                 // 不必实现
             }
 
             @Override
-            public void passwordSetOk(String password) {
+            public void onPasswordSetOk(String password) {
                 // 返回给主Activity，由其保存
                 Intent intent = getIntent();
                 intent.putExtra(RETURN_PARAM_PASS, password);

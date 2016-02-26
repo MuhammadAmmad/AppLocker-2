@@ -18,8 +18,8 @@ public class FeedBackManagerFactory {
      * 创建反馈管理器
      * @return 反馈管理器的接口
      */
-    public static IFeedBack create (Context context) {
-        IFeedBack feedBackManager = null;
+    public static FeedBackBase create (Context context) {
+        FeedBackBase feedBackManager = null;
 
         switch (Configuration.FeedBackMangerType) {
             case Configuration.BMOB_FEEDBACK:

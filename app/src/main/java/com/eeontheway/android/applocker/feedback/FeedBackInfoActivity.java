@@ -9,7 +9,6 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -22,8 +21,6 @@ import com.eeontheway.android.applocker.push.PushMessageProcessor;
 import com.eeontheway.android.applocker.utils.Configuration;
 
 import java.util.List;
-
-import cn.bmob.v3.listener.UpdateListener;
 
 /**
  * 特定反馈信息的详细Activity
@@ -43,7 +40,7 @@ public class FeedBackInfoActivity extends AppCompatActivity {
     private TextView tv_response_time;
     private View pb_progress;
 
-    private IFeedBack feedBackManager;
+    private FeedBackBase feedBackManager;
     private FeedBackTopic topic;
     private IPush iPush;
 
@@ -168,7 +165,7 @@ public class FeedBackInfoActivity extends AppCompatActivity {
         feedBackManager.init(this);
 
         // 设置更新成功的处理
-        feedBackManager.setUpdateListener(new IFeedBack.SendStatusListener() {
+        feedBackManager.setUpdateListener(new FeedBackBase.SendStatusListener() {
             @Override
             public void onStart() {
             }
@@ -199,7 +196,7 @@ public class FeedBackInfoActivity extends AppCompatActivity {
         });
 
         // 设置回复成功的处理器
-        feedBackManager.setSendListener(new IFeedBack.SendStatusListener() {
+        feedBackManager.setSendListener(new FeedBackBase.SendStatusListener() {
             @Override
             public void onStart() {
                 pb_progress.setVisibility(View.VISIBLE);
@@ -247,7 +244,7 @@ public class FeedBackInfoActivity extends AppCompatActivity {
      * 获取标题
      */
     private void getTopic (String id) {
-        feedBackManager.setQueryTopicListener(new IFeedBack.QueryTopicStatusListener() {
+        feedBackManager.setQueryTopicListener(new FeedBackBase.QueryTopicStatusListener() {
             @Override
             public void onStart() {
                 pb_progress.setVisibility(View.VISIBLE);
@@ -279,7 +276,7 @@ public class FeedBackInfoActivity extends AppCompatActivity {
      * 获取所有的响应
      */
     private void getResponse () {
-        feedBackManager.setQueryResponseicListener(new IFeedBack.QueryResponseStatusListener() {
+        feedBackManager.setQueryResponseicListener(new FeedBackBase.QueryResponseStatusListener() {
             @Override
             public void onStart() {
                 pb_progress.setVisibility(View.VISIBLE);

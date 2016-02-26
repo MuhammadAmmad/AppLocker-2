@@ -15,10 +15,11 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.eeontheway.android.applocker.R;
-import com.eeontheway.android.applocker.update.ApkUpdater;
-import com.eeontheway.android.applocker.update.PackageInfoAccess;
+import com.eeontheway.android.applocker.feedback.FeedBackListActivity;
+import com.eeontheway.android.applocker.updater.UpdaterManager;
 import com.eeontheway.android.applocker.utils.AppMarketUtils;
 import com.eeontheway.android.applocker.utils.Configuration;
+import com.eeontheway.android.applocker.utils.SystemUtils;
 
 /**
  * 应用锁配置界面Activity
@@ -62,6 +63,8 @@ public class AboutActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_about);
 
+        setTitle(R.string.about);
+
         initToolBar();
         initViews();
     }
@@ -83,9 +86,8 @@ public class AboutActivity extends AppCompatActivity {
      */
     private void initViews() {
         // 初始化版本显示
-        PackageInfoAccess packageInfo = new PackageInfoAccess(this);
         tv_version = (TextView)findViewById(R.id.tv_version);
-        tv_version.setText(getString(R.string.version, packageInfo.getVersionName()));
+        tv_version.setText(getString(R.string.version, SystemUtils.getVersionName(this)));
 
         // 初始化菜单列表
         menuNames = new String[menu_name_res.length];
@@ -139,14 +141,14 @@ public class AboutActivity extends AppCompatActivity {
                     appMarketUtils.gotoVoteInMarket();
                     break;
                 case R.string.check_update:     // 启动更新检查
-                    ApkUpdater updater = new ApkUpdater(AboutActivity.this);
-                    updater.start(Configuration.updateSiteUrl);
+                    UpdaterManager updaterManager = new UpdaterManager(AboutActivity.this);
+                    updaterManager.startAppUpdate(Configuration.updateSiteUrl);
                     break;
                 case R.string.app_website:      // 打开App的网站
                     WebViewActivity.start(AboutActivity.this, Configuration.webSiteUrl, menuNames[position]);
                     break;
                 case R.string.feed_back:        // 启动反馈窗口
-                    FeedBackActivity.start(AboutActivity.this);
+                    FeedBackListActivity.start(AboutActivity.this);
                     break;
                 case R.string.pay_support:      // 启动捐赠接口
 
