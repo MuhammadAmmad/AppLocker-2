@@ -6,7 +6,7 @@ package com.eeontheway.android.applocker.updater;
  * @version v1.0
  * @Time 2016-12-15
  */
-public interface IUpdateLogOp {
+public interface IUpdateLogManager {
     /**
      * 日志保存结果的监听器
      */
@@ -29,6 +29,12 @@ public interface IUpdateLogOp {
      * @param listener
      */
     void setSaveResultListener(SaveResultListener listener);
+
+    /**
+     * 分配一个升级日志对像
+     * @return  日志对像
+     */
+    UpdateLog allocateUpdateLog (int oldVersion, int newVersion, boolean skipped);
 
     /**
      * 保存日志信息

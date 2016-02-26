@@ -15,8 +15,8 @@ public class UpdateLogManagerFactory {
      * 创建升级信息获取的对像
      * @return 升级信息获取对像
      */
-    public static IUpdateLogOp create (Context context) {
-        IUpdateLogOp op = null;
+    public static IUpdateLogManager create (Context context) {
+        IUpdateLogManager op = null;
         switch (Configuration.UPDATE_WRITE_LOG_METHOD) {
             case Configuration.UPDATE_WRITE_LOG_METHOD_BMOB:
                 op = new BmobUpdateLogManager(context);

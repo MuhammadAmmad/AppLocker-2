@@ -143,12 +143,12 @@ public class HttpDownloadTool extends DownloadToolBase {
 
                         downloadedSize += currentSize;
                         sendProgressMessage(downloadedSize);
-
-                        try {
-                            Thread.sleep(0);
-                        }catch (Exception e) {
-                            e.printStackTrace();
-                        }
+//
+//                        try {
+//                            Thread.sleep(0);
+//                        }catch (Exception e) {
+//                            e.printStackTrace();
+//                        }
                     }
                 }
                 sendEndMessage(0, null);

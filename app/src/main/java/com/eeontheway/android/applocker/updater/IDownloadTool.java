@@ -16,13 +16,13 @@ public interface IDownloadTool {
          * 开始下载回调
          * @param totalSize 总的下载大小
          */
-        void onStart (long totalSize);
+        void onStart (int totalSize);
 
         /**
          * 下载过程回调
          * @param donwloadedSize 已经完成的下载量
          */
-        void onProgress(long donwloadedSize);
+        void onProgress(int donwloadedSize);
 
         /**
          * 获取失败
