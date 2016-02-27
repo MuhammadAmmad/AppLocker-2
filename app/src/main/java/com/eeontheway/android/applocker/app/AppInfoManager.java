@@ -97,7 +97,7 @@ public class AppInfoManager {
      * @return App的包名
      */
     public String queryFirstAppPackageName () {
-        if (Build.VERSION.SDK_INT < 21) {
+        if (true) {
             List<ActivityManager.RunningTaskInfo> runningTaskInfos = activityManager.getRunningTasks(1);
             if (runningTaskInfos.size() > 0) {
                 return runningTaskInfos.get(0).topActivity.getPackageName();

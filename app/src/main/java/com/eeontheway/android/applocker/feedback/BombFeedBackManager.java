@@ -154,9 +154,12 @@ public class BombFeedBackManager extends FeedBackBase {
                 // 获取反馈信息列表
                 List<FeedBackTopic> infoList = new ArrayList<>();
                 for (BmobFeedBackInfo info : list) {
-                    FeedBackTopic topic = new FeedBackTopic();
-                    topic.setTopic(info.toFeedBackInfo());
-                    infoList.add(topic);
+                    FeedBackInfo feedBackInfo = info.toFeedBackInfo();
+                    if (feedBackInfo.isTopic()) {       // SDK Bug
+                        FeedBackTopic topic = new FeedBackTopic();
+                        topic.setTopic(info.toFeedBackInfo());
+                        infoList.add(topic);
+                    }
                 }
 
                 // 调用回调接口
@@ -210,9 +213,12 @@ public class BombFeedBackManager extends FeedBackBase {
                 // 获取反馈信息列表
                 List<FeedBackTopic> infoList = new ArrayList<>();
                 for (BmobFeedBackInfo info : list) {
-                    FeedBackTopic topic = new FeedBackTopic();
-                    topic.setTopic(info.toFeedBackInfo());
-                    infoList.add(topic);
+                    FeedBackInfo feedBackInfo = info.toFeedBackInfo();
+                    if (feedBackInfo.isTopic()) {       // SDK Bug
+                        FeedBackTopic topic = new FeedBackTopic();
+                        topic.setTopic(info.toFeedBackInfo());
+                        infoList.add(topic);
+                    }
                 }
 
                 // 调用回调接口

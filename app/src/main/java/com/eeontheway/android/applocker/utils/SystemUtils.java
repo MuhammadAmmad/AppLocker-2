@@ -1,10 +1,15 @@
 package com.eeontheway.android.applocker.utils;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkInfo;
 import android.net.Uri;
+import android.os.Build;
 import android.provider.Settings;
 import android.widget.Toast;
 
@@ -85,10 +90,15 @@ public class SystemUtils {
      * 安装指定应用
      * @param apkPath APP安装包路径
      */
-    public static void installApp (Context context, String apkPath) {
+    public static void installApp (Context context, String apkPath,
+                                            boolean checkResult, int requestCode) {
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setDataAndType(Uri.fromFile(new File(apkPath)), "application/vnd.android.package-archive");
-        context.startActivity(intent);
+        if (checkResult) {
+            ((Activity)context).startActivityForResult(intent, requestCode);
+        } else {
+            context.startActivity(intent);
+        }
     }
 
 
@@ -143,6 +153,33 @@ public class SystemUtils {
         }
 
         return versionCode;
+    }
+
+    /**
+     * 获取指定网络是否连接
+     * @param context 上下文
+     * @param type 指定的网络类型,取值ConnectivityManager的TYPE_MOBILE或者TYPE_WIFI
+     * @return true 已连接; false 未连接
+     */
+    public static boolean isNetworkConnected (Context context, int type) {
+        ConnectivityManager manager = (ConnectivityManager)context.getSystemService(
+                                        Context.CONNECTIVITY_SERVICE);
+        if (Build.VERSION.SDK_INT < 21) {
+            NetworkInfo info = manager.getNetworkInfo(type);
+            if ((info != null) && info.isConnected()) {
+                return true;
+            }
+        } else {
+            Network[] networks = manager.getAllNetworks();
+            for (Network net : networks) {
+                NetworkInfo info = manager.getNetworkInfo(net);
+                if ((info.getType() == type) && info.isConnected()) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }
 

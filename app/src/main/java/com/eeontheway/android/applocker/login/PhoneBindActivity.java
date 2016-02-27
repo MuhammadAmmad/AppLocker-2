@@ -3,7 +3,6 @@ package com.eeontheway.android.applocker.login;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
-import android.os.CountDownTimer;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -13,7 +12,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -26,60 +24,24 @@ import com.eeontheway.android.applocker.R;
  * @Time 2016-2-8
  */
 public class PhoneBindActivity extends AppCompatActivity implements View.OnClickListener {
-    private static final String PARAM_SMSCODE = "smscode";
-    private static final String PARAM_MODE = "param";
-    private static final int BIND_PHONE_MODE = 0;       // 绑定手机模式
-    private static final int GET_MODE = 1;           // 仅校验验证码模式
-    private int mode;
-
-    private EditText et_phone;
-    private EditText et_sms_code;
-    private Button bt_request_smscode;
-    private Button btn_sumbit;
     private TextView tv_skip;
+    private Button btn_sumbit;
+    private ProgressDialog progressDialog;
+    private SmscodeCheckFragment smscodeFragment;
+
+    private String phone;
+    private String smscode;
 
     private IUserManager userManager;
-    private SmsCodeResendTimer resendTimer;
-    private ProgressDialog progressDialog;
-
-    /**
-     * 启动Activity用于绑定手机
-     * @param activity 上下文
-     * @param requestCode 请求码，用于Activiy返回检查
-     */
-    public static void startForResultToBindPhone(Activity activity, int requestCode) {
-        startForResult(activity, BIND_PHONE_MODE, requestCode);
-    }
-
-    /**
-     * 启动Activity用于校验手机
-     * @param activity 上下文
-     * @param requestCode 请求码，用于Activiy返回检查
-     */
-    public static void startForResultToGet (Activity activity, int requestCode) {
-        startForResult(activity, GET_MODE, requestCode);
-    }
 
     /**
      * 启动Activty
      * @param activity 上下文
-     * @param mode 启动模式
      * @param requestCode 请求码，用于Activiy返回检查
      */
-    private static void startForResult(Activity activity, int mode, int requestCode) {
+    public static void startForResult(Activity activity, int requestCode) {
         Intent intent = new Intent(activity, PhoneBindActivity.class);
-        intent.putExtra(PARAM_MODE, mode);
         activity.startActivityForResult(intent, requestCode);
-    }
-
-    /**
-     * 获取短信验证码
-     * @param intent 数据intent
-     * @return 短信验证码，如果没有，则为空
-     */
-    public static String getSmsCode (Intent intent) {
-        String smscode = intent.getStringExtra(PARAM_SMSCODE);
-        return smscode;
     }
 
     /**
@@ -87,7 +49,6 @@ public class PhoneBindActivity extends AppCompatActivity implements View.OnClick
      */
     public void end (int resultCode) {
         setResult(resultCode);
-        getIntent().putExtra(PARAM_SMSCODE, et_sms_code.getText().toString());
         finish();
     }
 
@@ -101,9 +62,7 @@ public class PhoneBindActivity extends AppCompatActivity implements View.OnClick
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_phone_bind);
 
-        resendTimer = new SmsCodeResendTimer(60000, 1000);
-        mode = getIntent().getIntExtra(PARAM_MODE, GET_MODE);
-
+        setTitle(R.string.phone_bind);
         initUserManager();
 
         initToolBar();
@@ -135,28 +94,17 @@ public class PhoneBindActivity extends AppCompatActivity implements View.OnClick
      * 初始化各种View
      */
     private void initViews() {
-        et_phone = (EditText) findViewById(R.id.et_phone);
-        et_sms_code = (EditText) findViewById(R.id.et_sms_code);
-        bt_request_smscode = (Button) findViewById(R.id.bt_request_smscode);
-        bt_request_smscode.setOnClickListener(this);
         btn_sumbit = (Button) findViewById(R.id.btn_sumbit);
         btn_sumbit.setOnClickListener(this);
         tv_skip = (TextView) findViewById(R.id.tv_skip);
         tv_skip.setOnClickListener(this);
 
-        if (mode == BIND_PHONE_MODE) {
-            tv_skip.setVisibility(View.VISIBLE);
-            btn_sumbit.setText(R.string.bind_phone);
-            setTitle(R.string.phone_bind);
-        } else {
-            tv_skip.setVisibility(View.GONE);
-            btn_sumbit.setText(R.string.fill_complete);
-            setTitle(R.string.get_smscode);
-        }
-
         progressDialog = new ProgressDialog(this);
         progressDialog.setIndeterminate(true);
         progressDialog.setCanceledOnTouchOutside(false);
+
+        smscodeFragment = (SmscodeCheckFragment) getFragmentManager().findFragmentById(
+                                                                    R.id.fragment_smscode);
     }
 
     /**
@@ -204,28 +152,6 @@ public class PhoneBindActivity extends AppCompatActivity implements View.OnClick
         userManager = UserManagerFactory.create(this);
         userManager.init(this);
 
-        // 注册验证码请求事件监听器
-        userManager.setRequestSmsCodeListener(new IUserManager.OnRequestSmsCodeListener() {
-            @Override
-            public void onFail(int code, String msg) {
-                Toast.makeText(PhoneBindActivity.this, R.string.smscode_send_fail,
-                                                Toast.LENGTH_SHORT).show();
-                closeProgressDialog();
-
-                // 发送失败，允许重试
-                resendTimer.cancel();
-                bt_request_smscode.setText(R.string.send_sms_code);
-                bt_request_smscode.setEnabled(true);
-            }
-
-            @Override
-            public void onSuccess(String smsId) {
-                Toast.makeText(PhoneBindActivity.this, R.string.smscode_send_ok,
-                                                Toast.LENGTH_SHORT).show();
-                closeProgressDialog();
-            }
-        });
-
         // 注册验证码校验事件
         userManager.setVerifySmsCodeListener(new IUserManager.OnResultListener() {
             @Override
@@ -238,7 +164,7 @@ public class PhoneBindActivity extends AppCompatActivity implements View.OnClick
             @Override
             public void onSuccess() {
                 // 校验成功，开始绑定
-                userManager.bindPhoneNumer(et_phone.getText().toString());
+                userManager.bindPhoneNumer(phone);
             }
         });
 
@@ -262,13 +188,6 @@ public class PhoneBindActivity extends AppCompatActivity implements View.OnClick
     }
 
     /**
-     * 请求发送验证码
-     */
-    private void startRequestSMSCode(String phoneNumber) {
-        userManager.reqeustSmsCode(phoneNumber, "startRequestSMSCode");
-    }
-
-    /**
      * 开始绑定
      */
     private void startBind (String phoneNumber, String smsCode) {
@@ -282,40 +201,31 @@ public class PhoneBindActivity extends AppCompatActivity implements View.OnClick
     @Override
     public void onClick(View v) {
         // 检查是否跳过
-        if (v.getId() == R.id.tv_skip) {
-            end(RESULT_CANCELED);
-            return;
-        }
-
-        // 电话号码不能为空，必须以1开头，11位
-        String telRegex = "[1]\\d{10}";
-        String phone = et_phone.getText().toString();
-        if (TextUtils.isEmpty(phone)) {
-            Toast.makeText(this, R.string.phone_empty, Toast.LENGTH_SHORT).show();
-            return;
-        }
-        if (!phone.matches(telRegex)) {
-            Toast.makeText(this, R.string.phone_error, Toast.LENGTH_SHORT).show();
-            return;
-        }
-
         switch (v.getId()) {
-            case R.id.bt_request_smscode:   // 请求验证码
-                showProgressDialog(getString(R.string.smscode_requesting));
-                resendTimer.start();
-                bt_request_smscode.setEnabled(false);
+            case R.id.tv_skip:
+                end(RESULT_CANCELED);
+                return;
+            case R.id.btn_sumbit:
+                // 电话号码不能为空，必须以1开头，11位
+                String telRegex = "[1]\\d{10}";
+                phone = smscodeFragment.getPhoneNumber();
+                if (TextUtils.isEmpty(phone)) {
+                    Toast.makeText(this, R.string.phone_empty, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if (!phone.matches(telRegex)) {
+                    Toast.makeText(this, R.string.phone_error, Toast.LENGTH_SHORT).show();
+                    return;
+                }
 
-                startRequestSMSCode(phone);
-                break;
-            case R.id.btn_sumbit:           // 提交验证码登陆
                 // 检查验证码有效性
-                String smscode = et_sms_code.getText().toString();
+                smscode = smscodeFragment.getSmsCode();
                 if (TextUtils.isEmpty(smscode)) {
                     Toast.makeText(this, R.string.smscode_error, Toast.LENGTH_SHORT).show();
                     return;
                 }
-                showProgressDialog(getString(R.string.binding));
 
+                showProgressDialog(getString(R.string.binding));
                 startBind(phone, smscode);
                 break;
         }
@@ -335,25 +245,5 @@ public class PhoneBindActivity extends AppCompatActivity implements View.OnClick
      */
     private void closeProgressDialog () {
         progressDialog.dismiss();
-    }
-
-    /**
-     * SMScode重发的计时器
-     */
-    class SmsCodeResendTimer extends CountDownTimer {
-        public SmsCodeResendTimer(long millisInFuture, long countDownInterval) {
-            super(millisInFuture, countDownInterval);
-        }
-
-        @Override
-        public void onTick(long millisUntilFinished) {
-            bt_request_smscode.setText(getString(R.string.smscode_resend_after_time,
-                                                            millisUntilFinished / 1000));
-        }
-
-        @Override
-        public void onFinish() {
-            bt_request_smscode.setText(R.string.smscode_resend);
-        }
     }
 }

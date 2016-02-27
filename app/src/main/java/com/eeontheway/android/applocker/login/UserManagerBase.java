@@ -20,6 +20,8 @@ public abstract class UserManagerBase implements IUserManager {
     protected OnRequestSmsCodeListener requestSmsCodeListener;
     protected OnResultListener verifySmsCodeListener;
     protected OnQuerySmsCodeListener querySmsCodeListener;
+    protected OnResultListener bindPhoneListener;
+    protected OnQueryResultCodeListener checkPhoneVerified;
 
     /**
      * 构造函数
@@ -92,4 +94,21 @@ public abstract class UserManagerBase implements IUserManager {
     public void setVerifySmsCodeListener(OnResultListener listener) {
         this.verifySmsCodeListener = listener;
     }
+
+    /**
+     * 设置手机号绑定的事件回调
+     * @param listener 注册事件监听器
+     */
+    public void setBindPhoneListener(OnResultListener listener) {
+        this.bindPhoneListener = listener;
+    }
+
+    /**
+     * 检查手机号是否注册过
+     * @param listener 注册事件监听器
+     */
+    public void setCheckPhoneNumberVerifiedListener (OnQueryResultCodeListener listener) {
+        this.checkPhoneVerified = listener;
+    }
+
 }

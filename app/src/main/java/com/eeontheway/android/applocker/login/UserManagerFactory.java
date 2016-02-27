@@ -29,7 +29,6 @@ public class UserManagerFactory {
         switch (Configuration.USER_MANAGER_TYPE) {
             case Configuration.USER_MANAGER_TYPE_BMOB:
                 manager = new BmobUserManager(context);
-                manager.init(context);
                 break;
         }
         return manager;

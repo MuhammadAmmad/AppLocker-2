@@ -26,6 +26,7 @@
         <TextView
             android:id="@+id/tv_version"
             android:text="@string/about_version"
+            android:textColor="@color/colorSecondTextColor"
             android:gravity="center"
             android:textSize="12dp"
             android:layout_width="match_parent"
@@ -41,6 +42,7 @@
     <TextView
         android:id="@+id/tv_copyright"
         android:layout_weight="1"
+        android:textColor="@color/colorSecondTextColor"
         android:text="@string/copyright"
         android:textSize="12dp"
         android:layout_margin="@dimen/view_common_padding"

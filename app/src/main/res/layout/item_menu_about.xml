@@ -3,6 +3,7 @@
     android:orientation="horizontal"
     android:descendantFocusability="blocksDescendants"
     android:gravity="center"
+    android:padding="@dimen/view_common_padding"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 

@@ -8,6 +8,7 @@
 
     <dimen name="view_common_margin">5dp</dimen>
     <dimen name="view_common_padding">5dp</dimen>
+    <dimen name="view_width_padding">10dp</dimen>
     <dimen name="view_larget_margin">20dp</dimen>
 
     <dimen name="small_text_size">12dp</dimen>

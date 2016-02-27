@@ -13,6 +13,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.eeontheway.android.applocker.R;
 import com.eeontheway.android.applocker.feedback.FeedBackListActivity;
@@ -67,6 +68,20 @@ public class AboutActivity extends AppCompatActivity {
 
         initToolBar();
         initViews();
+    }
+
+    /**
+     * 等待初始密码的设置结果
+     * @param requestCode
+     * @param resultCode
+     * @param data
+     */
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == UpdaterManager.REQUEST_INSTALL_APP) {
+            // 用户取消了安装过程
+            Toast.makeText(this, R.string.update_canceled, Toast.LENGTH_SHORT).show();
+        }
     }
 
     /**
@@ -142,7 +157,7 @@ public class AboutActivity extends AppCompatActivity {
                     break;
                 case R.string.check_update:     // 启动更新检查
                     UpdaterManager updaterManager = new UpdaterManager(AboutActivity.this);
-                    updaterManager.startAppUpdate(Configuration.updateSiteUrl);
+                    updaterManager.manuUpdate(Configuration.updateSiteUrl);
                     break;
                 case R.string.app_website:      // 打开App的网站
                     WebViewActivity.start(AboutActivity.this, Configuration.webSiteUrl, menuNames[position]);

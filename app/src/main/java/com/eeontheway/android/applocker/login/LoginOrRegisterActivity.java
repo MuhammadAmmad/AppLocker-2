@@ -28,16 +28,16 @@ import com.eeontheway.android.applocker.R;
  * @Time 2016-2-8
  */
 public class LoginOrRegisterActivity extends AppCompatActivity implements View.OnClickListener {
+    private static final int BIND_REQUEST = 0;
+    private static final int RESETPASS_REQUEST = 1;
     private static final String PARAM_LOGIN_MODE = "loginMode";
 
-    private TableLayout tl_login;
     private TableRow tr_secondPassword;
     private EditText et_account;
     private EditText et_first_password;
     private EditText et_second_password;
     private Button btn_sumbit;
     private TextView tv_create_account;
-    private View rl_phone;
     private View ll_register_way;
     private View ll_login;
     private ViewStub vs_register_mode;
@@ -51,12 +51,20 @@ public class LoginOrRegisterActivity extends AppCompatActivity implements View.O
     /**
      * 启动应用锁配置界面
      * @param loginMode 是否是登陆模式
-     * @param context 上下文
+     * @param activity 上下文
      */
-    public static void start(Activity context, boolean loginMode, int resultCode) {
-        Intent intent = new Intent(context, LoginOrRegisterActivity.class);
+    public static void startForResult(Activity activity, boolean loginMode, int requestCode) {
+        Intent intent = new Intent(activity, LoginOrRegisterActivity.class);
         intent.putExtra(PARAM_LOGIN_MODE, loginMode);
-        context.startActivityForResult(intent, resultCode);
+        activity.startActivityForResult(intent, requestCode);
+    }
+
+    /**
+     * 终中绑定过程
+     */
+    public void end (int resultCode) {
+        setResult(resultCode);
+        finish();
     }
 
     /**
@@ -75,7 +83,35 @@ public class LoginOrRegisterActivity extends AppCompatActivity implements View.O
         initViews();
 
         // 根据配置切换模式
-        switchMode(isLoginMode);}
+        switchMode(isLoginMode);
+    }
+
+    /**
+     * Activity的onDestroy回调
+     */
+    @Override
+    protected void onDestroy() {
+        userManager.unInit();
+        super.onDestroy();
+    }
+
+    /**
+     * Activity的onActivityResult回调
+     */
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == BIND_REQUEST) {
+            // 不管是否绑定手机号，都认为是注册成功
+            end(RESULT_OK);
+        } else if (requestCode == RESETPASS_REQUEST) {
+            if (resultCode == RESULT_OK) {
+                // 重设之后，要求重新登陆
+                Toast.makeText(this, R.string.password_ok_relogin, Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            super.onActivityResult(requestCode, resultCode, data);
+        }
+    }
 
     /**
      * 初始化ToolBar
@@ -93,7 +129,6 @@ public class LoginOrRegisterActivity extends AppCompatActivity implements View.O
      * 初始化各种View
      */
     private void initViews() {
-        tl_login = (TableLayout)findViewById(R.id.tl_login);
         tr_secondPassword = (TableRow)findViewById(R.id.tr_secondPassword);
         et_account = (EditText)findViewById(R.id.et_account);
         et_first_password = (EditText)findViewById(R.id.et_first_password);
@@ -105,8 +140,6 @@ public class LoginOrRegisterActivity extends AppCompatActivity implements View.O
         vs_register_mode = (ViewStub)findViewById(R.id.vs_register_mode);
         ll_login = findViewById(R.id.ll_login);
         ll_login.setOnClickListener(this);
-        rl_phone = findViewById(R.id.rl_phone);
-        rl_phone.setOnClickListener(this);
 
         progressDialog = new ProgressDialog(this);
         progressDialog.setIndeterminate(true);
@@ -118,6 +151,8 @@ public class LoginOrRegisterActivity extends AppCompatActivity implements View.O
      */
     private void initUserManager () {
         userManager = UserManagerFactory.create(this);
+        userManager.init(this);
+        userManager.logout();
 
         // 登陆监听器
         userManager.setOnLoginListener(new IUserManager.OnResultListener() {
@@ -132,8 +167,7 @@ public class LoginOrRegisterActivity extends AppCompatActivity implements View.O
             public void onSuccess() {
                 // 登陆成功，设置成功返回值，结束自己
                 progressDialog.dismiss();
-                setResult(RESULT_OK);
-                finish();
+                end(RESULT_OK);
             }
         });
 
@@ -151,9 +185,9 @@ public class LoginOrRegisterActivity extends AppCompatActivity implements View.O
                 // 注册成功，设置成功返回值，结束自己
                 Toast.makeText(LoginOrRegisterActivity.this, getString(R.string.register_ok),
                         Toast.LENGTH_SHORT).show();progressDialog.dismiss();
-                setResult(RESULT_OK);
 
-                finish();
+                // 启动手机绑定
+                PhoneBindActivity.startForResult(LoginOrRegisterActivity.this, BIND_REQUEST);
             }
         });
     }
@@ -214,11 +248,20 @@ public class LoginOrRegisterActivity extends AppCompatActivity implements View.O
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
-                finish();
+                end(RESULT_CANCELED);
                 return true;
             default:
                 return super.onContextItemSelected(item);
         }
+    }
+
+    /**
+     * 返回键处理
+     */
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        end(RESULT_CANCELED);
     }
 
     /**
@@ -241,9 +284,9 @@ public class LoginOrRegisterActivity extends AppCompatActivity implements View.O
                     starRegister();
                 }
                 break;
-            case R.id.rl_phone:
-                SmsCodeLoginActivity.start(this);
-                finish();
+            case R.id.ll_login:
+                // 获取短信验证码，之后再启动密码修改功能
+                PasswordResetBySmscodeActivity.startForResult(this, RESETPASS_REQUEST);
                 break;
         }
     }

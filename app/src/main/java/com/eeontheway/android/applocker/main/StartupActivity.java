@@ -1,5 +1,6 @@
 package com.eeontheway.android.applocker.main;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.res.XmlResourceParser;
 import android.os.AsyncTask;
@@ -51,8 +52,16 @@ public class StartupActivity extends AppCompatActivity {
     private static final String BMOB_APPID = "46120064d8e98adb870a67247a102485";
 
     /**
-     * OnCreate
-     *
+     * 启动该Activity
+     * @param context 上下文
+     */
+    public static void start (Context context) {
+        Intent intent = new Intent(context, StartupActivity.class);
+        context.startActivity(intent);
+    }
+
+    /**
+     * Activity的OnCreate回调
      * @param savedInstanceState
      */
     @Override

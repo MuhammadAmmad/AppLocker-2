@@ -94,4 +94,9 @@ public final class Configuration {
     public static final int UPDATE_DOWNLOAD_METHOD_BMOB = 0;
     public static final int UPDATE_DOWNLOAD_METHOD = UPDATE_DOWNLOAD_METHOD_BMOB;
 
+    /**
+     * 用户管理接口类型
+     */
+    public static final int USER_MANAGER_TYPE_BMOB = 0;         // 通过BMOB管理用户
+    public static final int USER_MANAGER_TYPE = USER_MANAGER_TYPE_BMOB;
 }

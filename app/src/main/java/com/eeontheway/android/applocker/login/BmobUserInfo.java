@@ -16,6 +16,12 @@ public class BmobUserInfo extends BmobUser {
 
     /**
      * 构造函数
+     */
+    public BmobUserInfo() {
+    }
+
+    /**
+     * 构造函数
      * @param info 用户信息
      */
     public BmobUserInfo (UserInfo info) {

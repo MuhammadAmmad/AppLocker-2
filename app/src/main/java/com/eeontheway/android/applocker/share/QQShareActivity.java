@@ -113,9 +113,7 @@ public class QQShareActivity extends AppCompatActivity {
      * @param data 数据
      */
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (null != tencent) {
-            Tencent.onActivityResultData(requestCode, 0, data, listener);
-        }
+        Tencent.onActivityResultData(requestCode, 0, data, listener);
     }
 
     /**

@@ -39,6 +39,9 @@ public class SettingsManager {
     private boolean alert_lock_unlock;
     private boolean add_tag_to_photo;
 
+    // 更新配置
+    private boolean updateOnlyWhenWifiConntected;
+
     private Context context;
     private static SettingsManager instance;
 
@@ -55,6 +58,10 @@ public class SettingsManager {
         }
 
         return instance;
+    }
+
+    public static void freeInstance (Context context) {
+
     }
 
     protected SettingsManager() {}
@@ -186,6 +193,15 @@ public class SettingsManager {
      */
     public boolean isAddTagToPhoto () {
         return add_tag_to_photo;
+    }
+
+    /**
+     * 是否只允许在WIFI状态下更新
+     * @return
+     */
+    public boolean isUpdateOnlyWhenWifiConntected () {
+        updateOnlyWhenWifiConntected = true;
+        return updateOnlyWhenWifiConntected;
     }
 }
 

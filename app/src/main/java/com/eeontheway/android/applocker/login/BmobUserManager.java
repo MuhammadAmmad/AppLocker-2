@@ -3,11 +3,16 @@ package com.eeontheway.android.applocker.login;
 import android.content.Context;
 
 import com.eeontheway.android.applocker.R;
+import com.eeontheway.android.applocker.updater.BmobUpdateInfo;
 
+import java.util.List;
+
+import cn.bmob.v3.BmobQuery;
 import cn.bmob.v3.BmobSMS;
 import cn.bmob.v3.BmobUser;
 import cn.bmob.v3.datatype.BmobSmsState;
 import cn.bmob.v3.exception.BmobException;
+import cn.bmob.v3.listener.FindListener;
 import cn.bmob.v3.listener.LogInListener;
 import cn.bmob.v3.listener.QuerySMSStateListener;
 import cn.bmob.v3.listener.RequestSMSCodeListener;
@@ -65,7 +70,8 @@ public class BmobUserManager extends UserManagerBase {
                     }
                 }else{
                     if (loginResultListener != null) {
-                        loginResultListener.onFail(e.getErrorCode(), e.getMessage());
+                        loginResultListener.onFail(e.getErrorCode(),
+                                            getErrorMsg(e.getErrorCode(), e.getMessage()));
                     }
                 }
             }
@@ -97,6 +103,12 @@ public class BmobUserManager extends UserManagerBase {
      * @param code 验证码
      */
     public void loginBySmsCode (String phoneNumber, String code) {
+        if (!isSmsCodeValid(code)) {
+            if (loginResultListener != null) {
+                loginResultListener.onFail(-1, context.getString(R.string.smscode_invalid));
+            }
+            return;
+        }
 
         BmobUser.loginBySMSCode(context, phoneNumber, code, new LogInListener<BmobUserInfo>() {
             @Override
@@ -107,7 +119,8 @@ public class BmobUserManager extends UserManagerBase {
                     }
                 }else{
                     if (loginResultListener != null) {
-                        loginResultListener.onFail(e.getErrorCode(), e.getLocalizedMessage());
+                        loginResultListener.onFail(e.getErrorCode(),
+                                getErrorMsg(e.getErrorCode(), e.getMessage()));
                     }
                 }
             }
@@ -129,7 +142,8 @@ public class BmobUserManager extends UserManagerBase {
                     }
                 }else{
                     if (requestSmsCodeListener != null) {
-                        requestSmsCodeListener.onFail(e.getErrorCode(), e.getLocalizedMessage());
+                        requestSmsCodeListener.onFail(e.getErrorCode(),
+                                getErrorMsg(e.getErrorCode(), e.getMessage()));
                     }
                 }
             }
@@ -158,7 +172,8 @@ public class BmobUserManager extends UserManagerBase {
                     }
                 }else{
                     if (verifySmsCodeListener != null) {
-                        verifySmsCodeListener.onFail(e.getErrorCode(), e.getLocalizedMessage());
+                        verifySmsCodeListener.onFail(e.getErrorCode(),
+                                getErrorMsg(e.getErrorCode(), e.getMessage()));
                     }
                 }
             }
@@ -226,7 +241,7 @@ public class BmobUserManager extends UserManagerBase {
             @Override
             public void onFailure(int i, String s) {
                 if (signUpResultListener != null) {
-                    signUpResultListener.onFail(i, s);
+                    signUpResultListener.onFail(i, getErrorMsg(i, s));
                 }
             }
         });
@@ -267,7 +282,8 @@ public class BmobUserManager extends UserManagerBase {
                     }
                 } else {
                     if (signUpResultListener != null) {
-                        signUpResultListener.onFail(e.getErrorCode(), e.getLocalizedMessage());
+                        signUpResultListener.onFail(e.getErrorCode(),
+                                getErrorMsg(e.getErrorCode(), e.getLocalizedMessage()));
                     }
                 }
             }
@@ -304,7 +320,7 @@ public class BmobUserManager extends UserManagerBase {
             @Override
             public void onFailure(int i, String s) {
                 if (updateInfoResultListener != null) {
-                    updateInfoResultListener.onFail(i, s);
+                    updateInfoResultListener.onFail(i, getErrorMsg(i, s));
                 }
             }
         });
@@ -327,7 +343,7 @@ public class BmobUserManager extends UserManagerBase {
             @Override
             public void onFailure(int code, String msg) {
                 if (passwordModifyResultListener != null) {
-                    passwordModifyResultListener.onFail(code, msg);
+                    passwordModifyResultListener.onFail(code, getErrorMsg(code, msg));
                 }
             }
         });
@@ -345,7 +361,6 @@ public class BmobUserManager extends UserManagerBase {
             }
             return;
         }
-
         BmobUser.resetPasswordBySMSCode(context, smsCode, newPassword, new ResetPasswordByCodeListener() {
             @Override
             public void done(BmobException e) {
@@ -355,7 +370,8 @@ public class BmobUserManager extends UserManagerBase {
                     }
                 }else{
                     if (passwordModifyResultListener != null) {
-                        passwordModifyResultListener.onFail(e.getErrorCode(), e.getLocalizedMessage());
+                        passwordModifyResultListener.onFail(e.getErrorCode(),
+                                getErrorMsg(e.getErrorCode(), e.getLocalizedMessage()));
                     }
                 }
             }
@@ -364,21 +380,115 @@ public class BmobUserManager extends UserManagerBase {
 
     /**
      * 为当前用户绑定手机号
+     * @param phoneNumber 待邦定的手机号
      */
-    public void updatePhoneNumer (String phoeNumber) {
-//        BmobUser.resetPasswordBySMSCode(context, smsCode, newPassword, new ResetPasswordByCodeListener() {
-//            @Override
-//            public void done(BmobException e) {
-//                if(e == null){
-//                    if (passwordModifyResultListener != null) {
-//                        passwordModifyResultListener.onSuccess();
-//                    }
-//                }else{
-//                    if (passwordModifyResultListener != null) {
-//                        passwordModifyResultListener.onFail(e.getErrorCode(), e.getLocalizedMessage());
-//                    }
-//                }
-//            }
-//        });
+    public void bindPhoneNumer (String phoneNumber) {
+        BmobUserInfo user = new BmobUserInfo();
+        user.setMobilePhoneNumber(phoneNumber);
+        user.setMobilePhoneNumberVerified(true);
+        BmobUserInfo currentUser = BmobUser.getCurrentUser(context, BmobUserInfo.class);
+
+        user.update(context, currentUser.getObjectId(), new UpdateListener() {
+            @Override
+            public void onSuccess() {
+                if (bindPhoneListener != null) {
+                    bindPhoneListener.onSuccess();
+                }
+            }
+
+            @Override
+            public void onFailure(int i, String s) {
+                if (bindPhoneListener != null) {
+                    bindPhoneListener.onFail(i, getErrorMsg(i, s));
+                }
+            }
+        });
+    }
+
+
+    /**
+     * 检查手机号是否被验证过
+     * @param phoneNumber
+     */
+    public void checkPhoneNumberVerified (String phoneNumber) {
+        BmobQuery<BmobUser> query = new BmobQuery<>();
+        query.addWhereEqualTo("mobilePhoneNumber", phoneNumber);
+        query.findObjects(context, new FindListener<BmobUser>() {
+            @Override
+            public void onSuccess(List<BmobUser> list) {
+                if (checkPhoneVerified != null) {
+                    checkPhoneVerified.onSuccess(list.size());
+                }
+            }
+
+            @Override
+            public void onError(int i, String s) {
+                if (bindPhoneListener != null) {
+                    bindPhoneListener.onFail(i, getErrorMsg(i, s));
+                }
+            }
+        });
+    }
+
+    /**
+     * 获取错误信息串
+     * @param code 错误代码
+     * @param msg 原始错误消息
+     * @return 最终的错误信息串
+     */
+    public static String getErrorMsg (int code, String msg) {
+        String finaMsg;
+
+        switch (code) {
+            // SDK错误码
+            case 9001: finaMsg = "Application Id为空，请初始化."; break;
+            case 9002: finaMsg = "解析返回数据出错"; break;
+            case 9003: finaMsg = "上传文件出错"; break;
+            case 9004: finaMsg = "文件上传失败"; break;
+            case 9005: finaMsg = "批量操作只支持最多50条"; break;
+            case 9006: finaMsg = "objectId为空"; break;
+            case 9007: finaMsg = "文件大小超过10M"; break;
+            case 9008: finaMsg = "上传文件不存在"; break;
+            case 9009: finaMsg = "没有缓存数据"; break;
+            case 9010: finaMsg = "网络超时或者没有给应用网络权限"; break;
+            case 9011: finaMsg = "BmobUser类不支持批量操作"; break;
+            case 9012: finaMsg = "上下文为空"; break;
+            case 9013: finaMsg = "BmobObject（数据表名称）格式不正确"; break;
+            case 9014: finaMsg = "第三方账号授权失败"; break;
+            case 9015: finaMsg = "其他错误均返回此code"; break;
+            case 9016: finaMsg = "无网络连接，请检查您的手机网络."; break;
+            case 9017: finaMsg = "与第三方登录有关的错误，具体请看对应的错误描述"; break;
+            case 9018: finaMsg = "参数不能为空"; break;
+            case 9019: finaMsg = "格式不正确：手机号码、邮箱地址、验证码"; break;
+
+            // 支付功能
+            case -1:  finaMsg = "微信返回的错误码，可能是未安装微信，也可能是微信没获得网络权限等"; break;
+            case -2:  finaMsg = "微信支付用户中断操作"; break;
+            case -3:  finaMsg = "未安装微信支付插件"; break;
+            case 102:  finaMsg = "设置了安全验证，但是签名或IP不对"; break;
+            case 6001:  finaMsg = "支付宝支付用户中断操作"; break;
+            case 4000:  finaMsg = "支付宝支付出错，可能是参数有问题"; break;
+            case 1111:  finaMsg = "解析服务器返回的数据出错，可能是提交参数有问题"; break;
+            case 2222:  finaMsg = "服务器端返回参数出错，可能是提交的参数有问题（如查询的订单号不存在）"; break;
+            case 3333:  finaMsg = "解析服务器数据出错，可能是提交参数有问题"; break;
+            case 5277:  finaMsg = "查询订单号时未输入订单号"; break;
+            case 7777:  finaMsg = "微信客户端未安装"; break;
+            case 8888:  finaMsg = "微信客户端版本不支持微信支付"; break;
+            case 10003:  finaMsg = "商品名或详情不符合微信/支付宝的规定（如微信商品名不可以超过42个中文）"; break;
+            case 10777:  finaMsg = "上次发起的请求还未处理完成，禁止下次请求，可用BmobPay.ForceFree()解除"; break;
+
+            // REST API错误码列表
+            case 101: finaMsg ="用户名或密码不正确"; break;
+            case 202: finaMsg ="用户名已经存在"; break;
+            case 205: finaMsg ="没有找到此用户名的用户"; break;
+            case 207: finaMsg ="验证码错误"; break;
+            case 209: finaMsg ="该手机号码已经存在"; break;
+            case 210: finaMsg ="旧密码不正确"; break;
+
+            case 10010: finaMsg = "短信验证码发送次数过多，请稍候重试"; break;
+            default: finaMsg = msg;
+        }
+
+        return finaMsg;
     }
 }

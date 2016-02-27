@@ -20,7 +20,9 @@ import com.eeontheway.android.applocker.R;
 import com.eeontheway.android.applocker.feedback.FeedBackListActivity;
 import com.eeontheway.android.applocker.lock.LockService;
 import com.eeontheway.android.applocker.lock.SettingsManager;
+import com.eeontheway.android.applocker.login.LoginOrRegisterActivity;
 import com.eeontheway.android.applocker.updater.UpdaterManager;
+import com.eeontheway.android.applocker.utils.Configuration;
 
 /**
  * 主Activity
@@ -55,7 +57,7 @@ public class MainActivity extends AppCompatActivity {
         // 检查密码是否设置，只有当设置后，才能启动
         checkPassword();
 
-        AboutActivity.start(this);
+        LoginOrRegisterActivity.startForResult(this, true, 1);
     }
 
     /**
@@ -110,17 +112,26 @@ public class MainActivity extends AppCompatActivity {
      */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (resultCode == RESULT_OK) {
-            // 密码设置正确，保存密码
-            settingsManager.savePassword(data.getStringExtra(PasswordSetActivity.RETURN_PARAM_PASS));
-
-            // 正常启动
-            startCheckUpdate();
-            LockService.startBlockService(this);
-        } else {
-            // 取消设置，结束应用
-            finish();
+        if (requestCode == 1) {
+            return;
         }
+
+//        if (requestCode == UpdaterManager.REQUEST_INSTALL_APP) {
+//            // 用户取消了安装过程
+//            Toast.makeText(this, R.string.update_canceled, Toast.LENGTH_SHORT).show();
+//        } else {
+            if (resultCode == RESULT_OK) {
+                // 密码设置正确，保存密码
+                settingsManager.savePassword(data.getStringExtra(PasswordSetActivity.RETURN_PARAM_PASS));
+
+                // 正常启动
+                startCheckUpdate();
+                LockService.startBlockService(this);
+            } else {
+                // 取消设置，结束应用
+                finish();
+            }
+       // }
     }
 
     /**
@@ -180,7 +191,7 @@ public class MainActivity extends AppCompatActivity {
         // 如果要更新，则调用更新管理器
         if (checkUpdateEnable) {
             UpdaterManager updaterManager = new UpdaterManager(MainActivity.this);
-            updaterManager.startAppUpdate(getString(R.string.updateInfoUrl));
+            updaterManager.autoUpdate(Configuration.updateSiteUrl);
         }
     }
 }

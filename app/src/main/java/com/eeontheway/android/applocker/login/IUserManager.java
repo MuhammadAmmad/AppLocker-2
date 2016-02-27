@@ -2,11 +2,6 @@ package com.eeontheway.android.applocker.login;
 
 import android.content.Context;
 
-import cn.bmob.v3.BmobSMS;
-import cn.bmob.v3.exception.BmobException;
-import cn.bmob.v3.listener.RequestSMSCodeListener;
-import cn.bmob.v3.listener.VerifySMSCodeListener;
-
 /**
  * 用户管理接口
  * @author lishutong
@@ -62,6 +57,23 @@ public interface IUserManager {
          * @param smsId 注册码的ID
          */
         void onSuccess (String smsId);
+    }
+
+    /**
+     * 回调接口
+     */
+    interface OnQueryResultCodeListener {
+        /**
+         * 登陆失败
+         * @param code 错误码
+         * @param msg 错误原因消息
+         */
+        void onFail (int code, String msg);
+
+        /**
+         * 登陆成功
+         */
+        void onSuccess (int code);
     }
 
     /**
@@ -197,4 +209,35 @@ public interface IUserManager {
      * @param smsId 短信ID
      */
     void querySmsCode (String smsId);
+
+    /**
+     * 设置手机号绑定的事件回调
+     * @param listener 注册事件监听器
+     */
+    void setBindPhoneListener(OnResultListener listener);
+
+    /**
+     * 为当前用户绑定手机号
+     * @param phoneNumber 待邦定的手机号
+     */
+    void bindPhoneNumer (String phoneNumber);
+
+    /**
+     * 使用短信验证码来修改密码
+     * @param smsCode 短信验证码
+     * @param newPassword 新密码
+     */
+    void modifyPasswordBySmsCode (String smsCode, String newPassword);
+
+    /**
+     * 检查手机号是否注册过
+     * @param listener 注册事件监听器
+     */
+    void setCheckPhoneNumberVerifiedListener (OnQueryResultCodeListener listener);
+
+    /**
+     * 检查手机号是否被验证过
+     * @param phoneNumber
+     */
+    void checkPhoneNumberVerified (String phoneNumber);
 }
