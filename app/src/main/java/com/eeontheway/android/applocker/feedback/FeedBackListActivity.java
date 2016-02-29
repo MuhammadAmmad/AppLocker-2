@@ -16,6 +16,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.eeontheway.android.applocker.R;
+import com.eeontheway.android.applocker.utils.SystemUtils;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -84,22 +85,6 @@ public class FeedBackListActivity extends AppCompatActivity {
         startLoadData();
     }
 
-    /**
-     * 格式化时间字符串
-     * @param time 时间字符串
-     * @return 时间对像
-     */
-    public Date formatDate (String time) {
-        Date date  = null;
-
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        try {
-            date = sdf.parse(time);
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-        return date;
-    }
 
     /**
      * 初始化Feedback管理器
@@ -119,7 +104,8 @@ public class FeedBackListActivity extends AppCompatActivity {
                     for (int i = 0; i < infoList.size(); i++) {
                         FeedBackTopic topic = infoList.get(i);
 
-                        Date topicDate = formatDate(topic.getTopic().getCreateTime());
+                        Date topicDate = SystemUtils.formatDate(topic.getTopic().getCreateTime(),
+                                                                    "yyyy-MM-dd HH:mm:ss");
                         if ((lastUpdateDate != null) && topicDate.before(lastUpdateDate)) {
                             // 如果创建时间比上一次更新要早，则说明该信息是刚回复过的标题，刷新既可
                             boolean found = false;
@@ -251,7 +237,8 @@ public class FeedBackListActivity extends AppCompatActivity {
     private void loadLatestData () {
         if (feedBackTopicList.size() > 0) {
             // 加载更新的数据
-            Date date = formatDate(feedBackTopicList.get(0).getTopic().getCreateTime());
+            Date date = SystemUtils.formatDate(
+                    feedBackTopicList.get(0).getTopic().getCreateTime(), "yyyy-MM-dd HH:mm:ss");
             feedBackManager.queryFeedBackNewer(MORE_QUERY_COUNT, date, lastUpdateDate);
         } else {
             // 为空，强制刷新，加载
@@ -301,7 +288,7 @@ public class FeedBackListActivity extends AppCompatActivity {
                     (lastVisibleItem + 1 == feedBackTopicList.size())) {
                 // 加载更多更老的数据
                 FeedBackTopic topic = feedBackTopicList.get(feedBackTopicList.size() - 1);
-                Date date = formatDate(topic.getTopic().getCreateTime());
+                Date date = SystemUtils.formatDate(topic.getTopic().getCreateTime(), "yyyy-MM-dd HH:mm:ss");
                 rcv_adapter.setUpLoadingMoreEnable(true);
                 feedBackManager.queryFeedBackOlder(MORE_QUERY_COUNT, date, lastUpdateDate);
             }

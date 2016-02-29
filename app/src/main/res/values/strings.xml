@@ -269,4 +269,9 @@
     <string name="reset_password">重置密码</string>
     <string name="phonenum_not_verified">错误：该手机号未与任何账户关联</string>
     <string name="query_failed">查询失败:%s</string>
+    <string name="welcome_to_use_app">欢迎您，%s！</string>
+    <string name="current_date">今天是%s</string>
+    <string name="register_or_login">注册/登陆</string>
+    <string name="logout">退出登陆</string>
+    <string name="you_are_not_logined_yet">您还未登陆</string>
 </resources>

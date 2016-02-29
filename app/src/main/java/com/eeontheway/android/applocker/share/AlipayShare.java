@@ -40,7 +40,6 @@ public class AlipayShare extends ShareBase implements IShare {
         if (api == null) {
             api = APAPIFactory.createZFBApi(context.getApplicationContext(),
                                 Configuration.ALIPAY_APPID, false);
-            api.registerApp(Configuration.ALIPAY_APPID);
         }
         instanceCount++;
     }
@@ -52,7 +51,6 @@ public class AlipayShare extends ShareBase implements IShare {
     public void uninit() {
         if (instanceCount > 0) {
             if (--instanceCount == 0) {
-                api.unregisterApp();
                 api = null;
             }
         }

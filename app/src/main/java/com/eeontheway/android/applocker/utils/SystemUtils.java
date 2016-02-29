@@ -16,6 +16,9 @@ import android.widget.Toast;
 import com.eeontheway.android.applocker.R;
 
 import java.io.File;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -25,6 +28,35 @@ import java.util.List;
  * @Time 2016-12-15
  */
 public class SystemUtils {
+    /**
+     * 格式化时间字符串
+     * @param time 时间字符串
+     * @param format 格式，参考"yyyy-MM-dd HH:mm:ss"
+     * @return 时间对像
+     */
+    public static Date formatDate (String time, String format) {
+        Date date  = null;
+
+        SimpleDateFormat sdf = new SimpleDateFormat(format);
+        try {
+            date = sdf.parse(time);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return date;
+    }
+
+    /**
+     * 格式化时间字符串
+     * @param date 指定时间
+     * @param format 格式，参考"yyyy-MM-dd HH:mm:ss"
+     * @return 时间对像
+     */
+    public static String formatDate (Date date, String format) {
+        SimpleDateFormat sdf = new SimpleDateFormat(format);
+        return sdf.format(date);
+    }
+
     /**
      * 获取当前App安装的时间
      *

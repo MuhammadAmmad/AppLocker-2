@@ -4,7 +4,7 @@ android {
     signingConfigs {
         config {
             keyPassword '9835624'
-            storeFile file('/home/guoguo/workspace/work/app.lks.jks')
+            storeFile file('/home/lishutong/workspace/app.lks.jks')
             storePassword '9835624'
             keyAlias 'keykey'
         }
@@ -53,4 +53,5 @@ dependencies {
     compile files('libs/open_sdk_r5509.jar')
     compile files('libs/json_simple-1.1.jar')
     compile files('libs/libapshare.jar')
+    compile files('libs/open_sdk_r5276.jar')
 }

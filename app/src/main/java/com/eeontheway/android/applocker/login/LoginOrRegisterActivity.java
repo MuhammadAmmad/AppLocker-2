@@ -3,6 +3,7 @@ package com.eeontheway.android.applocker.login;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -14,7 +15,6 @@ import android.view.View;
 import android.view.ViewStub;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -57,6 +57,17 @@ public class LoginOrRegisterActivity extends AppCompatActivity implements View.O
         Intent intent = new Intent(activity, LoginOrRegisterActivity.class);
         intent.putExtra(PARAM_LOGIN_MODE, loginMode);
         activity.startActivityForResult(intent, requestCode);
+    }
+
+    /**
+     * 启动应用锁配置界面
+     * @param loginMode 是否是登陆模式
+     * @param fragment fragment
+     */
+    public static void startForResult(Fragment fragment, boolean loginMode, int requestCode) {
+        Intent intent = new Intent(fragment.getContext(), LoginOrRegisterActivity.class);
+        intent.putExtra(PARAM_LOGIN_MODE, loginMode);
+        fragment.startActivityForResult(intent, requestCode);
     }
 
     /**

@@ -15,15 +15,23 @@ import android.widget.CheckBox;
 import android.widget.ExpandableListView;
 import android.widget.ImageView;
 import android.widget.TextView;
+
 import com.eeontheway.android.applocker.R;
 import com.eeontheway.android.applocker.feedback.FeedBackListActivity;
-import com.eeontheway.android.applocker.feedback.FeedBackSubmitActivity;
+import com.eeontheway.android.applocker.login.IUserManager;
+import com.eeontheway.android.applocker.login.LoginOrRegisterActivity;
+import com.eeontheway.android.applocker.login.UserInfo;
+import com.eeontheway.android.applocker.login.UserManagerFactory;
 import com.eeontheway.android.applocker.share.ShareActivity;
 import com.eeontheway.android.applocker.share.ShareInfo;
 import com.eeontheway.android.applocker.utils.Configuration;
+import com.eeontheway.android.applocker.utils.SystemUtils;
+
+import java.util.Date;
 
 /**
  * 主界面左侧滑动页面显示的内容
+ * 包含主菜单和用户账户入口
  *
  * @author lishutong
  * @version v1.0
@@ -36,7 +44,7 @@ public class MainLeftFragment extends Fragment {
     private static final int ABOUT_ROW = 2;
     private static final MenuInfo [] topMenuInfos = {
             new MenuInfo(R.string.mode_list, MenuInfo.ICON_INVALID),                // 模式列表
-            new MenuInfo(R.string.settings, R.drawable.ic_settings_black_24dp),       // 设置
+            new MenuInfo(R.string.settings, R.drawable.ic_settings_black_24dp),     // 设置
             new MenuInfo(R.string.about, MenuInfo.ICON_INVALID)                     // 关于
     };
 
@@ -50,13 +58,16 @@ public class MainLeftFragment extends Fragment {
 
     private ExpandableListView ev_menu;
     private BaseExpandableListAdapter ev_adapter;
-    private TextView tv_date;
-    private TextView tv_city;
-    private TextView tv_weather;
+    private ImageView iv_head;
+    private TextView tv_welcome;
+    private TextView tv_current_time;
+    private Button bt_reg_login;
+    private Button bt_logout;
     private Button bt_share;
     private Button bt_feedback;
 
     private Activity parentActivity;
+    private IUserManager userManager;
 
     /**
      * Fragment的onCreate回调
@@ -68,12 +79,15 @@ public class MainLeftFragment extends Fragment {
 
         parentActivity = getActivity();
         ev_adapter = new TopMenuAdapter();
+
+        initUserManager();
     }
 
     /**
      * Fragment的onCreateView回调
      * @param savedInstanceState
-     */    @Nullable
+     */
+    @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
@@ -81,23 +95,46 @@ public class MainLeftFragment extends Fragment {
 
         // 找到所有的View
         ev_menu = (ExpandableListView) view.findViewById(R.id.ev_menu);
-        tv_date = (TextView)view.findViewById(R.id.tv_date);
-        tv_city = (TextView)view.findViewById(R.id.tv_city);
-        tv_weather = (TextView)view.findViewById(R.id.tv_weather);
+        tv_welcome = (TextView)view.findViewById(R.id.tv_welcome);
+        iv_head = (ImageView) view.findViewById(R.id.iv_head);
+        tv_current_time = (TextView)view.findViewById(R.id.tv_current_time);
+        bt_reg_login = (Button) view.findViewById(R.id.bt_reg_login);
+        bt_logout = (Button) view.findViewById(R.id.bt_logout);
         bt_feedback = (Button)view.findViewById(R.id.bt_feedback);
         bt_share = (Button)view.findViewById(R.id.bt_share);
 
         // 初始化菜单
+        initView();
         initMenus();
         initListener();
         return view;
     }
 
     /**
+     * Activity的onDestory函数
+     */
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        userManager.unInit();
+    }
+
+    /**
+     * Fragment的onResume回调
+     */
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        updateHeaderView();
+    }
+
+
+    /**
      * 初始化菜单列表
      */
     private void initMenus () {
-        // 初始化顶层菜单
         ev_menu.setAdapter(new TopMenuAdapter());
     }
 
@@ -113,6 +150,58 @@ public class MainLeftFragment extends Fragment {
         bt_feedback.setOnClickListener(clickListener);
         bt_share.setOnClickListener(clickListener);
     }
+
+    /**
+     * 初始化界面显示
+     */
+    private void initView () {
+        // 登陆按钮点击事件
+        bt_reg_login.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                LoginOrRegisterActivity.startForResult(MainLeftFragment.this, true, 0);
+            }
+        });
+
+        // 登陆出去事件
+        bt_logout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                userManager.logout();
+                updateHeaderView();
+            }
+        });
+    }
+
+    /**
+     * 更新用户登陆状态显示
+     */
+    private void updateHeaderView () {
+        UserInfo userInfo = userManager.getMyUserInfo();
+        if (userInfo == null) {
+            // 未登陆
+            bt_reg_login.setVisibility(View.VISIBLE);
+            bt_logout.setVisibility(View.GONE);
+            tv_welcome.setText(R.string.you_are_not_logined_yet);
+            iv_head.setImageResource(R.drawable.ic_unknown_user);
+
+        } else {
+            bt_reg_login.setVisibility(View.GONE);
+            bt_logout.setVisibility(View.VISIBLE);
+            tv_welcome.setText(getString(R.string.welcome_to_use_app, userInfo.getUserName()));
+            iv_head.setImageResource(R.drawable.ic_known_person);
+        }
+        tv_current_time.setText(SystemUtils.formatDate(new Date(), "yyyy-MM-dd"));
+    }
+
+    /**
+     * 初始化用户管理器
+     */
+    private void initUserManager() {
+        userManager = UserManagerFactory.create(parentActivity);
+        userManager.init(parentActivity);
+    }
+
 
     /**
      * 按钮点击事件处理

@@ -56,8 +56,6 @@ public class MainActivity extends AppCompatActivity {
 
         // 检查密码是否设置，只有当设置后，才能启动
         checkPassword();
-
-        LoginOrRegisterActivity.startForResult(this, true, 1);
     }
 
     /**

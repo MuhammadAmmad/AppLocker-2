@@ -244,11 +244,9 @@
             android:noHistory="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
-
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-
-                <data android:scheme="tencent222222" />
+                <data android:scheme="tencent1105120437" />
             </intent-filter>
         </activity>
         <activity
@@ -268,13 +266,7 @@
 
         <activity android:name=".login.LoginOrRegisterActivity" />
         <activity android:name=".login.PhoneBindActivity" />
-        <!--
- ATTENTION: This was auto-generated to add Google Play services to your project for
-     App Indexing.  See https://g.co/AppIndexing/AndroidStudio for more information.
-        -->
-        <meta-data
-            android:name="com.google.android.gms.version"
-            android:value="@integer/google_play_services_version" />
+
 
         <activity android:name=".login.PasswordResetBySmscodeActivity"></activity>
     </application>
