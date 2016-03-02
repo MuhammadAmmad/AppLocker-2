@@ -4,5 +4,11 @@
     <item android:id="@+id/action_applocker_setting"
         android:title="@string/settings"
         android:icon="@drawable/icon_setting"
-        app:showAsAction="collapseActionView|always" />
+        app:showAsAction="collapseActionView" />
+    <item android:id="@+id/action_feedback"
+        android:title="@string/feed_back"
+        app:showAsAction="collapseActionView" />
+    <item android:id="@+id/action_checkupdate"
+        android:title="@string/check_update"
+        app:showAsAction="collapseActionView" />
 </menu>

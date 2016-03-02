@@ -55,21 +55,18 @@
             android:name=".main.MainActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".main.LockLogListActivity"
-            android:screenOrientation="portrait" />
-        <activity
             android:name=".main.SettingsActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".main.PasswordVerifyActivity"
+            android:name=".lock.PasswordVerifyActivity"
             android:launchMode="singleInstance"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".main.LockLogActivity"
+            android:name=".lock.LockLogActivity"
             android:launchMode="singleInstance"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".main.PasswordSetActivity"
+            android:name=".lock.PasswordSetActivity"
             android:screenOrientation="portrait" />
         <activity android:name=".share.QQShareActivity" />
         <activity
@@ -266,8 +263,6 @@
 
         <activity android:name=".login.LoginOrRegisterActivity" />
         <activity android:name=".login.PhoneBindActivity" />
-
-
         <activity android:name=".login.PasswordResetBySmscodeActivity"></activity>
     </application>
 

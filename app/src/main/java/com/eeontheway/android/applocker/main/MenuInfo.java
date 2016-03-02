@@ -1,8 +1,5 @@
 package com.eeontheway.android.applocker.main;
 
-
-import android.graphics.Bitmap;
-
 /**
  * 菜单信息
  *

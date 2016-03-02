@@ -44,9 +44,11 @@ public class BmobUserInfo extends BmobUser {
         // BmobUser不提供密码获取函数, 本地不保存密码
         UserInfo info = new UserInfo(getUsername(), "");
         info.setEmail(getEmail());
-        info.setEmailVerified(getEmailVerified());
+        Boolean emailVerified = getEmailVerified();
+        info.setEmailVerified((emailVerified == null) ? false : emailVerified.booleanValue());
         info.setPhoneNumber(getMobilePhoneNumber());
-        info.setPhoneNumberVerified(getMobilePhoneNumberVerified());
+        Boolean phoneVerified = getMobilePhoneNumberVerified();
+        info.setPhoneNumberVerified((phoneVerified == null) ? false : phoneVerified.booleanValue());
         info.setLastLoginTime(lastLoginTime);
         info.setRegisterTime(getCreatedAt());
         return info;

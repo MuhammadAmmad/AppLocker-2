@@ -1,4 +1,4 @@
-package com.eeontheway.android.applocker.main;
+package com.eeontheway.android.applocker.lock;
 
 import android.content.Context;
 import android.content.Intent;
@@ -19,10 +19,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.eeontheway.android.applocker.R;
-import com.eeontheway.android.applocker.lock.LockLogInfo;
-import com.eeontheway.android.applocker.lock.LockService;
-import com.eeontheway.android.applocker.lock.SettingsManager;
-import com.eeontheway.android.applocker.db.LockLogDao;
 import com.eeontheway.android.applocker.utils.CameraUtils;
 import com.eeontheway.android.applocker.utils.DisplayUtil;
 import com.eeontheway.android.applocker.ui.NumberPasswordView;

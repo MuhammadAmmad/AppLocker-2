@@ -3,6 +3,9 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
+    <include
+        android:id="@+id/tl_header"
+        layout="@layout/item_activity_header" />
     <fragment
         android:id="@+id/applock_log_list_fragment"
         android:name="com.eeontheway.android.applocker.main.LockLogListFragment"

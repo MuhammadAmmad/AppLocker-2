@@ -40,7 +40,7 @@ public class AboutActivity extends AppCompatActivity {
             R.string.check_update,
             R.string.app_website,
             R.string.feed_back,
-            R.string.pay_support
+            //R.string.pay_support      支付功能暂不支持
     };
     private String [] menuNames;
 
@@ -156,7 +156,8 @@ public class AboutActivity extends AppCompatActivity {
                     appMarketUtils.gotoVoteInMarket();
                     break;
                 case R.string.check_update:     // 启动更新检查
-                    UpdaterManager updaterManager = new UpdaterManager(AboutActivity.this);
+                    UpdaterManager updaterManager = new UpdaterManager(AboutActivity.this,
+                                                            MainActivity.REQUEST_INSTALL_APP);
                     updaterManager.manuUpdate(Configuration.updateSiteUrl);
                     break;
                 case R.string.app_website:      // 打开App的网站

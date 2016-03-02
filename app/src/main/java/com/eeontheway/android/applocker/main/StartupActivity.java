@@ -246,8 +246,7 @@ public class StartupActivity extends AppCompatActivity {
     private void loadMainUI () {
         // 动画播放和文件拷贝分属两个线程，仅当二者同时完毕时，才可进入主UI
         if (copyAssertFileOk && animationPlayOver) {
-            Intent intent = new Intent(StartupActivity.this, MainActivity.class);
-            startActivity(intent);
+            MainActivity.start(this);
             finish();
         }
     }

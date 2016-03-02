@@ -274,4 +274,5 @@
     <string name="register_or_login">注册/登陆</string>
     <string name="logout">退出登陆</string>
     <string name="you_are_not_logined_yet">您还未登陆</string>
+    <string name="you_have_login_out">您已登出</string>
 </resources>

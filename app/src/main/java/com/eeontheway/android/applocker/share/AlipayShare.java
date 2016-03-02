@@ -39,7 +39,7 @@ public class AlipayShare extends ShareBase implements IShare {
         this.context = context;
         if (api == null) {
             api = APAPIFactory.createZFBApi(context.getApplicationContext(),
-                                Configuration.ALIPAY_APPID, false);
+                                Configuration.ALIPAY_APPID, true);
         }
         instanceCount++;
     }

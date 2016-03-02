@@ -23,7 +23,7 @@ import com.eeontheway.android.applocker.R;
 import com.eeontheway.android.applocker.app.AppInfo;
 import com.eeontheway.android.applocker.app.AppInfoManager;
 import com.eeontheway.android.applocker.app.BaseAppInfo;
-import com.eeontheway.android.applocker.db.LockConfigDao;
+import com.eeontheway.android.applocker.lock.LockConfigDao;
 import com.eeontheway.android.applocker.lock.LockInfo;
 import com.eeontheway.android.applocker.lock.SettingsManager;
 
@@ -105,12 +105,6 @@ public class LockConfigFragment extends Fragment {
 
         // 配置顶部头
         lv_header = view.findViewById(R.id.lv_header);
-        lv_header.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                LockLogListActivity.startActivity(parentActivity);
-            }
-        });
 
         // 修改进度条
         rl_loading = view.findViewById(R.id.rl_loading);

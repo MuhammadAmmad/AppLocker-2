@@ -1,6 +1,7 @@
 package com.eeontheway.android.applocker.main;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -15,6 +16,7 @@ import android.widget.CheckBox;
 import android.widget.ExpandableListView;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.eeontheway.android.applocker.R;
 import com.eeontheway.android.applocker.feedback.FeedBackListActivity;
@@ -130,7 +132,6 @@ public class MainLeftFragment extends Fragment {
         updateHeaderView();
     }
 
-
     /**
      * 初始化菜单列表
      */
@@ -159,7 +160,8 @@ public class MainLeftFragment extends Fragment {
         bt_reg_login.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                LoginOrRegisterActivity.startForResult(MainLeftFragment.this, true, 0);
+                LoginOrRegisterActivity.startForResult(parentActivity, true,
+                                                                MainActivity.REQUEST_LOGIN);
             }
         });
 
@@ -169,6 +171,9 @@ public class MainLeftFragment extends Fragment {
             public void onClick(View v) {
                 userManager.logout();
                 updateHeaderView();
+
+                Toast.makeText(parentActivity, R.string.you_have_login_out,
+                                                                Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -176,7 +181,7 @@ public class MainLeftFragment extends Fragment {
     /**
      * 更新用户登陆状态显示
      */
-    private void updateHeaderView () {
+    public void updateHeaderView () {
         UserInfo userInfo = userManager.getMyUserInfo();
         if (userInfo == null) {
             // 未登陆
@@ -191,7 +196,8 @@ public class MainLeftFragment extends Fragment {
             tv_welcome.setText(getString(R.string.welcome_to_use_app, userInfo.getUserName()));
             iv_head.setImageResource(R.drawable.ic_known_person);
         }
-        tv_current_time.setText(SystemUtils.formatDate(new Date(), "yyyy-MM-dd"));
+        tv_current_time.setText(getString(R.string.current_date,
+                        SystemUtils.formatDate(new Date(), "yyyy-MM-dd")));
     }
 
     /**

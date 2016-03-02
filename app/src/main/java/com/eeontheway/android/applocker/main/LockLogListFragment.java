@@ -28,7 +28,7 @@ import android.widget.Toast;
 import com.eeontheway.android.applocker.R;
 import com.eeontheway.android.applocker.lock.LockLogInfo;
 import com.eeontheway.android.applocker.lock.LockLogViewInfo;
-import com.eeontheway.android.applocker.db.LockLogDao;
+import com.eeontheway.android.applocker.lock.LockLogDao;
 
 import java.io.File;
 import java.io.IOException;

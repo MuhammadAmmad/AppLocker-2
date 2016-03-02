@@ -39,7 +39,7 @@ public class ShareActivity extends AppCompatActivity {
             new ShareActionInfo(R.drawable.wx_timeline, R.string.wx_timeline, IShare.SHARE_TYPE_WX_TIMELINE),
             new ShareActionInfo(R.drawable.qq_logo, R.string.qq_friend, IShare.SHARE_TYPE_QQ_FRIEND),
             new ShareActionInfo(R.drawable.qzone_logo, R.string.qzone, IShare.SHARE_TYPE_QZONE),
-            new ShareActionInfo(R.drawable.ic_alipay, R.string.alipay, IShare.SHARE_TYPE_ALIPAY),
+            //new ShareActionInfo(R.drawable.ic_alipay, R.string.alipay, IShare.SHARE_TYPE_ALIPAY),
             new ShareActionInfo(R.drawable.share_platform_more, R.string.share_more, IShare.SHARE_TYPE_SYSTEM)
     };
 

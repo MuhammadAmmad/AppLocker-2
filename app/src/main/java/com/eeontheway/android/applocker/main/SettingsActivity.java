@@ -11,6 +11,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import com.eeontheway.android.applocker.R;
+import com.eeontheway.android.applocker.lock.PasswordSetActivity;
 import com.eeontheway.android.applocker.lock.SettingsManager;
 
 /**

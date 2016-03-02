@@ -11,6 +11,7 @@ import android.preference.PreferenceScreen;
 import android.text.TextUtils;
 
 import com.eeontheway.android.applocker.R;
+import com.eeontheway.android.applocker.lock.PasswordSetActivity;
 import com.eeontheway.android.applocker.lock.SettingsManager;
 
 /**
@@ -129,7 +130,7 @@ public class SettingsFragment extends PreferenceFragment {
     @Override
     public boolean onPreferenceTreeClick(PreferenceScreen preferenceScreen, Preference preference) {
         if (preference.getKey().equals(SettingsManager.applock_password_key)) {
-            PasswordSetActivity.statActivity(parentActivity);
+            PasswordSetActivity.statActivity(parentActivity, MainActivity.REQUEST_SET_PASS);
             return true;
         } else {
             return super.onPreferenceTreeClick(preferenceScreen, preference);

@@ -65,7 +65,7 @@ public class LoginOrRegisterActivity extends AppCompatActivity implements View.O
      * @param fragment fragment
      */
     public static void startForResult(Fragment fragment, boolean loginMode, int requestCode) {
-        Intent intent = new Intent(fragment.getContext(), LoginOrRegisterActivity.class);
+        Intent intent = new Intent(fragment.getActivity(), LoginOrRegisterActivity.class);
         intent.putExtra(PARAM_LOGIN_MODE, loginMode);
         fragment.startActivityForResult(intent, requestCode);
     }

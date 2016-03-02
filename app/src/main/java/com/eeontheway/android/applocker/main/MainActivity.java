@@ -1,26 +1,35 @@
 package com.eeontheway.android.applocker.main;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.design.widget.TabLayout;
+import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.eeontheway.android.applocker.R;
 import com.eeontheway.android.applocker.feedback.FeedBackListActivity;
 import com.eeontheway.android.applocker.lock.LockService;
+import com.eeontheway.android.applocker.lock.PasswordSetActivity;
 import com.eeontheway.android.applocker.lock.SettingsManager;
-import com.eeontheway.android.applocker.login.LoginOrRegisterActivity;
+import com.eeontheway.android.applocker.ui.FragmentPagerViewAdapter;
+import com.eeontheway.android.applocker.ui.FragmentPagerViewInfo;
 import com.eeontheway.android.applocker.updater.UpdaterManager;
 import com.eeontheway.android.applocker.utils.Configuration;
 
@@ -33,13 +42,41 @@ import com.eeontheway.android.applocker.utils.Configuration;
  * @Time 2016-12-15
  */
 public class MainActivity extends AppCompatActivity {
+    public static final int REQUEST_SET_PASS = 0;
+    public static final int REQUEST_INSTALL_APP = 1;
+    public static final int REQUEST_LOGIN = 2;
+
     private Toolbar tb_main;
     private DrawerLayout dl_main;
     private ActionBarDrawerToggle actionBarDrawerToggle;
 
     private long lastBackKeyPressTime = 0;
     private SettingsManager settingsManager;
+    private MainLeftFragment mainLeftFragment;
+    private UpdaterManager updaterManager;
 
+    // Fragment信息数组
+    private final FragmentPagerViewInfo[] fragmentInfoArray = {
+            new FragmentPagerViewInfo(
+                    new LockConfigFragment(),
+                    R.string.applock_list,
+                    R.drawable.widget_search_navigation,
+                    R.drawable.widget_search_navigation),
+            new FragmentPagerViewInfo(
+                    new LockLogListFragment(),
+                    R.string.applock_logs,
+                    R.drawable.folder_encript_selected,
+                    R.drawable.folder_encript_selected)
+    };
+
+    /**
+     * 启动该Activity
+     * @param context 上下文
+     */
+    public static void start (Context context) {
+        Intent intent = new Intent(context, MainActivity.class);
+        context.startActivity(intent);
+    }
     /**
      * Activity的onCreate函数
      * @param savedInstanceState
@@ -50,6 +87,9 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         settingsManager = SettingsManager.getInstance(this);
+        mainLeftFragment = (MainLeftFragment) getSupportFragmentManager().findFragmentById(
+                                                                R.id.main_left_fragment);
+        updaterManager = new UpdaterManager(MainActivity.this, REQUEST_INSTALL_APP);
 
         initViews();
         setTitle(R.string.app_locker);
@@ -86,7 +126,83 @@ public class MainActivity extends AppCompatActivity {
         actionBarDrawerToggle.syncState();
         dl_main.setDrawerListener(actionBarDrawerToggle);
 
-        dl_main.openDrawer(Gravity.LEFT);
+        // 配置显示Tab
+        initTabs();
+    }
+
+
+    /**
+     *  初始化UI
+     *  显示各个Fragment
+     */
+    private void initTabs() {
+        TabLayout tabLayout = (TabLayout)findViewById(R.id.tab_layout);
+        final ViewPager viewPager = (ViewPager)findViewById(R.id.view_page);
+
+        // 初始化适配器及ViewPager
+        viewPager.setAdapter(new FragmentPagerViewAdapter(MainActivity.this, getFragmentManager(), fragmentInfoArray));
+
+        // 关联Tab和Laout
+        tabLayout.setupWithViewPager(viewPager);
+
+        // 之后，重新配置所有的Tab，设置自定义样式
+        for (int i = 0; i < fragmentInfoArray.length; i++) {
+            final FragmentPagerViewInfo info = fragmentInfoArray[i];
+
+            // 初始化显示的自定义View
+            View tabView = LayoutInflater.from(MainActivity.this).inflate(R.layout.item_main_tablayout, null);
+            ImageView iconView = (ImageView)tabView.findViewById(R.id.iv_icon);
+            TextView nameView = (TextView)tabView.findViewById(R.id.tv_name);
+            iconView.setImageResource(info.getIconUnSelectedResId());
+            nameView.setText(info.getNameResId());
+            nameView.setTextColor(getResources().getColor(R.color.color_tab_text_unselected));
+
+            // 使用自定义的View
+            TabLayout.Tab tab = tabLayout.getTabAt(i);
+            tab.setCustomView(tabView);
+
+            // 设置监听器，用于切换时更改图标和字体颜色
+            tabLayout.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+                private void showTabSelected (TabLayout.Tab tab, boolean selected) {
+                    FragmentPagerViewInfo info = fragmentInfoArray[tab.getPosition()];
+
+                    View tabView = tab.getCustomView();
+                    ImageView iconView = (ImageView) tabView.findViewById(R.id.iv_icon);
+                    TextView nameView = (TextView) tabView.findViewById(R.id.tv_name);
+
+                    // 更新图标显示
+                    if (selected == true) {
+                        iconView.setImageResource(info.getIconSelectedResId());
+                        nameView.setTextColor(getResources().getColor(R.color.color_tab_text_selected));
+                    } else {
+                        iconView.setImageResource(info.getIconUnSelectedResId());
+                        nameView.setTextColor(getResources().getColor(R.color.color_tab_text_unselected));
+                    }
+
+                    // 切换标题
+                    setTitle(info.getNameResId());
+                }
+
+                @Override
+                public void onTabSelected(TabLayout.Tab tab) {
+                    showTabSelected(tab, true);
+                    viewPager.setCurrentItem(tab.getPosition());
+                }
+
+                @Override
+                public void onTabUnselected(TabLayout.Tab tab) {
+                    showTabSelected(tab, false);
+                }
+
+                @Override
+                public void onTabReselected(TabLayout.Tab tab) {
+                    onTabSelected(tab);
+                }
+            });
+
+            // 选中第0个
+            tabLayout.getTabAt(0).select();
+        }
     }
 
     /**
@@ -95,7 +211,7 @@ public class MainActivity extends AppCompatActivity {
     private void checkPassword() {
         String password = settingsManager.getPassword();
         if((password == null) || (password.isEmpty())) {
-            PasswordSetActivity.statActivity(this);
+            PasswordSetActivity.statActivity(this, REQUEST_SET_PASS);
         } else {
             startCheckUpdate();
             LockService.startBlockService(this);
@@ -114,22 +230,33 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-//        if (requestCode == UpdaterManager.REQUEST_INSTALL_APP) {
-//            // 用户取消了安装过程
-//            Toast.makeText(this, R.string.update_canceled, Toast.LENGTH_SHORT).show();
-//        } else {
-            if (resultCode == RESULT_OK) {
-                // 密码设置正确，保存密码
-                settingsManager.savePassword(data.getStringExtra(PasswordSetActivity.RETURN_PARAM_PASS));
+        switch (requestCode) {
+            case REQUEST_LOGIN:
+                mainLeftFragment.updateHeaderView();
+                if (resultCode == RESULT_OK) {
+                    Toast.makeText(this, R.string.login_scuess, Toast.LENGTH_SHORT).show();
+                }
+                break;
+            case REQUEST_SET_PASS:      // 密码设置
+                if (resultCode == RESULT_OK) {
+                    // 密码设置正确，保存密码
+                    settingsManager.savePassword(data.getStringExtra(
+                                                PasswordSetActivity.RETURN_PARAM_PASS));
 
-                // 正常启动
-                startCheckUpdate();
-                LockService.startBlockService(this);
-            } else {
-                // 取消设置，结束应用
-                finish();
-            }
-       // }
+                    // 正常启动
+                    startCheckUpdate();
+                    LockService.startBlockService(this);
+                } else {
+                    // 取消设置，结束应用
+                    finish();
+                }
+                break;
+            case REQUEST_INSTALL_APP:   // 升级安装
+                Toast.makeText(this, R.string.update_canceled, Toast.LENGTH_SHORT).show();
+                break;
+            default:
+                break;
+        }
     }
 
     /**
@@ -154,6 +281,12 @@ public class MainActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case android.R.id.home:
                 finish();
+                return true;
+            case R.id.action_feedback:
+                FeedBackListActivity.start(this);
+                return true;
+            case R.id.action_checkupdate:
+                updaterManager.manuUpdate(Configuration.updateSiteUrl);
                 return true;
             case R.id.action_applocker_setting:
                 SettingsActivity.start(MainActivity.this);
@@ -188,7 +321,6 @@ public class MainActivity extends AppCompatActivity {
 
         // 如果要更新，则调用更新管理器
         if (checkUpdateEnable) {
-            UpdaterManager updaterManager = new UpdaterManager(MainActivity.this);
             updaterManager.autoUpdate(Configuration.updateSiteUrl);
         }
     }

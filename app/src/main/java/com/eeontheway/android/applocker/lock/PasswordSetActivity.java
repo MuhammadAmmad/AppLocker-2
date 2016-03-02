@@ -1,4 +1,4 @@
-package com.eeontheway.android.applocker.main;
+package com.eeontheway.android.applocker.lock;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -23,9 +23,9 @@ public class PasswordSetActivity extends AppCompatActivity {
      * 启动Activity
      * @param activity 上下文
      */
-    public static void statActivity (Activity activity) {
+    public static void statActivity (Activity activity, int requestCode) {
         Intent intent = new Intent(activity, PasswordSetActivity.class);
-        activity.startActivityForResult(intent, 0);
+        activity.startActivityForResult(intent, requestCode);
     }
 
     /**

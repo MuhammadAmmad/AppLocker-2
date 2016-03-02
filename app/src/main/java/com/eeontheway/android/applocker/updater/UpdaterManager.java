@@ -44,13 +44,15 @@ public class UpdaterManager {
 
     private boolean wifiConnected;
     private boolean mobileConnected;
+    private int requestCode;
 
     /**
      * 构造器
      * @param context 上下文对像
      */
-    public UpdaterManager(Activity context) {
+    public UpdaterManager(Activity context, int requestCode) {
         this.context = context;
+        this.requestCode = requestCode;
 
         settingsManager = SettingsManager.getInstance(context);
         simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -305,7 +307,7 @@ public class UpdaterManager {
                 updateLogManager.saveUpdateLog(updateLog);
 
                 // 下载成功，安装App
-                SystemUtils.installApp(context, destPath, true, REQUEST_INSTALL_APP);
+                SystemUtils.installApp(context, destPath, true, requestCode);
 
                 progressDialog.hide();
             }

@@ -15,9 +15,6 @@ import android.util.Log;
 
 import com.eeontheway.android.applocker.app.AppInfoManager;
 import com.eeontheway.android.applocker.app.BaseAppInfo;
-import com.eeontheway.android.applocker.db.LockConfigDao;
-import com.eeontheway.android.applocker.main.LockLogActivity;
-import com.eeontheway.android.applocker.main.PasswordVerifyActivity;
 import com.eeontheway.android.applocker.utils.ServiceUtils;
 
 import java.io.ByteArrayOutputStream;

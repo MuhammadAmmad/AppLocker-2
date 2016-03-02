@@ -1,4 +1,4 @@
-package com.eeontheway.android.applocker.db;
+package com.eeontheway.android.applocker.lock;
 
 import android.content.BroadcastReceiver;
 import android.content.ContentValues;
@@ -10,8 +10,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.support.v4.content.LocalBroadcastManager;
 
 import com.eeontheway.android.applocker.app.AppInfo;
-import com.eeontheway.android.applocker.lock.LockConfigInfo;
-import com.eeontheway.android.applocker.lock.LockInfo;
 
 import java.util.ArrayList;
 import java.util.List;
