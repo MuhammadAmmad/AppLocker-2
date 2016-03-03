@@ -30,7 +30,7 @@ import java.util.List;
  * @Time 2016-12-15
  */
 public class LockService extends Service {
-    private LockConfigDao dao;
+    private LockConfigManager lockConfigManager;
     private UnlockedList unlockedList;
     private Handler screenUnlockAllHandler;
     private Runnable clearAppLockedRunnable;
@@ -59,7 +59,7 @@ public class LockService extends Service {
     public static void startBlockService(Context context) {
         if (ServiceUtils.isServiceRunning(context, LockService.class.getName()) == false) {
             Intent intent = new Intent(context, LockService.class);
-            context.startService(intent);
+           // context.startService(intent);
         }
     }
 
@@ -260,13 +260,13 @@ public class LockService extends Service {
         appInfoList = appInfoManager.queryAllAppInfo(AppInfoManager.AppType.ALL_APP);
 
         // 当数据库发生变化时，重新加载所有的配置项
-        dao = new LockConfigDao(this);
-        dao.registerDataChangeReveiver(new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                loadAllLockConfigList();
-            }
-        });
+        lockConfigManager = LockConfigManager.getInstance(this);
+//        lockConfigManager.registerDataChangeReveiver(new BroadcastReceiver() {
+//            @Override
+//            public void onReceive(Context context, Intent intent) {
+//                loadAllLockConfigList();
+//            }
+//        });
         loadAllLockConfigList();
 
         settingsManager = SettingsManager.getInstance(this);
@@ -303,7 +303,7 @@ public class LockService extends Service {
         // 加入到锁定配置对列中
         synchronized (lockConfigInfoList) {
             lockConfigInfoList.clear();
-            lockConfigInfoList.addAll(dao.queryAllLockInfo());
+            //lockConfigInfoList.addAll(lockConfigManager(0, 0xFFFFFFFF));
             //lockConfigInfoList.add(configInfo);
         }
     }
@@ -338,11 +338,11 @@ public class LockService extends Service {
 
         // 如果发现服务被强行中止，则重启服务
         // 重启后可能会由于监听线程在同步对像上，造成整个应用卡死退出
-        if (dao.isAnyPackageNeedLock()) {
-            startBlockService(this);
-            Log.d("AppLocker", "destroy");
-        }
-        dao.close();
+//        if (lockConfigManager.isAnyPackageNeedLock()) {
+//            startBlockService(this);
+//            Log.d("AppLocker", "destroy");
+//        }
+//        lockConfigManager.close();
 
         super.onDestroy();
     }

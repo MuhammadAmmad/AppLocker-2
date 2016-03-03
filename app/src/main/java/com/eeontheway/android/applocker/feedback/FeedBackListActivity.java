@@ -18,8 +18,6 @@ import android.widget.Toast;
 import com.eeontheway.android.applocker.R;
 import com.eeontheway.android.applocker.utils.SystemUtils;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -193,7 +191,7 @@ public class FeedBackListActivity extends AppCompatActivity {
 
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
         layoutManager.setOrientation(LinearLayoutManager.VERTICAL);
-        rcv_list.setLayoutManager(new LinearLayoutManager(this));
+        rcv_list.setLayoutManager(layoutManager);
         rcv_list.addOnScrollListener(new ScrollerListener());
 
         rcv_adapter = new FeedBackListAdapter(this, feedBackTopicList);

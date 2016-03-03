@@ -1,15 +1,19 @@
 package com.eeontheway.android.applocker.main;
 
 import android.app.Activity;
-import android.content.Intent;
+import android.app.AlertDialog;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.PopupMenu;
+import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewStub;
+import android.widget.AdapterView;
 import android.widget.BaseExpandableListAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -20,6 +24,8 @@ import android.widget.Toast;
 
 import com.eeontheway.android.applocker.R;
 import com.eeontheway.android.applocker.feedback.FeedBackListActivity;
+import com.eeontheway.android.applocker.lock.LockConfigManager;
+import com.eeontheway.android.applocker.lock.LockModeInfo;
 import com.eeontheway.android.applocker.login.IUserManager;
 import com.eeontheway.android.applocker.login.LoginOrRegisterActivity;
 import com.eeontheway.android.applocker.login.UserInfo;
@@ -50,13 +56,9 @@ public class MainLeftFragment extends Fragment {
             new MenuInfo(R.string.about, MenuInfo.ICON_INVALID)                     // 关于
     };
 
-    // 模式列表菜单项
-    private static final MenuInfo [] modeListMenuInfos = {
-            new MenuInfo(R.string.default_mode, MenuInfo.ICON_INVALID),
-            new MenuInfo(R.string.child_mode, MenuInfo.ICON_INVALID),
-            new MenuInfo(R.string.group_mode, MenuInfo.ICON_INVALID),
-            new MenuInfo(R.string.location_mode, MenuInfo.ICON_INVALID)
-    };
+    private Activity parentActivity;
+    private LockConfigManager lockConfigManager;
+    private IUserManager userManager;
 
     private ExpandableListView ev_menu;
     private BaseExpandableListAdapter ev_adapter;
@@ -68,9 +70,6 @@ public class MainLeftFragment extends Fragment {
     private Button bt_share;
     private Button bt_feedback;
 
-    private Activity parentActivity;
-    private IUserManager userManager;
-
     /**
      * Fragment的onCreate回调
      * @param savedInstanceState
@@ -81,6 +80,7 @@ public class MainLeftFragment extends Fragment {
 
         parentActivity = getActivity();
         ev_adapter = new TopMenuAdapter();
+        lockConfigManager = LockConfigManager.getInstance(parentActivity);
 
         initUserManager();
     }
@@ -108,7 +108,8 @@ public class MainLeftFragment extends Fragment {
         // 初始化菜单
         initView();
         initMenus();
-        initListener();
+        initShareAndFeedback();
+
         return view;
     }
 
@@ -117,9 +118,10 @@ public class MainLeftFragment extends Fragment {
      */
     @Override
     public void onDestroy() {
-        super.onDestroy();
-
+        lockConfigManager.freeInstance();
         userManager.unInit();
+
+        super.onDestroy();
     }
 
     /**
@@ -136,20 +138,87 @@ public class MainLeftFragment extends Fragment {
      * 初始化菜单列表
      */
     private void initMenus () {
-        ev_menu.setAdapter(new TopMenuAdapter());
+        ev_menu.setAdapter(ev_adapter);
+        ev_menu.expandGroup(MODE_LIST_ROW);
+
+        // 列表的组点击事件
+        ev_menu.setOnGroupClickListener(new ExpandableListView.OnGroupClickListener() {
+            @Override
+            public boolean onGroupClick(ExpandableListView parent, View v, int groupPosition, long id) {
+                switch (groupPosition) {
+                    case MODE_LIST_ROW:
+                        // 修改修改选中状态，以便切换菜单的指示器
+                        MenuInfo menuInfo = topMenuInfos[groupPosition];
+                        menuInfo.setSelected(!menuInfo.isSelected());
+                        ev_adapter.notifyDataSetChanged();
+                        break;
+                    case SETTING_ROW:
+                        SettingsActivity.start(parentActivity);
+                        break;
+                    case ABOUT_ROW:
+                        AboutActivity.start(parentActivity);
+                        break;
+                }
+                return false;
+            }
+        });
+
+        // 列表子项点击事件
+        ev_menu.setOnChildClickListener(new ExpandableListView.OnChildClickListener() {
+            @Override
+            public boolean onChildClick(ExpandableListView parent, View v, int groupPosition,
+                                        int childPosition, long id) {
+                if (groupPosition == MODE_LIST_ROW) {
+                    if (childPosition == (lockConfigManager.getLockModeCount())) {
+                        // 显示添加模式
+                        showCreateModeDialog();
+                    } else {
+                        // 切换模式
+                        lockConfigManager.switchModeInfo(childPosition);
+                        ev_adapter.notifyDataSetChanged();
+                    }
+                }
+                return false;
+            }
+        });
+
+        // 列表子项长按事件
+        ev_menu.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                if (view.getId() == R.id.ll_sub_menu) {
+                    // 排除掉最后一个无效的菜单项
+                    int lockModeCount = lockConfigManager.getLockModeCount();
+                    if ((lockModeCount > 0) && (position <= lockModeCount)) {
+                        showModeModifyDialog(view, lockConfigManager.getLockModeInfo(position - 1));
+                        return true;
+                    }
+
+                }
+                return false;
+            }
+        });
     }
 
     /**
-     * 初始化各种UI的Listener
+     * 初始化各种UI的initShareAndFeedback
      */
-    private void initListener() {
-        // 配置菜单列表
-        ev_menu.setOnGroupClickListener(new ExpandListGroupClickListener());
+    private void initShareAndFeedback() {
+        // 启动反馈功能
+        bt_feedback.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FeedBackListActivity.start(parentActivity);
+            }
+        });
 
-        // 配置普通点击事件处理
-        ClickListener clickListener = new ClickListener();
-        bt_feedback.setOnClickListener(clickListener);
-        bt_share.setOnClickListener(clickListener);
+        // 启动分享功能
+        bt_share.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startShareApp();
+            }
+        });
     }
 
     /**
@@ -179,6 +248,14 @@ public class MainLeftFragment extends Fragment {
     }
 
     /**
+     * 初始化用户管理器
+     */
+    private void initUserManager() {
+        userManager = UserManagerFactory.create(parentActivity);
+        userManager.init(parentActivity);
+    }
+
+    /**
      * 更新用户登陆状态显示
      */
     public void updateHeaderView () {
@@ -197,33 +274,7 @@ public class MainLeftFragment extends Fragment {
             iv_head.setImageResource(R.drawable.ic_known_person);
         }
         tv_current_time.setText(getString(R.string.current_date,
-                        SystemUtils.formatDate(new Date(), "yyyy-MM-dd")));
-    }
-
-    /**
-     * 初始化用户管理器
-     */
-    private void initUserManager() {
-        userManager = UserManagerFactory.create(parentActivity);
-        userManager.init(parentActivity);
-    }
-
-
-    /**
-     * 按钮点击事件处理
-     */
-    private class ClickListener implements View.OnClickListener {
-        @Override
-        public void onClick(View v) {
-            switch (v.getId()) {
-                case R.id.bt_share:     // 启动分享机制
-                    startShareApp();
-                    break;
-                case R.id.bt_feedback:  // 启动反馈机制
-                    FeedBackListActivity.start(parentActivity);
-                    break;
-            }
-        }
+                SystemUtils.formatDate(new Date(), "yyyy-MM-dd")));
     }
 
     /**
@@ -242,46 +293,128 @@ public class MainLeftFragment extends Fragment {
     }
 
     /**
-     * 列表的组项点击事件处理
+     * 显示添加模式窗口，让用户选择
      */
-    private class ExpandListGroupClickListener implements ExpandableListView.OnGroupClickListener {
-        @Override
-        public boolean onGroupClick(ExpandableListView parent, View v, int groupPosition, long id) {
-            switch (groupPosition) {
-                case MODE_LIST_ROW:
-                    // 修改修改选中状态，以便切换菜单的指示器
-                    MenuInfo menuInfo = topMenuInfos[groupPosition];
-                    menuInfo.setSelected(!menuInfo.isSelected());
+    private void showCreateModeDialog() {
+        ModeRenameDialog dialog = new ModeRenameDialog(parentActivity, true);
+        dialog.setListener(new ModeRenameDialog.ResultListener() {
+            @Override
+            public void rename(String newName) {
+                LockModeInfo modeInfo = lockConfigManager.addModeInfo(newName);
+                if (modeInfo != null) {
+                    // 如果之前为空，则切换到该模式；否则，保留之前的配置
+                    if (lockConfigManager.getLockModeCount() == 1) {
+                        lockConfigManager.switchModeInfo(0);
+                    }
                     ev_adapter.notifyDataSetChanged();
-                    break;
-                case SETTING_ROW:
-                    SettingsActivity.start(parentActivity);
-                    break;
-                case ABOUT_ROW:
-                    AboutActivity.start(parentActivity);
-                    break;
+                    Toast.makeText(parentActivity, getString(R.string.mode_add_ok, modeInfo.getName()),
+                            Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(parentActivity, R.string.add_failed, Toast.LENGTH_SHORT).show();
+                }
             }
-            return false;
-        }
+
+            @Override
+            public void cancel() {}
+        });
+        dialog.show();
+    }
+
+    /**
+     * 显示模式名称修改对话框
+     * 等待重命名的模式
+     */
+    private void showRenameModeDialog (final LockModeInfo modeInfo) {
+        ModeRenameDialog dialog = new ModeRenameDialog(parentActivity, false);
+        dialog.setListener(new ModeRenameDialog.ResultListener() {
+            @Override
+            public void rename(String newName) {
+                modeInfo.setName(newName);
+                boolean ok = lockConfigManager.updateModeInfo(modeInfo);
+                if (ok) {
+                    ev_adapter.notifyDataSetChanged();
+                    Toast.makeText(parentActivity, R.string.mode_rename_ok, Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(parentActivity, R.string.mode_rename_failed, Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void cancel() {}
+        });
+        dialog.show();
+    }
+
+    /**
+     * 显示删除模式对话框
+     * @param modeInfo 待删除的模式
+     */
+    private void showDeleteModeDialog (final LockModeInfo modeInfo) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
+        final AlertDialog dialog = builder.create();
+
+        View view = View.inflate(parentActivity, R.layout.view_mode_delete, null);
+        TextView tv_msg = (TextView) view.findViewById(R.id.tv_msg);
+        tv_msg.setText(getString(R.string.confirmDelete_modeinfo, modeInfo.getName()));
+        final Button bt_del = (Button) view.findViewById(R.id.bt_del);
+        final Button btn_cancel = (Button) view.findViewById(R.id.btn_cancel);
+        bt_del.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (lockConfigManager.getLockModeCount() > 0) {
+                    lockConfigManager.switchModeInfo(0);
+                }
+                lockConfigManager.deleteModeInfo(modeInfo);
+                ev_adapter.notifyDataSetChanged();
+
+                dialog.dismiss();
+                Toast.makeText(parentActivity, R.string.deleteOk, Toast.LENGTH_SHORT).show();
+            }
+        });
+        btn_cancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.dismiss();
+            }
+        });
+        dialog.setView(view);
+        dialog.show();
+    }
+
+    /**
+     * 显示模式修改对话框
+     */
+    private void showModeModifyDialog (View view, final LockModeInfo modeInfo) {
+        // 弹出对话框
+        PopupMenu popupMenu = new PopupMenu(parentActivity, view, Gravity.BOTTOM);
+        popupMenu.inflate(R.menu.menu_mode_modify);
+        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                switch (item.getItemId()) {
+                    case R.id.action_rename:
+                        showRenameModeDialog(modeInfo);
+                        break;
+                    case R.id.action_delete:
+                        showDeleteModeDialog(modeInfo);
+                        break;
+                }
+                return false;
+            }
+        });
+        popupMenu.show();
     }
 
     /**
      * 菜单列表显示的Adpter
      */
     private class TopMenuAdapter extends BaseExpandableListAdapter {
+        private static final int CHILD_TYPE_NORMAL = 0;
+        private static final int CHILD_TYPE_ADD = 1;
+
         @Override
         public int getGroupCount() {
             return topMenuInfos.length;
-        }
-
-        @Override
-        public int getChildrenCount(int groupPosition) {
-            int cnt = 0;
-
-            if (groupPosition == MODE_LIST_ROW) {
-                cnt = modeListMenuInfos.length;
-            }
-            return cnt;
         }
 
         @Override
@@ -290,23 +423,8 @@ public class MainLeftFragment extends Fragment {
         }
 
         @Override
-        public Object getChild(int groupPosition, int childPosition) {
-            MenuInfo menuInfo = null;
-
-            if (groupPosition == MODE_LIST_ROW) {
-                menuInfo = modeListMenuInfos[childPosition];
-            }
-            return menuInfo;
-        }
-
-        @Override
         public long getGroupId(int groupPosition) {
             return groupPosition;
-        }
-
-        @Override
-        public long getChildId(int groupPosition, int childPosition) {
-            return childPosition;
         }
 
         @Override
@@ -340,20 +458,65 @@ public class MainLeftFragment extends Fragment {
         }
 
         @Override
-        public View getChildView(int groupPosition, int childPosition, boolean isLastChild,
+        public int getChildrenCount(int groupPosition) {
+            int cnt = 0;
+
+            if (groupPosition == MODE_LIST_ROW) {
+                cnt = lockConfigManager.getLockModeCount() + 1;
+            }
+            return cnt;
+        }
+
+        @Override
+        public long getChildId(int groupPosition, int childPosition) {
+            return childPosition;
+        }
+
+
+        @Override
+        public int getChildTypeCount() {
+            return 2;
+        }
+
+        public int getChildType(int groupPosition, int childPosition) {
+            if (groupPosition == MODE_LIST_ROW) {
+                if (childPosition == lockConfigManager.getLockModeCount()) {
+                    return CHILD_TYPE_ADD;
+                } else {
+                    return CHILD_TYPE_NORMAL;
+                }
+            } else {
+                return 1;
+            }
+        }
+
+        @Override
+        public Object getChild(int groupPosition, int childPosition) {
+            LockModeInfo lockModeInfo = null;
+
+            if (groupPosition == MODE_LIST_ROW) {
+                lockModeInfo = lockConfigManager.getLockModeInfo(childPosition);
+            }
+            return lockModeInfo;
+        }
+
+        @Override
+        public View getChildView(int groupPosition, final int childPosition, boolean isLastChild,
                                  View convertView, ViewGroup parent) {
-            // 渲染UI，由于菜单列表很少，就不用考虑优化
             View view = View.inflate(parentActivity, R.layout.item_menu_main_left_sub, null);
             ImageView iv_icon = (ImageView)view.findViewById(R.id.iv_icon);
             TextView tv_title = (TextView)view.findViewById(R.id.tv_title);
+            CheckBox cb_enable = (CheckBox) view.findViewById(R.id.cb_enable);
 
             if (groupPosition == MODE_LIST_ROW) {
-                // 配置显示
-                MenuInfo menuInfo = modeListMenuInfos[childPosition];
-                if (menuInfo.getIconRes() != MenuInfo.ICON_INVALID) {
-                    iv_icon.setImageResource(menuInfo.getIconRes());
+                if (isLastChild) {
+                    tv_title.setText(R.string.mode_add);
+                    cb_enable.setVisibility(View.GONE);
+                } else {
+                    LockModeInfo lockModeInfo = lockConfigManager.getLockModeInfo(childPosition);
+                    tv_title.setText(lockModeInfo.getName());
+                    cb_enable.setChecked(lockModeInfo.isEnabled());
                 }
-                tv_title.setText(menuInfo.getTitleRes());
             }
 
             return view;

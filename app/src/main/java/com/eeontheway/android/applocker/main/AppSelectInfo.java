@@ -1,4 +1,4 @@
-package com.eeontheway.android.applocker.lock;
+package com.eeontheway.android.applocker.main;
 
 import com.eeontheway.android.applocker.app.AppInfo;
 
@@ -9,11 +9,9 @@ import com.eeontheway.android.applocker.app.AppInfo;
  * @version v1.0
  * @Time 2016-12-15
  */
-public class LockInfo {
-    /**
-     * App信息
-     */
+public class AppSelectInfo {
     private AppInfo appInfo;
+    private boolean selected;
 
     /**
      * 获取App信息
@@ -32,23 +30,18 @@ public class LockInfo {
     }
 
     /**
-     * 是否被锁定
+     * 返回应用是否选择信息
+     * @return 应用是否选择
      */
-    private boolean locked;
-
-    /**
-     * 返回应用是否锁定信息
-     * @return 应用是否锁定
-     */
-    public boolean isLocked() {
-        return locked;
+    public boolean isSelected() {
+        return selected;
     }
 
     /**
-     * 设置应用锁定信息
-     * @param locked 应用是否锁定
+     * 设置应用选择信息
+     * @param selected 应用是否被选择
      */
-    public void setLocked(boolean locked) {
-        this.locked = locked;
+    public void setSelected(boolean selected) {
+        this.selected = selected;
     }
 }

@@ -8,10 +8,8 @@ package com.eeontheway.android.applocker.app;
  * @Time 2016-12-15
  */
 public class AppInfo extends BaseAppInfo {
-    /**
-     * 版本号
-     */
     private int versionCode;
+    private boolean inRom;
 
     /**
      * 获取版本号
@@ -30,11 +28,6 @@ public class AppInfo extends BaseAppInfo {
     public void setVersionCode(int versionCode) {
         this.versionCode = versionCode;
     }
-
-    /**
-     * 是否在内部ROM空间
-     */
-    private boolean inRom;
 
     /**
      * 判断是位于内部Rom

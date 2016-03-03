@@ -26,9 +26,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.eeontheway.android.applocker.R;
+import com.eeontheway.android.applocker.lock.LockConfigManager;
 import com.eeontheway.android.applocker.lock.LockLogInfo;
 import com.eeontheway.android.applocker.lock.LockLogViewInfo;
-import com.eeontheway.android.applocker.lock.LockLogDao;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,7 +42,7 @@ import java.util.List;
  * @version v1.0
  * @Time 2016-2-9
  */
-public class LockLogListFragment extends Fragment {
+public class AccessLogListFragment extends Fragment {
     private ListView lv_logs;
     private Button bt_remove;
     private TextView tv_count;
@@ -52,7 +52,7 @@ public class LockLogListFragment extends Fragment {
 
     private Activity parentActivity;
     private List<LockLogViewInfo> logViewInfoList = new ArrayList<>();
-    private LockLogDao logDao;
+    private LockConfigManager lockConfigManager;
     private BaseAdapter logListAdapter;
     private CompoundButton.OnCheckedChangeListener cb_all_listener;
     private Animation animationRemoveButtonIn;
@@ -67,7 +67,7 @@ public class LockLogListFragment extends Fragment {
         super.onCreate(savedInstanceState);
 
         parentActivity = getActivity();
-        logDao = new LockLogDao(parentActivity);
+        lockConfigManager = LockConfigManager.getInstance(parentActivity);
         logListAdapter = createAdapter();
 
         // 开始加载日志列表
@@ -79,9 +79,9 @@ public class LockLogListFragment extends Fragment {
      */
     @Override
     public void onDestroy() {
-        super.onDestroy();
+        lockConfigManager.freeInstance();
 
-        logDao.close();
+        super.onDestroy();
     }
 
     @Nullable
@@ -138,7 +138,7 @@ public class LockLogListFragment extends Fragment {
                         removePhoto(info);
 
                         // 从数据库中删除纪录
-                        logDao.deleteLockLog(info.getLogInfo());
+                        lockConfigManager.deleteLockLog(info.getLogInfo());
                         logViewInfoList.remove(info);
                         deletedCount++;
                     } else {
@@ -275,7 +275,7 @@ public class LockLogListFragment extends Fragment {
             @Override
             protected Void doInBackground(Void... params) {
                 // 查询数据库，获取需要的数据
-                List<LockLogInfo> logInfoList= logDao.queryAllLockerLog();
+                List<LockLogInfo> logInfoList= lockConfigManager.queryAllLockerLog(0, 0xFFFFFFF);
 
                 // 将获取的对像转换成界面处理需要的
                 for (LockLogInfo info : logInfoList) {

@@ -2,22 +2,10 @@ package com.eeontheway.android.applocker.app;
 
 import android.app.ActivityManager;
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.graphics.drawable.Drawable;
-import android.net.TrafficStats;
-import android.net.Uri;
 import android.os.Build;
-import android.os.Debug;
-import android.provider.Settings;
-import android.util.Log;
-import android.widget.Toast;
 
-import com.eeontheway.android.applocker.R;
-
-import java.io.File;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
@@ -64,32 +52,50 @@ public class AppInfoManager {
      * @param packageName 应用的包名
      * @return App信息
      */
-    public AppInfo queryAppInfo (String packageName) {
-        List<PackageInfo> packageInfos = packageManager.getInstalledPackages(
-                PackageManager.GET_ACTIVITIES);
+    public AppInfo querySimpleAppInfo (String packageName) {
+        try {
+            ApplicationInfo info = packageManager.getApplicationInfo(packageName, 0);
 
-        for (PackageInfo info : packageInfos) {
-            if (packageName.equals(info.applicationInfo.packageName)) {
-                AppInfo appInfo = new AppInfo();
-                appInfo.setPackageName(info.applicationInfo.packageName);
-                appInfo.setIcon(info.applicationInfo.loadIcon(packageManager));
-                appInfo.setName(info.applicationInfo.loadLabel(packageManager).toString());
-                if ((info.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0) {
-                    appInfo.setUserApp(true);
-                } else {
-                    appInfo.setUserApp(false);
-                }
-                appInfo.setUsedSize(new File(info.applicationInfo.sourceDir).length());
-                appInfo.setVersionName(info.versionName);
-
-                appInfo.setVersionCode(info.versionCode);
-                appInfo.setInRom((info.applicationInfo.flags & ApplicationInfo.FLAG_EXTERNAL_STORAGE) == 0);
-
-                return appInfo;
-            }
+            AppType type = ((info.flags & ApplicationInfo.FLAG_SYSTEM) == 0) ?
+                    AppType.USER_APP : AppType.SYSTEM_APP;AppInfo appInfo = new AppInfo();
+            appInfo.setPackageName(packageName);
+            appInfo.setIcon(info.loadIcon(packageManager));
+            appInfo.setUserApp(type == AppType.USER_APP);
+            appInfo.setName(info.loadLabel(packageManager).toString());
+            return appInfo;
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
         }
 
         return null;
+    }
+
+
+    /**
+     * 获取所有的App信息列表
+     *
+     * @param appType 待获取的App类型
+     * @return App信息列表
+     */
+    public List<BaseAppInfo> queryAllAppInfo(AppType appType) {
+        List<BaseAppInfo> appInfoList = new ArrayList<>();
+        List<ApplicationInfo> applicationInfoList = packageManager.getInstalledApplications(0);
+
+        for (ApplicationInfo info : applicationInfoList) {
+            AppType type = ((info.flags & ApplicationInfo.FLAG_SYSTEM) == 0) ?
+                    AppType.USER_APP : AppType.SYSTEM_APP;
+
+            if ((appType == AppType.ALL_APP) || (appType == type)) {
+                AppInfo appInfo = new AppInfo();
+                appInfo.setPackageName(info.packageName);
+                appInfo.setIcon(info.loadIcon(packageManager));
+                appInfo.setName(info.loadLabel(packageManager).toString());
+                appInfo.setUserApp(type == AppType.USER_APP);
+                appInfoList.add(appInfo);
+            }
+        }
+
+        return appInfoList;
     }
 
     /**
@@ -160,99 +166,4 @@ public class AppInfoManager {
 
         return false;
     }
-
-    /**
-     * 获取所有的App信息列表
-     *
-     * @param appType 待获取的App类型
-     * @return App信息列表
-     */
-    public List<BaseAppInfo> queryAllAppInfo(AppType appType) {
-        List<BaseAppInfo> appInfoList = new ArrayList<>();
-        List<PackageInfo> packageInfos = packageManager.getInstalledPackages(0);
-
-        for (PackageInfo info : packageInfos) {
-            AppType type = ((info.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0) ?
-                    AppType.USER_APP : AppType.SYSTEM_APP;
-
-            if ((appType == AppType.ALL_APP) || (appType == type)) {
-                AppInfo appInfo = new AppInfo();
-                appInfo.setPackageName(info.applicationInfo.packageName);
-                appInfo.setIcon(info.applicationInfo.loadIcon(packageManager));
-                appInfo.setName(info.applicationInfo.loadLabel(packageManager).toString());
-                appInfo.setUserApp(type == AppType.USER_APP);
-                appInfo.setUsedSize(new File(info.applicationInfo.sourceDir).length());
-                appInfo.setVersionName(info.versionName);
-                //appInfo.setSignatures(info.signatures[0].toCharsString());
-
-                appInfo.setVersionCode(info.versionCode);
-                appInfo.setInRom((info.applicationInfo.flags & ApplicationInfo.FLAG_EXTERNAL_STORAGE) == 0);
-
-                appInfoList.add(appInfo);
-            }
-        }
-
-        return appInfoList;
-    }
-
-    /**
-     * 查看应用的详细信息
-     *
-     * @param packageName 待查看应用的包名
-     */
-    public void viewProcess(String packageName) {
-        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-        intent.setData(Uri.parse("package:" + packageName));
-        context.startActivity(intent);
-    }
-
-    /**
-     * 杀死进程
-     */
-    public void killProcess(String packageName) {
-        activityManager.restartPackage(packageName);
-    }
-
-    /**
-     * 获取所有的进程信息
-     *
-     * @param appType 待获取的App类型
-     * @return 进程信息列表
-     */
-    public List<BaseAppInfo> queryAllProcessInfo(AppType appType) {
-        List<BaseAppInfo> processInfoList = new ArrayList<>();
-
-        List<ActivityManager.RunningAppProcessInfo> infoList = activityManager.getRunningAppProcesses();
-        for (ActivityManager.RunningAppProcessInfo info : infoList) {
-            try {
-                PackageInfo packageInfo = packageManager.getPackageInfo(info.processName, 0);
-                AppType type = ((packageInfo.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0) ?
-                        AppType.USER_APP : AppType.SYSTEM_APP;
-
-                if ((appType == AppType.ALL_APP) || (appType == type)) {
-                    ProcessInfo processInfo = new ProcessInfo();
-
-                    Drawable icon = packageInfo.applicationInfo.loadIcon(packageManager);
-                    processInfo.setIcon(icon);
-                    String name = packageInfo.applicationInfo.loadLabel(packageManager).toString();
-                    processInfo.setName(name);
-                    processInfo.setUserApp(type == AppType.USER_APP);
-
-                    processInfo.setPid(info.pid);
-                    processInfo.setUid(info.uid);
-                    processInfo.setPackageName(info.processName);
-
-                    Debug.MemoryInfo[] memInfo = activityManager.getProcessMemoryInfo(new int[]{info.pid});
-                    processInfo.setUsedSize(memInfo[0].dalvikPrivateDirty);
-
-                    processInfoList.add(processInfo);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-        return processInfoList;
-    }
-
 }

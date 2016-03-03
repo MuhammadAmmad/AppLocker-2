@@ -35,7 +35,6 @@
                 </android.support.v4.view.ViewPager>
             </FrameLayout>
 
-
             <FrameLayout
                 android:background="@color/tooBarBackgroud"
                 android:layout_width="match_parent"

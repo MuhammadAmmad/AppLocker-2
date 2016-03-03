@@ -13,7 +13,6 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -58,13 +57,13 @@ public class MainActivity extends AppCompatActivity {
     // Fragment信息数组
     private final FragmentPagerViewInfo[] fragmentInfoArray = {
             new FragmentPagerViewInfo(
-                    new LockConfigFragment(),
+                    new AppLockListFragment(),
                     R.string.applock_list,
                     R.drawable.widget_search_navigation,
                     R.drawable.widget_search_navigation),
             new FragmentPagerViewInfo(
-                    new LockLogListFragment(),
-                    R.string.applock_logs,
+                    new LockConditionFragment(),
+                    R.string.lock_condition,
                     R.drawable.folder_encript_selected,
                     R.drawable.folder_encript_selected)
     };

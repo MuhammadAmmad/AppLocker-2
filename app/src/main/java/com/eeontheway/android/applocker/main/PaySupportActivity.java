@@ -89,5 +89,4 @@ public class PaySupportActivity extends AppCompatActivity {
                 return super.onContextItemSelected(item);
         }
     }
-
 }

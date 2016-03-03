@@ -89,4 +89,11 @@
         <item name="android:background">@drawable/login_button_selector</item>
         <item name="android:textColor">@color/white</item>
     </style>
+
+    <style name="dayCheck" parent="AppTheme">
+        <item name="android:button">@null</item>
+        <item name="android:background">@drawable/day_check_selector</item>
+        <item name="android:padding">@dimen/view_width_padding</item>
+        <item name="android:textSize">@dimen/large_text_size</item>
+    </style>
 </resources>

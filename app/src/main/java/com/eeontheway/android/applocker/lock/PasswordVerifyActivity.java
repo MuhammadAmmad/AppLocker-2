@@ -44,7 +44,7 @@ public class PasswordVerifyActivity extends AppCompatActivity {
     private final static String PARAM_ICON_NAME = "iconName";
 
     private SettingsManager settingsManager;
-    private LockLogDao lockLogDao;
+    private LockConfigManager lockConfigManager;
     private CameraUtils cameraUtils;
     private String photoName;
     private LockLogInfo lockLogInfo = new LockLogInfo();
@@ -71,7 +71,7 @@ public class PasswordVerifyActivity extends AppCompatActivity {
 
         activity = this;
         settingsManager = SettingsManager.getInstance(this);
-        lockLogDao = new LockLogDao(this);
+        lockConfigManager = LockConfigManager.getInstance(this);
 
         initViews ();
         initCameraCapture();
@@ -85,6 +85,7 @@ public class PasswordVerifyActivity extends AppCompatActivity {
         // 清除Static引用，以释放内存
         activity = null;
 
+        lockConfigManager.freeInstance();
         cameraUtils.close();
         super.onDestroy();
     }
@@ -189,11 +190,11 @@ public class PasswordVerifyActivity extends AppCompatActivity {
      * 显示最近密码错误的信息
      */
     private void showLatestPasswordErrorInfo() {
-        LockLogInfo logInfo = lockLogDao.queryLatestLockerLog(lastPasswordErrorPackageName);
-        if (logInfo != null) {
-            // 启动日志显示界面
-            LockLogActivity.startActivity(this, logInfo);
-        }
+//        LockLogInfo logInfo = lockConfigManager.qu(lastPasswordErrorPackageName);
+//        if (logInfo != null) {
+//            // 启动日志显示界面
+//            LockLogActivity.startActivity(this, logInfo);
+//        }
     }
 
     /**
@@ -247,7 +248,7 @@ public class PasswordVerifyActivity extends AppCompatActivity {
      * @param logInfo 日志信息
      */
     private void saveLogInfoToDatabase (LockLogInfo logInfo) {
-        lockLogDao.addLogInfo(logInfo);
+       // lockConfigManager.addLogInfo(logInfo);
     }
 
     /**
@@ -353,7 +354,7 @@ public class PasswordVerifyActivity extends AppCompatActivity {
 
         // 刷新照片存储路径
         lockLogInfo.setPhotoPath(path);
-        lockLogDao.updateLogInfo(lockLogInfo);
+        //lockConfigManager.updateLogInfo(lockLogInfo);
 
         // 释放资源
         newBitmap.recycle();

@@ -12,11 +12,13 @@ import java.io.Serializable;
  */
 public class LockLogInfo implements Serializable {
     public static final String PHOTO_PATH_PREFIX = "AppLockerPhoto";
-
-    /**
-     * 内部ID
-     */
     private long id;
+    private String appName;
+    private String packageName;
+    private String photoPath;
+    private String time;
+    private String location;
+    private int passwordErrorCount;
 
     /**
      * 获取内部ID
@@ -35,11 +37,6 @@ public class LockLogInfo implements Serializable {
     }
 
     /**
-     * 应用的包名
-     */
-    private String packageName;
-
-    /**
      * 获取应用的包名
      * @return 应用的包名
      */
@@ -55,10 +52,6 @@ public class LockLogInfo implements Serializable {
         this.packageName = packageName;
     }
 
-    /**
-     * App名称，非包名
-     */
-    private String appName;
 
     /**
      * 获取App名称
@@ -77,11 +70,6 @@ public class LockLogInfo implements Serializable {
     }
 
     /**
-     * 日志纪录的时间
-     */
-    private String time;
-
-    /**
      * 获取日志纪录时间
      * @return 日志纪录时间
      */
@@ -98,11 +86,6 @@ public class LockLogInfo implements Serializable {
     }
 
     /**
-     * 密码次数
-     */
-    private int passwordErrorCount;
-
-    /**
      * 获取密码次数
      * @return 密码次数
      */
@@ -117,11 +100,6 @@ public class LockLogInfo implements Serializable {
     public void setPasswordErrorCount(int passwordErrorCount) {
         this.passwordErrorCount = passwordErrorCount;
     }
-
-    /**
-     * 拍摄的照片
-     */
-    private String photoPath;
 
     /**
      * 获取拍摄的照片路径
@@ -145,5 +123,21 @@ public class LockLogInfo implements Serializable {
      */
     public boolean isPhotoInInternal () {
         return photoPath.startsWith("/");
+    }
+
+    /**
+     * 获取日志产生的地理位置
+     * @return 地理位置
+     */
+    public String getLocation() {
+        return location;
+    }
+
+    /**
+     * 设置日志产生的地址位置
+     * @param location 地理位置
+     */
+    public void setLocation(String location) {
+        this.location = location;
     }
 }
