@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import com.eeontheway.android.applocker.app.AppInfo;
 import com.eeontheway.android.applocker.app.AppInfoManager;
+import com.eeontheway.android.applocker.locate.Position;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -228,15 +229,23 @@ public class LockConfigDatabase {
 
         // 查找gps配置信息
         cursor = db.query("gps_lock_config",
-                new String[]{"id", "enable" },
+                new String[]{"id", "enable", "latitude", "longitude", "radius", "address"},
                 "mode_id=?",
                 new String[] {modeInfo.getId() + ""}, null, null, null);
         ok = cursor.moveToFirst();
         while (ok) {
-            TimeLockCondition info = new TimeLockCondition();
-            info.setId(cursor.getInt(0));
-            info.setEnable(cursor.getInt(3) > 0);
-            configList.add(info);
+            GpsLockCondition lockCondition = new GpsLockCondition();
+            lockCondition.setId(cursor.getInt(0));
+            lockCondition.setEnable(cursor.getInt(1) > 0);
+
+            Position position = new Position();
+            position.setLatitude(cursor.getDouble(2));
+            position.setLongitude(cursor.getDouble(3));
+            position.setRadius((float)cursor.getDouble(4));
+            position.setAddress(cursor.getString(5));
+            lockCondition.setPosition(position);
+
+            configList.add(lockCondition);
 
             ok = cursor.moveToNext();
         }
@@ -266,9 +275,9 @@ public class LockConfigDatabase {
      * @param config 待更新的时间锁定信息
      * @return true 成功; false 失败
      */
-    public boolean updateLockCondition(BaseLockCondition config, BaseLockCondition newConfig) {
+    public boolean updateLockCondition(BaseLockCondition config) {
         if (config instanceof TimeLockCondition) {
-            TimeLockCondition timeLockCondition = (TimeLockCondition)newConfig;
+            TimeLockCondition timeLockCondition = (TimeLockCondition)config;
 
             ContentValues values = new ContentValues();
             values.put("start_time", timeLockCondition.getStartTime());
@@ -277,9 +286,19 @@ public class LockConfigDatabase {
             values.put("enable", timeLockCondition.isEnable());
             int row = db.update("time_lock_config", values, "id=?", new String[] {config.getId() + ""});
             return (row > 0);
-        }
+        } else {
+            GpsLockCondition gpsLockCondition = (GpsLockCondition)config;
 
-        return true;
+            ContentValues values = new ContentValues();
+            values.put("enable", gpsLockCondition.isEnable());
+            Position position = gpsLockCondition.getPosition();
+            values.put("latitude", position.getLatitude());
+            values.put("longitude", position.getLongitude());
+            values.put("radius", position.getRadius());
+            values.put("address", position.getAddress());
+            int row = db.update("gps_lock_config", values, "id=?", new String[] {config.getId() + ""});
+            return (row > 0);
+        }
     }
 
 
@@ -304,121 +323,46 @@ public class LockConfigDatabase {
                 config.setId((int)rowId);
                 return true;
             }
+        } else {
+            GpsLockCondition gpsLockCondition = (GpsLockCondition)config;
+
+            ContentValues values = new ContentValues();
+            values.put("enable", gpsLockCondition.isEnable());
+            values.put("mode_id", modeInfo.getId());
+            Position position = gpsLockCondition.getPosition();
+            values.put("latitude", position.getLatitude());
+            values.put("longitude", position.getLongitude());
+            values.put("radius", position.getRadius());
+            values.put("address", position.getAddress());
+            long rowId = db.insert("gps_lock_config", null, values);
+            if (rowId != -1) {
+                config.setId((int)rowId);
+                return true;
+            }
         }
 
         return false;
     }
 
     /**
-     * 获取指定模式所有的GPS锁定信息
-     * @param modeInfo 指定的模式
-     * @return GPS锁定信息配置列表
-     */
-    public List<GpsLockCondition> queryGpsConfigInfo (LockModeInfo modeInfo) {
-        List<GpsLockCondition> configList = new ArrayList<>();
-        String queryString = "select id, enable" +
-                " from gps_lock_config" +
-                " where id = ?;";
-
-        Cursor cursor = db.rawQuery(queryString, new String[] {"" + modeInfo.getId()});
-        boolean ok = cursor.moveToFirst();
-        while (ok) {
-            GpsLockCondition info = new GpsLockCondition();
-            info.setId(cursor.getInt(0));
-            info.setEnable(cursor.getInt(1) > 0); ;
-            configList.add(info);
-
-            ok = cursor.moveToNext();
-        }
-        cursor.close();
-        return configList;
-    }
-
-
-    /**
-     * 在指定模式下添加一个GPS锁定配置
-     * @param config 待添加的GPS锁定信息，部分信息在插入过程中会自动完善
-     * @param modeInfo 指定模式
-     * @return true 成功; false 失败
-     */
-    public boolean addGpsConfigIntoToMode (GpsLockCondition config, LockModeInfo modeInfo) {
-        String queryString = "insert into gps_lock_config (mode_id, enable)" +
-                " values (?, ?);";
-        Cursor cursor = db.rawQuery(queryString, new String[] {
-                "" + modeInfo.getId(),
-                config.isEnable() ? "1" : "0"});
-        boolean ok = cursor.moveToFirst();
-        cursor.close();
-        if (!ok) return false;
-
-        // 获取插入项的ID
-        queryString = "select last_insert_rowid() newid";
-        cursor = db.rawQuery(queryString, null);
-        if (cursor.moveToFirst()) {
-            config.setId(cursor.getInt(0));
-        }
-        cursor.close();
-
-        return true;
-    }
-
-    /**
-     * 更新GPS锁定信息
-     * @param config 待更新的GPS锁定信息
-     * @return true 成功; false 失败
-     */
-    public boolean updateGpsConfigInfo (GpsLockCondition config) {
-        String queryString = "update gps_lock_config set enable = ? where id = ?;";
-        Cursor cursor = db.rawQuery(queryString, new String[] {
-                config.isEnable() ? "1" : "0",
-                config.getId() + ""});
-        boolean ok = cursor.moveToFirst();
-        cursor.close();
-        if (!ok) return false;
-
-        return true;
-    }
-
-    /**
-     * 删除GPS锁定信息
-     * @param config GPS锁定信息
-     */
-    public boolean deleteGpsConfigInfo (GpsLockCondition config) {
-        String queryString = "delete from gps_lock_config where id = ?;";
-        Cursor cursor = db.rawQuery(queryString, new String[] {"" + config.getId()});
-        boolean ok = cursor.moveToFirst();
-        cursor.close();
-        return ok;
-    }
-
-    /**
      * 添加一条锁定日志
-     * @param logInfo 锁定日志
+     * @param accessLog 锁定日志
      * @return true 操作成功; false 操作失败
      */
-    public boolean addLogInfo (LockLogInfo logInfo) {
-        String queryString = "insert into lock_log (app_name, package_name, time, location," +
-                " photo_path, password_err_cnt )" +
-                " values (?, ?, ?, ?, ?, ?);";
-        Cursor cursor = db.rawQuery(queryString, new String[] {
-                logInfo.getAppName(),
-                logInfo.getPackageName(),
-                logInfo.getTime(),
-                logInfo.getLocation(),
-                logInfo.getPhotoPath(),
-                "" + logInfo.getPasswordErrorCount()});
-        boolean ok = cursor.moveToFirst();
-        cursor.close();
-        if (!ok) return false;
+    public boolean addAccessInfo(AccessLog accessLog) {
+        ContentValues values = new ContentValues();
+        values.put("appName", accessLog.getAppName());
+        values.put("packageName", accessLog.getPackageName());
+        values.put("passErrorCount", accessLog.getPasswordErrorCount());
+        values.put("photoPath", accessLog.getPhotoPath());
+        values.put("resason", "unknown");
 
-        // 获取插入项的ID
-        queryString = "select last_insert_rowid() newid";
-        cursor = db.rawQuery(queryString, null);
-        if (cursor.moveToFirst()) {
-            logInfo.setId(cursor.getInt(0));
+        long row = db.insert("app_log_list", null, values);
+        if (row >= 0) {
+            accessLog.setId(row);
+            return true;
         }
-        cursor.close();
-        return true;
+        return false;
     }
 
     /**
@@ -426,57 +370,32 @@ public class LockConfigDatabase {
      * @param logInfo 锁定日志
      * @return true 操作成功; false 操作失败
      */
-    public boolean deleteLockLog (LockLogInfo logInfo) {
-        String queryString = "delete from lock_log where id = ?;";
-        Cursor cursor = db.rawQuery(queryString, new String[] {"" + logInfo.getId()});
-        boolean ok = cursor.moveToFirst();
-        cursor.close();
-        return ok;
-    }
-
-    /**
-     * 更新一条锁定日志
-     * 更新时，将会在日志中的id为搜索条件进行更新
-     * @param logInfo 锁定日志
-     * @return true 操作成功; false 操作失败
-     */
-    public boolean updateLogInfo (LockLogInfo logInfo) {
-        String queryString = "update gps_lock_config set app_name = ?, package_name = ?," +
-                " time = ?, location = ?, photo_path = ?, " +
-                " password_err_cnt = ? where id = ?";
-        Cursor cursor = db.rawQuery(queryString, new String[] {
-                logInfo.getAppName(),
-                logInfo.getPackageName(),
-                logInfo.getTime(),
-                logInfo.getLocation(),
-                logInfo.getPhotoPath(),
-                "" + logInfo.getPasswordErrorCount()});
-        boolean ok = cursor.moveToFirst();
-        cursor.close();
-        if (!ok) return false;
-        return true;
+    public boolean deleteAccessLog (AccessLog logInfo) {
+        int row = db.delete("app_log_list", "id=?", new String[]{logInfo.getId() + ""});
+        return (row > 0);
     }
 
     /**
      * 获取指定包所有的锁定日志
      * @return 锁定日志
      */
-    public List<LockLogInfo> queryAllLockerLog (int startPos, int count) {
-        List<LockLogInfo> logList = new ArrayList<>();
+    public List<AccessLog> queryAccessLog (int startPos, int count) {
+        List<AccessLog> logList = new ArrayList<>();
 
-        String queryString = "select id, app_name, package_name, time, location, " +
-                " photo_path, password_err_cnt from lock_log " +
-                " set limit ? offset ?;";
+        String queryString = "select id, appName, packageName, " +
+                " passErrorCount, photoPath, resason from app_log_list " +
+                " limit ? offset ?;";
         Cursor cursor = db.rawQuery(queryString, new String[] {"" + count, "" + startPos});
         boolean ok = cursor.moveToFirst();
         while (ok) {
-            LockLogInfo info = new LockLogInfo();
+            AccessLog info = new AccessLog();
             info.setId(cursor.getInt(0));
             info.setAppName(cursor.getString(1));
             info.setPackageName(cursor.getString(2));
-            info.setLocation(cursor.getString(3));
+            info.setPasswordErrorCount(cursor.getInt(3));
             info.setPhotoPath(cursor.getString(4));
-            info.setPasswordErrorCount(cursor.getInt(5));
+            logList.add(info);
+
             ok = cursor.moveToNext();
         }
         cursor.close();

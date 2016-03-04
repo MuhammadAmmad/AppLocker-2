@@ -35,7 +35,19 @@
         android:layout_centerVertical="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content">
-
+        <TextView
+            android:id="@+id/tv_postion"
+            android:paddingLeft="@dimen/viewNormalMargin"
+            android:text="@string/Longitude_Latitude"
+            style="@style/Common.TextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        <TextView
+            android:id="@+id/tv_address"
+            android:paddingLeft="@dimen/viewNormalMargin"
+            android:text="@string/real_address"
+            style="@style/Common.TextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
     </LinearLayout>
-
 </RelativeLayout>

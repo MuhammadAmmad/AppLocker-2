@@ -1,6 +1,7 @@
 package com.eeontheway.android.applocker.app;
 
 import android.app.ActivityManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
@@ -145,6 +146,23 @@ public class AppInfoManager {
 
         return null;
     }
+
+
+    /**
+     * 查看位于前台的App
+     * @return 任务信息
+     */
+    public ComponentName queryTopComponentName () {
+        if (Build.VERSION.SDK_INT < 21) {
+            List<ActivityManager.RunningTaskInfo> runningTaskInfos = activityManager.getRunningTasks(1);
+            if (runningTaskInfos.size() > 0) {
+                return runningTaskInfos.get(0).topActivity;
+            }
+        }
+
+        return null;
+    }
+
 
     /**
      * 判断指定应用是否正在运行

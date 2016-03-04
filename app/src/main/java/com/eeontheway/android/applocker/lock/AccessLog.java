@@ -10,7 +10,7 @@ import java.io.Serializable;
  * @version v1.0
  * @Time 2016-12-15
  */
-public class LockLogInfo implements Serializable {
+public class AccessLog implements Serializable {
     public static final String PHOTO_PATH_PREFIX = "AppLockerPhoto";
     private long id;
     private String appName;
@@ -19,6 +19,7 @@ public class LockLogInfo implements Serializable {
     private String time;
     private String location;
     private int passwordErrorCount;
+    private boolean selected;
 
     /**
      * 获取内部ID
@@ -139,5 +140,21 @@ public class LockLogInfo implements Serializable {
      */
     public void setLocation(String location) {
         this.location = location;
+    }
+
+    /**
+     * 是否被选中
+     * @return true/fase
+     */
+    public boolean isSelected() {
+        return selected;
+    }
+
+    /**
+     * 设置是否被选中
+     * @param selected 是否被选中
+     */
+    public void setSelected(boolean selected) {
+        this.selected = selected;
     }
 }

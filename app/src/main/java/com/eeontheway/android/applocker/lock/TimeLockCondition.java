@@ -1,8 +1,15 @@
 package com.eeontheway.android.applocker.lock;
 
+import android.app.Fragment;
 import android.content.Context;
 
 import com.eeontheway.android.applocker.R;
+import com.eeontheway.android.applocker.main.LocationConditionEditActivity;
+import com.eeontheway.android.applocker.main.TimeConditionEditActivity;
+import com.eeontheway.android.applocker.utils.SystemUtils;
+
+import java.util.Calendar;
+import java.util.Date;
 
 /**
  * 时间锁定配置
@@ -25,6 +32,7 @@ public class TimeLockCondition extends BaseLockCondition {
 
     /**
      * 复制锁定信息
+     * 只复制应用层的信息
      * @param lockConfig 锁定信息
      */
     public void copy (BaseLockCondition lockConfig) {
@@ -135,5 +143,69 @@ public class TimeLockCondition extends BaseLockCondition {
         }
 
         return stringBuffer.toString();
+    }
+
+    /**
+     * 检查指定的日期是否在该范围内
+     * @param calendar 日间
+     * @return true/false
+     */
+    public boolean isMatch (Calendar calendar) {
+        // 比较星期
+        switch (calendar.get(Calendar.DAY_OF_WEEK)) {
+            case Calendar.MONDAY:
+                if (!isDaySet(TimeLockCondition.DAY1)) {
+                    return false;
+                }
+                break;
+            case Calendar.TUESDAY:
+                if (!isDaySet(TimeLockCondition.DAY2)) {
+                    return false;
+                }
+                break;
+            case Calendar.WEDNESDAY:
+                if (!isDaySet(TimeLockCondition.DAY3)) {
+                    return false;
+                }
+                break;
+            case Calendar.THURSDAY:
+                if (!isDaySet(TimeLockCondition.DAY4)) {
+                    return false;
+                }
+                break;
+            case Calendar.FRIDAY:
+                if (!isDaySet(TimeLockCondition.DAY5)) {
+                    return false;
+                }
+                break;
+            case Calendar.SATURDAY:
+                if (!isDaySet(TimeLockCondition.DAY6)) {
+                    return false;
+                }
+                break;
+            case Calendar.SUNDAY:
+                if (!isDaySet(TimeLockCondition.DAY7)) {
+                    return false;
+                }
+                break;
+        }
+
+        // 比较时/分
+        Date date = calendar.getTime();
+        Calendar startCalendar = Calendar.getInstance();
+        startCalendar.setTime(SystemUtils.formatDate(getStartTime(), "HH:mm"));
+        startCalendar.set(0, 0, 0);
+
+        Calendar endCalendar = Calendar.getInstance();
+        endCalendar.setTime(SystemUtils.formatDate(getEndTime(), "HH:mm"));
+        endCalendar.set(0, 0, 0);
+
+        if (startCalendar.compareTo(calendar) <= 0) {
+            if (endCalendar.compareTo(calendar) >= 0) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

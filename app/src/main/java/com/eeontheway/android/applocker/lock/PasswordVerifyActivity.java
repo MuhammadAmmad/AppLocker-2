@@ -47,7 +47,7 @@ public class PasswordVerifyActivity extends AppCompatActivity {
     private LockConfigManager lockConfigManager;
     private CameraUtils cameraUtils;
     private String photoName;
-    private LockLogInfo lockLogInfo = new LockLogInfo();
+    private AccessLog accessLog = new AccessLog();
 
     private static AppCompatActivity activity;
     private static String lastPasswordErrorPackageName;
@@ -139,9 +139,6 @@ public class PasswordVerifyActivity extends AppCompatActivity {
      * 初始化界面
      */
     private void initViews() {
-        setTitle(R.string.app_locked);
-
-        // 显示包名被锁定
         tv_name = (TextView)findViewById(R.id.tv_name);
         iv_icon = (ImageView)findViewById(R.id.iv_icon);
         tv_password_error_alert = (TextView)findViewById(R.id.tv_password_error_alert);
@@ -190,11 +187,11 @@ public class PasswordVerifyActivity extends AppCompatActivity {
      * 显示最近密码错误的信息
      */
     private void showLatestPasswordErrorInfo() {
-//        LockLogInfo logInfo = lockConfigManager.qu(lastPasswordErrorPackageName);
-//        if (logInfo != null) {
-//            // 启动日志显示界面
-//            LockLogActivity.startActivity(this, logInfo);
-//        }
+        AccessLog accessLog = lockConfigManager.getAccessLog(lastPasswordErrorPackageName);
+        if (accessLog != null) {
+            // 启动日志显示界面
+            LockLogActivity.startActivity(this, accessLog);
+        }
     }
 
     /**
@@ -223,7 +220,7 @@ public class PasswordVerifyActivity extends AppCompatActivity {
      */
     private String savePhotoToInternal(byte [] imgData, String fileName) {
         // 直接在Data目录下的创建图像存储目录
-        File dir = new File(getFilesDir().getPath() + File.separator + LockLogInfo.PHOTO_PATH_PREFIX);
+        File dir = new File(getFilesDir().getPath() + File.separator + AccessLog.PHOTO_PATH_PREFIX);
         if (!dir.exists() || !dir.isDirectory()) {
             dir.delete();
             dir.mkdir();
@@ -245,10 +242,10 @@ public class PasswordVerifyActivity extends AppCompatActivity {
 
     /**
      * 将日志信息保存到数据库中
-     * @param logInfo 日志信息
+     * @param accessLog 日志信息
      */
-    private void saveLogInfoToDatabase (LockLogInfo logInfo) {
-       // lockConfigManager.addLogInfo(logInfo);
+    private void saveLogInfoToDatabase (AccessLog accessLog) {
+        lockConfigManager.addAccessLog(accessLog);
     }
 
     /**
@@ -273,11 +270,11 @@ public class PasswordVerifyActivity extends AppCompatActivity {
                 settingsManager.getCaptureOnFailCount();
 
         // 生成日志信息
-        lockLogInfo.setPackageName(packageName);
-        lockLogInfo.setAppName(appName);
-        lockLogInfo.setPasswordErrorCount(settingsManager.getCaptureOnFailCount());
+        accessLog.setPackageName(packageName);
+        accessLog.setAppName(appName);
+        accessLog.setPasswordErrorCount(settingsManager.getCaptureOnFailCount());
         dateFormat.applyPattern("yyyy-MM-dd KK:mm:ss");
-        lockLogInfo.setTime(dateFormat.format(date));
+        accessLog.setTime(dateFormat.format(date));
 
         // 先启动照相并保存后，才能获取最近路径
         if (settingsManager.isCaptureOnFailEnable()) {
@@ -285,7 +282,7 @@ public class PasswordVerifyActivity extends AppCompatActivity {
         }
 
         // 获取最新路径后，才能保存至数据库中
-        saveLogInfoToDatabase(lockLogInfo);
+        saveLogInfoToDatabase(accessLog);
 
         // 纪录超过错误次数的包名
         lastPasswordErrorPackageName = packageName;
@@ -333,11 +330,11 @@ public class PasswordVerifyActivity extends AppCompatActivity {
             paint.setTextSize(textSize);
             paint.setColor(getResources().getColor(R.color.red));
             float startX = 10, startY = 10;
-            canvas.drawText(getString(R.string.appLocker_err_detect, lockLogInfo.getAppName()),
+            canvas.drawText(getString(R.string.appLocker_err_detect, accessLog.getAppName()),
                     startX, 1 * textSize + startY, paint);
-            canvas.drawText(getString(R.string.password_err_counter, lockLogInfo.getPasswordErrorCount()),
+            canvas.drawText(getString(R.string.password_err_counter, accessLog.getPasswordErrorCount()),
                     startX, 2 * textSize + startY, paint);
-            canvas.drawText(getString(R.string.time_args, lockLogInfo.getTime()),
+            canvas.drawText(getString(R.string.time_args, accessLog.getTime()),
                     startX, 3 * textSize + startY, paint);
         }
 
@@ -353,8 +350,8 @@ public class PasswordVerifyActivity extends AppCompatActivity {
         }
 
         // 刷新照片存储路径
-        lockLogInfo.setPhotoPath(path);
-        //lockConfigManager.updateLogInfo(lockLogInfo);
+        accessLog.setPhotoPath(path);
+        //lockConfigManager.updateLogInfo(--);
 
         // 释放资源
         newBitmap.recycle();

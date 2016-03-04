@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.eeontheway.android.applocker">
 
+    <uses-permission android:name="com.android.launcher.permission.READ_SETTINGS" />
+    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
@@ -37,10 +39,17 @@
         android:required="false" />
 
     <application
+        android:name=".main.StartupApplcation"
         android:allowBackup="true"
         android:icon="@drawable/app_lanucher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme">
+
+        <!-- 百度地图的Key -->
+        <meta-data
+            android:name="com.baidu.lbsapi.API_KEY"
+            android:value="jRDsqqA4sljGOcmp8yuQ6Bki" />
+
         <activity
             android:name=".main.StartupActivity"
             android:screenOrientation="portrait"
@@ -270,7 +279,8 @@
             android:name=".main.AppSelectActivity"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustPan" />
-        <activity android:name=".main.TimeConditionEditActivity"></activity>
+        <activity android:name=".main.TimeConditionEditActivity" />
+        <activity android:name=".main.LocationConditionEditActivity"></activity>
     </application>
 
 </manifest>

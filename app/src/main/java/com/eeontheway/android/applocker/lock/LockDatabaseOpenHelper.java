@@ -11,7 +11,7 @@ import android.database.sqlite.SQLiteOpenHelper;
  * @Time 2016-12-15
  */
 public class LockDatabaseOpenHelper extends SQLiteOpenHelper {
-    private static final int currentVersion = 21;
+    private static final int currentVersion = 22;
     private static final String dbName = "applocklist.db";
 
     // 数据库表项配置
@@ -48,10 +48,14 @@ public class LockDatabaseOpenHelper extends SQLiteOpenHelper {
             ");";
     private static final String gps_lock_config_tableName = "gps_lock_config";
     public static final String gps_lock_config_creator =    // gps锁定配置
-            "CREATE TABLE gps_lock_config (" +
-            "   id                 INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT," +
-            "   mode_id            INTEGER  REFERENCES mode_list (id) ON DELETE CASCADE, " +
-            "   enable             BOOLEAN NOT NULL" +
+            "CREATE TABLE gps_lock_config (\n" +
+            "    id                 INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,\n" +
+            "    enable             BOOLEAN NOT NULL,\n" +
+            "    mode_id            INTEGER REFERENCES mode_list (id) ON DELETE CASCADE,\n" +
+            "    latitude           DOUBLE  NOT NULL,\n" +
+            "    longitude          DOUBLE  NOT NULL,\n" +
+            "    radius             DOUBLE  NOT NULL,\n" +
+            "    address            STRING\n" +
             ");";
     private static final String app_log_list_tableName = "app_log_list";
     private static final String app_log_list_creator =      // 锁定日志配置

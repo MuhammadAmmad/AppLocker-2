@@ -10,6 +10,7 @@ import android.widget.CompoundButton;
 import android.widget.TextView;
 
 import com.eeontheway.android.applocker.R;
+import com.eeontheway.android.applocker.locate.Position;
 import com.eeontheway.android.applocker.lock.BaseLockCondition;
 import com.eeontheway.android.applocker.lock.GpsLockCondition;
 import com.eeontheway.android.applocker.lock.LockConfigManager;
@@ -25,6 +26,7 @@ import com.eeontheway.android.applocker.lock.TimeLockCondition;
 class LockConditionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private static final int ITEM_TYPE_TIME = 0;
     private static final int ITEM_TYPE_GPS = 1;
+    private static final int ITEM_TYPE_UNKNOWN = 2;
 
     private Context context;
     private LockConfigManager lockConfigManager;
@@ -73,7 +75,7 @@ class LockConditionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
         } else {
             View view = LayoutInflater.from(parent.getContext())
                     .inflate(R.layout.item_postion_lock_config, parent, false);
-            return new ItemPostionViewHolder(view);
+            return new ItemPositionViewHolder(view);
         }
     }
 
@@ -92,10 +94,14 @@ class LockConditionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
             viewHolder.tv_day.setText(timeLockCondition.getDayString(context));
             viewHolder.cb_enable.setChecked(timeLockCondition.isEnable());
             viewHolder.cb_selected.setChecked(timeLockCondition.isSelected());
-        } else {
+        } else if (config instanceof GpsLockCondition){
             GpsLockCondition gpsLockCondition = (GpsLockCondition)config;
-            ItemPostionViewHolder viewHolder = (ItemPostionViewHolder)holder;
+            ItemPositionViewHolder viewHolder = (ItemPositionViewHolder)holder;
 
+            Position pos = gpsLockCondition.getPosition();
+            viewHolder.tv_address.setText(pos.getAddress());
+            viewHolder.tv_postion.setText(context.getString(R.string.Longitude_Latitude,
+                                        pos.getLongitude(), pos.getLatitude()));
             viewHolder.cb_enable.setChecked(gpsLockCondition.isEnable());
             viewHolder.cb_selected.setChecked(gpsLockCondition.isSelected());
         }
@@ -112,9 +118,11 @@ class LockConditionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
         BaseLockCondition config = lockConfigManager.getLockCondition(position);
         if (config instanceof TimeLockCondition) {
             return ITEM_TYPE_TIME;
-        } else {
+        } else if (config instanceof GpsLockCondition){
             return ITEM_TYPE_GPS;
         }
+
+        return ITEM_TYPE_UNKNOWN;
     }
 
     /**
@@ -122,28 +130,21 @@ class LockConditionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
      */
     interface ItemSelectedListener {
         void onItemClicked (int pos);
-        void onItemLongClicked (int pos);
         void onItemSelected (int pos, boolean selected);
     }
 
     /**
-     * 时间配置的ViewHolder
+     * 基础的ItemViewHolder
      */
-    class ItemTimeViewHolder extends RecyclerView.ViewHolder {
-        private CheckBox cb_enable;
-        private TextView tv_start_time;
-        private TextView tv_end_time;
-        private TextView tv_day;
-        private View ll_item;
-        private CheckBox cb_selected;
+    class BaseItemViewHolder extends RecyclerView.ViewHolder {
+        public View ll_item;
+        public CheckBox cb_enable;
+        public CheckBox cb_selected;
 
-        public ItemTimeViewHolder(final View itemView) {
+        public BaseItemViewHolder(View itemView) {
             super(itemView);
 
             cb_enable = (CheckBox) itemView.findViewById(R.id.cb_enable);
-            tv_start_time = (TextView)itemView.findViewById(R.id.tv_start_time);
-            tv_end_time = (TextView)itemView.findViewById(R.id.tv_end_time);
-            tv_day = (TextView)itemView.findViewById(R.id.tv_day);
             ll_item = itemView.findViewById(R.id.ll_item);
             cb_selected = (CheckBox)itemView.findViewById(R.id.cb_selected);
 
@@ -162,7 +163,7 @@ class LockConditionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
             });
 
             // 普通点击事件，切换锁定使能
-            ll_item.setOnClickListener(new View.OnClickListener() {
+            cb_enable.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     int pos = getAdapterPosition();
@@ -171,41 +172,51 @@ class LockConditionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
                     BaseLockCondition oldConfig = lockConfigManager.getLockCondition(pos);
                     BaseLockCondition newConfig = (BaseLockCondition)oldConfig.clone();
                     newConfig.setEnable(!oldConfig.isEnable());
-                    lockConfigManager.updateLockCondition(oldConfig, newConfig);
-
-                    if (listener != null) {
-                        listener.onItemClicked(getAdapterPosition());
-                    }
+                    lockConfigManager.updateLockCondition(newConfig);
                 }
             });
 
             // 长点击事件
-            ll_item.setOnLongClickListener(new View.OnLongClickListener() {
+            ll_item.setOnClickListener(new View.OnClickListener() {
                 @Override
-                public boolean onLongClick(View v) {
+                public void onClick(View v) {
                     if (listener != null) {
-                        listener.onItemLongClicked(getAdapterPosition());
+                        listener.onItemClicked(getAdapterPosition());
                     }
-                    return false;
                 }
             });
         }
     }
 
     /**
-     * 位置信息的ViewHolder
+     * 时间配置的ViewHolder
      */
-    class ItemPostionViewHolder extends RecyclerView.ViewHolder {
-        private CheckBox cb_enable;
-        private View ll_item;
-        private CheckBox cb_selected;
+    class ItemTimeViewHolder extends BaseItemViewHolder {
+        public TextView tv_start_time;
+        public TextView tv_end_time;
+        public TextView tv_day;
 
-        public ItemPostionViewHolder(View itemView) {
+        public ItemTimeViewHolder(final View itemView) {
             super(itemView);
 
-            cb_enable = (CheckBox) itemView.findViewById(R.id.cb_enable);
-            ll_item = itemView.findViewById(R.id.ll_item);
-            cb_selected = (CheckBox)itemView.findViewById(R.id.cb_selected);
+            tv_start_time = (TextView)itemView.findViewById(R.id.tv_start_time);
+            tv_end_time = (TextView)itemView.findViewById(R.id.tv_end_time);
+            tv_day = (TextView)itemView.findViewById(R.id.tv_day);
+        }
+    }
+
+    /**
+     * 位置信息的ViewHolder
+     */
+    class ItemPositionViewHolder extends BaseItemViewHolder {
+        public TextView tv_postion;
+        public TextView tv_address;
+
+        public ItemPositionViewHolder(View itemView) {
+            super(itemView);
+
+            tv_postion = (TextView) itemView.findViewById(R.id.tv_postion);
+            tv_address = (TextView) itemView.findViewById(R.id.tv_address);
         }
     }
 }

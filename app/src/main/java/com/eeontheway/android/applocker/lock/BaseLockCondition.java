@@ -1,12 +1,16 @@
 package com.eeontheway.android.applocker.lock;
 
+import android.app.Fragment;
+
+import java.io.Serializable;
+
 /**
  * 基本锁定配置
  * @author lishutong
  * @version v1.0
  * @Time 2016-12-15
  */
-public class BaseLockCondition implements Cloneable {
+public abstract class BaseLockCondition implements Cloneable, Serializable {
     private int id;
     private boolean enable;
     private boolean selected;
@@ -83,5 +87,4 @@ public class BaseLockCondition implements Cloneable {
     public void setEnable(boolean enable) {
         this.enable = enable;
     }
-
 }

@@ -27,6 +27,15 @@ android {
             signingConfig signingConfigs.config
         }
     }
+
+    sourceSets {
+        main {
+            jniLibs.srcDir 'libs'
+        }
+
+        debug.setRoot('build-types/debug')
+        release.setRoot('build-types/release')
+    }
 }
 
 dependencies {
@@ -53,5 +62,5 @@ dependencies {
     compile 'com.android.support:design:23.2.0'
     compile 'com.android.support:support-v4:23.2.0'
     compile 'com.android.support:cardview-v7:23.2.0'
-    compile 'com.google.android.gms:play-services-appindexing:8.1.0'
+    compile files('libs/BaiduLBS_Android.jar')
 }

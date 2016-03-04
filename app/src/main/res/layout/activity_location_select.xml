@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <include
+        android:id="@+id/tl_header"
+        layout="@layout/item_activity_header" />
+
+    <LinearLayout
+        android:id="@+id/ll_search"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <TextView
+            android:text="@string/search"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        <AutoCompleteTextView
+            android:id="@+id/act_search"
+            android:layout_weight="1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        <Button
+            android:id="@+id/bt_sumbit"
+            android:text="@string/submit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+
+    <RelativeLayout
+        android:layout_weight="1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <com.baidu.mapapi.map.MapView
+            android:id="@+id/map_baidu"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clickable="true" />
+        <ImageButton
+            android:id="@+id/bt_show_my_location"
+            android:src="@drawable/ic_clock"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="@dimen/view_larget_margin"
+            android:layout_marginLeft="@dimen/view_larget_margin"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        <RadioGroup
+            android:id="@+id/rg_map_type"
+            android:orientation="vertical"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentRight="true"
+            android:layout_marginTop="@dimen/view_larget_margin"
+            android:layout_marginRight="@dimen/view_larget_margin"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+            <RadioButton
+                android:id="@+id/rb_normal"
+                android:text="@string/normal_overlay"
+                android:textSize="@dimen/small_text_size"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+            <RadioButton
+                android:id="@+id/rb_satellite"
+                android:text="@string/satellite_overlay"
+                android:textSize="@dimen/small_text_size"
+                android:layout_marginTop="@dimen/view_width_padding"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </RadioGroup>
+    </RelativeLayout>
+
+</LinearLayout>

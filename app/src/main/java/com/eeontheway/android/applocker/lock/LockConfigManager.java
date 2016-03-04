@@ -3,7 +3,15 @@ package com.eeontheway.android.applocker.lock;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import com.eeontheway.android.applocker.app.AppInfo;
+import com.eeontheway.android.applocker.locate.LocationService;
+import com.eeontheway.android.applocker.locate.Position;
+import com.eeontheway.android.applocker.main.StartupApplcation;
+
+import java.io.File;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
@@ -28,6 +36,7 @@ public class LockConfigManager {
     private List<LockModeInfo> lockModeInfoList = new ArrayList<>();
     private List<AppLockInfo> appLockInfoList = new ArrayList<>();
     private List<BaseLockCondition> lockConditionList = new ArrayList<>();
+    private List<AccessLog> accessLogList = new ArrayList<>();
 
     private ConfigObservable observable;
 
@@ -265,10 +274,6 @@ public class LockConfigManager {
      * @param lockModeInfo 指定的App信息
      * @return 是否添加成功; true/false
      */
-    public boolean addAppInfoToMode(AppLockInfo appLockInfo) {
-        return addAppInfoToMode(appLockInfo, currentLockModeInfo);
-    }
-
     public boolean addAppInfoToMode(AppLockInfo appLockInfo, LockModeInfo lockModeInfo) {
         for (AppLockInfo lockInfo : appLockInfoList) {
             // 如果已经在列表中，则无需插入
@@ -284,6 +289,10 @@ public class LockConfigManager {
             observable.notifyObservers();
         }
         return ok;
+    }
+
+    public boolean addAppInfoToMode(AppLockInfo appLockInfo) {
+        return addAppInfoToMode(appLockInfo, currentLockModeInfo);
     }
 
     /**
@@ -403,7 +412,6 @@ public class LockConfigManager {
         return count;
     }
 
-
     /**
      * 检查被选中的App数量
      *
@@ -442,20 +450,23 @@ public class LockConfigManager {
 
     /**
      * 更新锁定时机配置
-     *
      * @param config 待更新的配置
-     * @param newConfig 新配置
      * @return 是否成功 true/false
      */
-    public boolean updateLockCondition(BaseLockCondition config, BaseLockCondition newConfig) {
-        boolean ok = lockConfigDatabase.updateLockCondition(config, newConfig);
+    public boolean updateLockCondition(BaseLockCondition config) {
+        boolean ok = lockConfigDatabase.updateLockCondition(config);
         if (ok) {
-            config.copy(newConfig);
+            // 如果数据库写成功了，则更新缓存
+            for (BaseLockCondition condition : lockConditionList) {
+                if (condition.getId() == config.getId()) {
+                    condition.copy(config);
+                    break;
+                }
+            }
             observable.notifyObservers();
         }
         return ok;
     }
-
 
     /**
      * 将指定的锁定配置添加到指定模式下边
@@ -464,10 +475,6 @@ public class LockConfigManager {
      * @param lockModeInfo 指定的App信息
      * @return 是否添加成功; true/false
      */
-    public boolean addLockConditionIntoMode(BaseLockCondition config) {
-        return addLockConditionIntoMode(config, currentLockModeInfo);
-    }
-
     public boolean addLockConditionIntoMode(BaseLockCondition config, LockModeInfo lockModeInfo) {
         boolean ok = lockConfigDatabase.addLockConditionIntoMode(config, lockModeInfo);
         if (ok) {
@@ -475,6 +482,10 @@ public class LockConfigManager {
             observable.notifyObservers();
         }
         return ok;
+    }
+
+    public boolean addLockConditionIntoMode(BaseLockCondition config) {
+        return addLockConditionIntoMode(config, currentLockModeInfo);
     }
 
     /**
@@ -488,4 +499,191 @@ public class LockConfigManager {
         }
     }
 
+    /**
+     * 获取日志条目数
+     * @return 日志条目数
+     */
+    public int getAcessLogsCount () {
+        return accessLogList.size();
+    }
+
+    /**
+     * 获取指定位置的日志信息
+     * @param index 指定位置
+     * @return 日志信息
+     */
+    public AccessLog getAccessLog (int index) {
+        if (index < accessLogList.size()) {
+            return accessLogList.get(index);
+        }
+
+        return null;
+    }
+
+    /**
+     * 获取指定包名的最新锁定日志
+     * @param packageName 查找是使用的包名
+     * @return 日志信息
+     */
+    public AccessLog getAccessLog (String packageName) {
+        for (AccessLog accessLog : accessLogList) {
+            if (accessLog.getPackageName().equals(packageName)) {
+                return accessLog;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * 检查被选中的日志条目数量
+     *
+     * @return 被选中的日志条目数
+     */
+    public int selectedAccessLogs () {
+        int count = 0;
+
+        for (AccessLog log : accessLogList) {
+            if (log.isSelected()) {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    /**
+     * 选中的所有日志条目数量
+     */
+    public void selectAllAccessLogs (boolean selecte) {
+        for (AccessLog log : accessLogList) {
+            log.setSelected(selecte);
+        }
+
+        if (accessLogList.size() > 0) {
+            observable.notifyObservers();
+        }
+    }
+
+    /**
+     * 将指定的日志信息添加到数据库中保存
+     * @param accessLog  待保存的日志信息
+     * @return 是否添加成功; true/false
+     */
+    public boolean addAccessLog (AccessLog accessLog) {
+        boolean ok = lockConfigDatabase.addAccessInfo(accessLog);
+        if (ok) {
+            // 新生成的日志，添加到头部
+            accessLogList.add(0, accessLog);
+            observable.notifyObservers();
+        }
+        return ok;
+    }
+
+    /**
+     * 删除选中的锁定配置
+     * @return 移除的数量
+     */
+    public int deleteSelectedAccessLogs () {
+        int count = 0;
+        List<AccessLog> removeList = new ArrayList<>();
+
+        // 扫描需要移除的App信息
+        for (AccessLog log : accessLogList) {
+            if (log.isSelected()) {
+                removeList.add(log);
+            }
+        }
+
+        // 开始移除操作
+        for (AccessLog log : removeList) {
+            // 从数据库中移除
+            boolean ok = lockConfigDatabase.deleteAccessLog(log);
+            if (ok) {
+                // 只删除内部的照片，存储在相册中的不删除
+                if (log.getPhotoPath() != null) {
+                    if (log.isPhotoInInternal()) {
+                        String path = log.getPhotoPath();
+                        new File(path).delete();
+                    }
+                }
+
+                // 再从缓存队列中移除
+                accessLogList.remove(log);
+
+                count++;
+            }
+        }
+
+        // 通知外界数据发生变化
+        if (count > 0) {
+            observable.notifyObservers();
+        }
+
+        return count;
+    }
+
+    /**
+     * 获取更多的日志信息，用于延迟加载
+     * @param moreCount 期望获取的更多数量
+     * @return 实际获取的数量
+     */
+    public int loadAccessLogsMore (int moreCount) {
+        List<AccessLog> accessLogs = lockConfigDatabase.queryAccessLog(accessLogList.size(), moreCount);
+        if (accessLogs.size() > 0) {
+            accessLogs.addAll(accessLogs);
+            observable.notifyObservers();
+        }
+        return accessLogs.size();
+    }
+
+    /**
+     * 检查指定的包是否需要锁定
+     * @param packageName 待检查的包
+     * @return true/false
+     */
+    public boolean isPackageNeedLock (String packageName) {
+        // 获取当前时间
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(new Date());
+        calendar.set(0, 0, 0);
+
+        // 获取当前位置
+        LocationService locationService = LocationService.getInstance(context);
+        Position position = locationService.getLastPosition().clone();
+
+        // 遍历App列表，查找其是否在其中
+        for (AppLockInfo appLockInfo : appLockInfoList) {
+            // 如果找到相应的App信息，则进一步判断是否符合锁定条件
+            AppInfo appInfo = appLockInfo.getAppInfo();
+            if (appInfo.getPackageName().equals(packageName)) {
+                // 如果未启动，则不需要锁定
+                if (!appLockInfo.isEnable()) {
+                    return false;
+                }
+
+                // 遍历锁定条件队列，判断是否满足任意锁定条件
+                for (BaseLockCondition condition : lockConditionList) {
+                    // 未使能，略过
+                    if (!condition.isEnable()) {
+                        continue;
+                    }
+
+                    if (condition instanceof TimeLockCondition) {
+                        // 判断时间上是否匹配
+                        if (((TimeLockCondition)condition).isMatch(calendar)) {
+                            return true;
+                        }
+                    } else if (condition instanceof GpsLockCondition) {
+                        // 判断地理位置是否符合
+                        if (((GpsLockCondition)condition).isMatch(position)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
 }

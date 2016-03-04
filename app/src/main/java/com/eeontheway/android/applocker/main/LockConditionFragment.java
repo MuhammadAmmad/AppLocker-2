@@ -1,6 +1,7 @@
 package com.eeontheway.android.applocker.main;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.app.Fragment;
 import android.support.design.widget.FloatingActionButton;
@@ -20,6 +21,7 @@ import android.widget.Toast;
 
 import com.eeontheway.android.applocker.R;
 import com.eeontheway.android.applocker.lock.BaseLockCondition;
+import com.eeontheway.android.applocker.lock.GpsLockCondition;
 import com.eeontheway.android.applocker.lock.LockConfigManager;
 import com.eeontheway.android.applocker.lock.TimeLockCondition;
 
@@ -34,6 +36,9 @@ import java.util.Observer;
  * @Time 2016-2-8
  */
 public class LockConditionFragment extends Fragment {
+    private static final int REQUEST_EDIT_TIME = 0;
+    private static final int REQUEST_EDIT_POS = 1;
+
     private RecyclerView rcv_list;
     private TextView tv_empty;
     private Button bt_del;
@@ -113,19 +118,58 @@ public class LockConditionFragment extends Fragment {
     }
 
     /**
+     * 获取Activity的处理结果
+     * @param requestCode 请求码
+     * @param resultCode 处理结果
+     * @param data 数据
+     */
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        // 用户取消了编辑
+        if (resultCode == Activity.RESULT_CANCELED) {
+            return;
+        }
+
+        // 按请求码不同做不同处理
+        boolean isEditMode;
+        BaseLockCondition condition;
+        switch (requestCode) {
+            case REQUEST_EDIT_TIME:     // 时间编辑返回
+                isEditMode = TimeConditionEditActivity.isEditMode(data);
+                condition = TimeConditionEditActivity.getCondition(data);
+                break;
+            case REQUEST_EDIT_POS:
+                isEditMode = LocationConditionEditActivity.isEditMode(data);
+                condition = LocationConditionEditActivity.getCondition(data);
+                break;
+            default:
+                return;
+        }
+
+        if (isEditMode) {
+            // 使用配置复制
+            lockConfigManager.updateLockCondition(condition);
+        } else {
+            // 新建数据
+            lockConfigManager.addLockConditionIntoMode(condition);
+        }
+    }
+
+    /**
      * 显示创建模式配置的对话框
      */
     private void showCreateLockTimeConfigDialog() {
-        PopupMenu popupMenu = new PopupMenu(parentActivity, rcv_list, Gravity.CENTER);
+        PopupMenu popupMenu = new PopupMenu(parentActivity, fab_add, Gravity.TOP);
         popupMenu.inflate(R.menu.menu_add_lock_time_config);
         popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 switch (item.getItemId()) {
                     case R.id.action_add_time_config:
-                        TimeConditionEditActivity.start(parentActivity);
+                        TimeConditionEditActivity.start(LockConditionFragment.this, REQUEST_EDIT_TIME);
                         return true;
                     case R.id.action_add_postion_config:
+                        LocationConditionEditActivity.start(LockConditionFragment.this, REQUEST_EDIT_POS);
                         return true;
                 }
                 return false;
@@ -165,14 +209,14 @@ public class LockConditionFragment extends Fragment {
 
             @Override
             public void onItemClicked(int pos) {
-            }
-
-            @Override
-            public void onItemLongClicked(int pos) {
                 // 选中编辑
                 BaseLockCondition config = lockConfigManager.getLockCondition(pos);
                 if (config instanceof TimeLockCondition) {
-                    TimeConditionEditActivity.start(parentActivity, pos);
+                    TimeConditionEditActivity.start(LockConditionFragment.this,
+                                        (TimeLockCondition)config, REQUEST_EDIT_TIME);
+                } else if (config instanceof GpsLockCondition) {
+                    LocationConditionEditActivity.start(LockConditionFragment.this,
+                                        (GpsLockCondition)config, REQUEST_EDIT_POS);
                 }
             }
         });

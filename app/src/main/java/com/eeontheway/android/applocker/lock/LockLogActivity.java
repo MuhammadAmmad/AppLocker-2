@@ -27,7 +27,7 @@ import java.io.IOException;
  */
 public class LockLogActivity extends AppCompatActivity {
     private static final String PARAM_LOGINFO = "param_loginfo";
-    private LockLogInfo lockLogInfo;
+    private AccessLog accessLog;
 
     private ImageView iv_photo;
     private View view_see_more;
@@ -38,7 +38,7 @@ public class LockLogActivity extends AppCompatActivity {
      * 启动Activity
      * @param logInfo 锁定日志信息
      */
-    public static void startActivity (Context context, LockLogInfo logInfo) {
+    public static void startActivity (Context context, AccessLog logInfo) {
         Intent intent = new Intent(context, LockLogActivity.class);
         intent.putExtra(PARAM_LOGINFO, logInfo);
         context.startActivity(intent);
@@ -56,28 +56,28 @@ public class LockLogActivity extends AppCompatActivity {
         setTitle(R.string.app_locker);
 
         // 获取传递的参数，并显示到界面上
-        lockLogInfo = (LockLogInfo)getIntent().getSerializableExtra(PARAM_LOGINFO);
-        showLockLogInfo(lockLogInfo);
+        accessLog = (AccessLog)getIntent().getSerializableExtra(PARAM_LOGINFO);
+        showLockLogInfo(accessLog);
     }
 
     /**
      * 显示完整的日志信息
-     * @param lockLogInfo 日志信息
+     * @param accessLog 日志信息
      */
-    private void showLockLogInfo(LockLogInfo lockLogInfo) {
+    private void showLockLogInfo(AccessLog accessLog) {
         iv_photo = (ImageView)findViewById(R.id.iv_photo);
         view_see_more = findViewById(R.id.view_see_more);
         bt_ok = (Button)findViewById(R.id.bt_ok);
         tv_msg = (TextView)findViewById(R.id.tv_msg);
 
         // 配置提示信息
-        tv_msg.setText(getString(R.string.app_somebody_access, lockLogInfo.getAppName()));
+        tv_msg.setText(getString(R.string.app_somebody_access, accessLog.getAppName()));
 
         // 根据图径，从不同的位置解析出图片，然后显示在界面上
         Bitmap bitmap = null;
-        String imagePath = lockLogInfo.getPhotoPath();
+        String imagePath = accessLog.getPhotoPath();
         if (imagePath != null) {
-            if (lockLogInfo.isPhotoInInternal()) {
+            if (accessLog.isPhotoInInternal()) {
                 bitmap = BitmapFactory.decodeFile(imagePath);
             } else {
                 try {

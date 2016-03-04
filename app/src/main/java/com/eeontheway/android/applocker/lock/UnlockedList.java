@@ -1,6 +1,7 @@
 package com.eeontheway.android.applocker.lock;
 
 import android.content.Context;
+import android.util.Log;
 
 import com.eeontheway.android.applocker.app.AppInfoManager;
 
@@ -78,6 +79,7 @@ public class UnlockedList {
             boolean existed = appInfoManager.isPackageRunning(name);
             if (existed == false) {
                 appList.remove(name);
+                Log.d("AppLocker", "Remove exited:" + name);
             }
         }
     }

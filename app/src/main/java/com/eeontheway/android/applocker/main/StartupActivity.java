@@ -10,6 +10,7 @@ import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.widget.RelativeLayout;
 
+import com.baidu.mapapi.SDKInitializer;
 import com.eeontheway.android.applocker.R;
 import com.eeontheway.android.applocker.utils.SystemUtils;
 import com.igexin.sdk.PushManager;
@@ -48,9 +49,6 @@ public class StartupActivity extends AppCompatActivity {
     private boolean animationPlayOver = false;
     private boolean copyAssertFileOk = false;
 
-    // 第三方SDK
-    private static final String BMOB_APPID = "46120064d8e98adb870a67247a102485";
-
     /**
      * 启动该Activity
      * @param context 上下文
@@ -69,22 +67,8 @@ public class StartupActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
 
-        initSDK();
         initViews();
         startLoadAllResource();
-    }
-
-    /**
-     * 初始化Bmob SDK
-     */
-    private void initSDK () {
-
-        // 初始化基础SDK
-        Bmob.initialize(this, BMOB_APPID);
-        BmobInstallation.getCurrentInstallation(this).save();
-
-        // 初始化个推的推送服务
-        PushManager.getInstance().initialize(getApplicationContext());
     }
 
     /**

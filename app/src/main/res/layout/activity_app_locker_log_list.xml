@@ -8,7 +8,7 @@
         layout="@layout/item_activity_header" />
     <fragment
         android:id="@+id/applock_log_list_fragment"
-        android:name="com.eeontheway.android.applocker.main.AccessLogListFragment"
+        android:name="com.eeontheway.android.applocker.main.AccessLogsFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 </LinearLayout>

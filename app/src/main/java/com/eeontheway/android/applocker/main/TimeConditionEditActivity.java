@@ -1,8 +1,8 @@
 package com.eeontheway.android.applocker.main;
 
-import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
+import android.app.Fragment;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -15,7 +15,6 @@ import android.widget.CheckBox;
 import android.widget.TimePicker;
 
 import com.eeontheway.android.applocker.R;
-import com.eeontheway.android.applocker.lock.LockConfigManager;
 import com.eeontheway.android.applocker.lock.TimeLockCondition;
 import com.eeontheway.android.applocker.utils.SystemUtils;
 
@@ -44,29 +43,46 @@ public class TimeConditionEditActivity extends AppCompatActivity {
     private Button bt_ok;
     private Button bt_cancel;
 
-    private LockConfigManager lockConfigManager;
     private boolean isEditMode;
     private TimeLockCondition timeLockCondition;
 
     /**
      * 启动界面，用于编辑时间配置
-     * @param context 上下文
+     * @param fragment
      */
-    public static void start (Context context, int index) {
-        Intent intent = new Intent(context, TimeConditionEditActivity.class);
+    public static void start (Fragment fragment, TimeLockCondition condition, int requestCode) {
+        Intent intent = new Intent(fragment.getActivity(), TimeConditionEditActivity.class);
         intent.putExtra(PARAM_EDIT_MODE, true);
-        intent.putExtra(PARAM_TIME_CONFIG, index);
-        context.startActivity(intent);
+        intent.putExtra(PARAM_TIME_CONFIG, condition);
+        fragment.startActivityForResult(intent, requestCode);
     }
 
     /**
      * 启动界面，用于创建新项
-     * @param context 上下文
+     * @param fragment 上下文
      */
-    public static void start (Context context) {
-        Intent intent = new Intent(context, TimeConditionEditActivity.class);
+    public static void start (Fragment fragment, int requestCode) {
+        Intent intent = new Intent(fragment.getActivity(), TimeConditionEditActivity.class);
         intent.putExtra(PARAM_EDIT_MODE, false);
-        context.startActivity(intent);
+        fragment.startActivityForResult(intent, requestCode);
+    }
+
+    /**
+     * 获取结果时间条件
+     * @param intent
+     * @return 时间条件
+     */
+    public static TimeLockCondition getCondition (Intent intent) {
+        return (TimeLockCondition)intent.getSerializableExtra(PARAM_TIME_CONFIG);
+    }
+
+    /**
+     * 判断是否是编辑模式
+     * @param intent
+     * @return true/false
+     */
+    public static boolean isEditMode (Intent intent) {
+        return intent.getBooleanExtra(PARAM_EDIT_MODE, false);
     }
 
     /**
@@ -79,21 +95,21 @@ public class TimeConditionEditActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_time_config_edit);
 
-        lockConfigManager = LockConfigManager.getInstance(this);
-
         // 读取配置参数
-        isEditMode = getIntent().getBooleanExtra(PARAM_EDIT_MODE, false);
+        Intent intent = getIntent();
+        isEditMode = intent.getBooleanExtra(PARAM_EDIT_MODE, false);
         if (isEditMode) {
-            int index = getIntent().getIntExtra(PARAM_TIME_CONFIG, 0);
-            timeLockCondition = (TimeLockCondition)lockConfigManager.getLockCondition(index);
+            timeLockCondition = (TimeLockCondition)intent.getSerializableExtra(PARAM_TIME_CONFIG);
+        } else {
+            // 创建一个缺省对像,使能
+            timeLockCondition = new TimeLockCondition();
+            timeLockCondition.setEnable(true);
         }
-
 
         setTitle(R.string.select_time);
         initToolBar();
         initViews();
     }
-
 
     /**
      * 初始化ToolBar
@@ -157,9 +173,9 @@ public class TimeConditionEditActivity extends AppCompatActivity {
         if (isEditMode) {
             // 解析并设置时间
             Calendar calendar = Calendar.getInstance();
-            calendar.setTime(SystemUtils.formatDate(timeLockCondition.getStartTime(), "HH:mm:ss"));
+            calendar.setTime(SystemUtils.formatDate(timeLockCondition.getStartTime(), "HH:mm"));
             setTimePickTime(tp_start_time, calendar);
-            calendar.setTime(SystemUtils.formatDate(timeLockCondition.getEndTime(), "HH:mm:ss"));
+            calendar.setTime(SystemUtils.formatDate(timeLockCondition.getEndTime(), "HH:mm"));
             setTimePickTime(tp_end_time, calendar);
 
             // 解析并设置星期
@@ -196,22 +212,18 @@ public class TimeConditionEditActivity extends AppCompatActivity {
                 day |= cb_day7.isChecked() ? TimeLockCondition.DAY7 : 0;
 
                 Calendar calendar = getTimePickTime(tp_start_time);
-                String startTime = SystemUtils.formatDate(calendar.getTime(), "HH:mm:ss");
+                String startTime = SystemUtils.formatDate(calendar.getTime(), "HH:mm");
                 calendar = getTimePickTime(tp_end_time);
-                String endTime = SystemUtils.formatDate(calendar.getTime(), "HH:mm:ss");
+                String endTime = SystemUtils.formatDate(calendar.getTime(), "HH:mm");
 
-                TimeLockCondition newConfig = new TimeLockCondition();
-                newConfig.setDay(day);
-                newConfig.setStartTime(startTime);
-                newConfig.setEndTime(endTime);
-                if (isEditMode) {
-                    lockConfigManager.updateLockCondition(timeLockCondition, newConfig);
-                } else {
-                    lockConfigManager.addLockConditionIntoMode(newConfig);
-                }
+                timeLockCondition.setDay(day);
+                timeLockCondition.setStartTime(startTime);
+                timeLockCondition.setEndTime(endTime);
 
                 // 结束编辑
-                setResult(RESULT_OK);
+                Intent intent = getIntent();
+                intent.putExtra(PARAM_TIME_CONFIG, timeLockCondition);
+                setResult(RESULT_OK, intent);
                 finish();
             }
         });

@@ -164,6 +164,8 @@
     <string name="end_time">结束时间:%s</string>
     <string name="select_start_time">请选择起始时间</string>
     <string name="select_end_time">请选择结束时间</string>
+    <string name="Longitude_Latitude" formatted="false">纬度%s, 经度:%s</string>
+    <string name="real_address">地址：%s</string>
     <string name="repeat">重复</string>
     <string name="empty_lock_time_config">请添加何时锁定配置项</string>
     <string name="time_config">基于时间段</string>
@@ -178,6 +180,12 @@
     <string name="day5">五</string>
     <string name="day6">六</string>
 
+    <string name="normal_overlay">普通图层</string>
+    <string name="satellite_overlay">卫星图层</string>
+    <string name="input_empty">您还没有输入任何内容</string>
+    <string name="no_result">抱歉，没有找到任何结果!</string>
+    <string name="unknwon_location">抱歉，未知位置！</string>
+    <string name="postion_not_marked">您还没有选择位置!</string>
 
     <string name="copyright">Copyright@2015-2016 \n eeontheway.com 版本所有</string>
     <string name="about_version">版本 %s</string>
@@ -188,6 +196,7 @@
     <string name="feed_back_list">反馈纪录</string>
     <string name="pay_support">捐赠支持</string>
     <string name="submit">提交</string>
+    <string name="search">搜索</string>
     <string name="leave_msg">请留下您的宝贵意见，我们将为您不断改进</string>
     <string name="write_response">请填写反馈回复</string>
     <string name="leave_contact">邮箱/QQ/电话等，可不填</string>

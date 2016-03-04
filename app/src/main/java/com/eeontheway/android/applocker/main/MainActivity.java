@@ -65,6 +65,11 @@ public class MainActivity extends AppCompatActivity {
                     new LockConditionFragment(),
                     R.string.lock_condition,
                     R.drawable.folder_encript_selected,
+                    R.drawable.folder_encript_selected),
+            new FragmentPagerViewInfo(
+                    new AccessLogsFragment(),
+                    R.string.access_logs,
+                    R.drawable.folder_encript_selected,
                     R.drawable.folder_encript_selected)
     };
 
@@ -225,6 +230,8 @@ public class MainActivity extends AppCompatActivity {
      */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
         if (requestCode == 1) {
             return;
         }
