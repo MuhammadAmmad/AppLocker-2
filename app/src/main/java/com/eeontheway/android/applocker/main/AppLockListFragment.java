@@ -1,7 +1,6 @@
 package com.eeontheway.android.applocker.main;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.app.Fragment;
@@ -18,6 +17,7 @@ import android.widget.Toast;
 
 import com.eeontheway.android.applocker.R;
 import com.eeontheway.android.applocker.lock.LockConfigManager;
+import com.eeontheway.android.applocker.ui.ListHeaderView;
 
 import java.util.Observable;
 import java.util.Observer;
@@ -33,10 +33,12 @@ public class AppLockListFragment extends Fragment {
     private TextView tv_empty;
     private Button bt_del;
     private FloatingActionButton fab_add;
+    private ListHeaderView ll_header;
 
     private AppLockListAdapter lockListAdapter;
     private Activity parentActivity;
     private LockConfigManager lockConfigManager;
+    private Observer observer;
 
     /**
      * Fragment的OnCreate()回调
@@ -54,6 +56,16 @@ public class AppLockListFragment extends Fragment {
     }
 
     /**
+     * Fragment的onDestroy()回调
+     */
+    @Override
+    public void onDestroy() {
+        lockConfigManager.unregisterObserver(observer);
+        lockConfigManager.freeInstance();
+        super.onDestroy();
+    }
+
+    /**
      * Fragment的onCreateView()回调
      * @param savedInstanceState 之前保存的状态
      */
@@ -62,49 +74,76 @@ public class AppLockListFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_app_lock_list, container, false);
 
-        // 配置删除按钮
+        ll_header = (ListHeaderView) view.findViewById(R.id.ll_header);
         bt_del = (Button) view.findViewById(R.id.bt_del);
+        rcv_list = (RecyclerView) view.findViewById(R.id.rcv_list);
+        tv_empty = (TextView) view.findViewById(R.id.tv_empty);
+        fab_add = (FloatingActionButton) view.findViewById(R.id.fab_add);
+
+        initHeader();
+        initListView();
+        initButtons();
+        return view;
+    }
+
+    /**
+     * 初始化头部
+     */
+    private void initHeader () {
+        // 更改标题计数
+        updateTotalCountShow();
+
+        // 配置全选监听器
+        ll_header.setListener(new ListHeaderView.ClickListener() {
+            @Override
+            public void onCheckAllSetListener(boolean isChecked) {
+                lockConfigManager.selectAllApp(isChecked);
+                showDeleteButton(isChecked);
+                updateTotalCountShow();
+            }
+        });
+    }
+
+    /**
+     * 初始化ListView
+     */
+    private void initListView () {
+        rcv_list.setHasFixedSize(true);
+        LinearLayoutManager layoutManager = new LinearLayoutManager(parentActivity);
+        layoutManager.setOrientation(LinearLayoutManager.VERTICAL);
+        rcv_list.setLayoutManager(layoutManager);
+        rcv_list.addItemDecoration(new LockListViewItemDecoration());
+        rcv_list.setItemAnimator(new LockListViewItemAnimator());
+        rcv_list.setAdapter(lockListAdapter);
+
+        // 初始化空白显示页
+        if (lockListAdapter.getItemCount() == 0) {
+            tv_empty.setVisibility(View.VISIBLE);
+        }
+    }
+
+    /**
+     * 初始化Button
+     */
+    private void initButtons () {
+        // 配置删除按钮
         bt_del.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 lockListAdapter.removeSelectedApp();
                 Toast.makeText(parentActivity, R.string.deleteOk, Toast.LENGTH_SHORT).show();
+                showDeleteButton(false);
             }
         });
 
-        // 初始化列表
-        rcv_list = (RecyclerView) view.findViewById(R.id.rcv_list);
-        rcv_list.setHasFixedSize(true);
-        LinearLayoutManager layoutManager = new LinearLayoutManager(parentActivity);
-        layoutManager.setOrientation(LinearLayoutManager.VERTICAL);
-        rcv_list.setLayoutManager(layoutManager);
-        rcv_list.setAdapter(lockListAdapter);
-
-        // 初始化空白显示页
-        tv_empty = (TextView) view.findViewById(R.id.tv_empty);
-        if (lockListAdapter.getItemCount() == 0) {
-            tv_empty.setVisibility(View.VISIBLE);
-        }
 
         // 初始化浮动按钮
-        fab_add = (FloatingActionButton) view.findViewById(R.id.fab_add);
         fab_add.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 AppSelectActivity.start(AppLockListFragment.this);
             }
         });
-
-        return view;
-    }
-
-    /**
-     * Fragment的onDestroy()回调
-     */
-    @Override
-    public void onDestroy() {
-        lockConfigManager.freeInstance();
-        super.onDestroy();
     }
 
     /**
@@ -115,25 +154,8 @@ public class AppLockListFragment extends Fragment {
         lockListAdapter.setItemSelectedListener(new AppLockListAdapter.ItemSelectedListener() {
             @Override
             public void onItemSelected(int pos, boolean selected) {
-                if (selected) {
-                    if (bt_del.getVisibility() != View.VISIBLE) {
-                        // 显示删除按钮
-                        Animation animation = AnimationUtils.loadAnimation(parentActivity,
-                                R.anim.listview_cleanbutton_bottom_in);
-                        animation.setFillAfter(true);
-                        bt_del.setVisibility(View.VISIBLE);
-                        bt_del.startAnimation(animation);
-                    }
-                } else if (!lockListAdapter.isAnyItemSelected()){
-                    if (bt_del.getVisibility() != View.GONE) {
-                        // 隐藏删除按钮
-                        Animation animation = AnimationUtils.loadAnimation(parentActivity,
-                                R.anim.listview_cleanbutton_bottom_in);
-                        animation.setFillAfter(true);
-                        bt_del.setVisibility(View.GONE);
-                        bt_del.startAnimation(animation);
-                    }
-                }
+                showDeleteButton(selected);
+                updateTotalCountShow();
             }
         });
     }
@@ -142,14 +164,86 @@ public class AppLockListFragment extends Fragment {
      * 注册数据变化监听器
      */
     private void initDataObserver () {
-        lockConfigManager.registerObserver(new Observer() {
+        observer = new Observer() {
             @Override
             public void update(Observable observable, Object data) {
                 lockListAdapter.notifyDataSetChanged();
+
+                // 是否显示空白view?
                 if (lockListAdapter.getItemCount() > 0) {
                     tv_empty.setVisibility(View.GONE);
+                } else {
+                    tv_empty.setVisibility(View.VISIBLE);
+                }
+
+                // 更改标题计数
+                updateTotalCountShow();
+            }
+        };
+
+        lockConfigManager.registerObserver(observer);
+    }
+
+    /**
+     * 更新标题中数量显示
+     */
+    private void updateTotalCountShow () {
+        ll_header.setTitle(getString(R.string.total_count,
+                lockConfigManager.selectedAppCount(),
+                lockConfigManager.getAppListCount()));
+    }
+
+    /**
+     * 显示删除按钮
+     * @param show 是否显示删除按钮
+     */
+    private void showDeleteButton (boolean show) {
+        if (show) {
+            if (bt_del.getVisibility() != View.VISIBLE) {
+                // 显示删除按钮
+                Animation animation = AnimationUtils.loadAnimation(parentActivity,
+                        R.anim.listview_cleanbutton_bottom_in);
+                animation.setFillAfter(true);
+                animation.setAnimationListener(new Animation.AnimationListener() {
+                    @Override
+                    public void onAnimationStart(Animation animation) {
+                        bt_del.setVisibility(View.VISIBLE);
+                    }
+
+                    @Override
+                    public void onAnimationEnd(Animation animation) {}
+
+                    @Override
+                    public void onAnimationRepeat(Animation animation) {}
+                });
+                bt_del.startAnimation(animation);
+            }
+        } else {
+            // 有任意一项未选中，则取消全选
+            ll_header.setCheckAll(false);
+
+            // 如果没有任何项选中，则隐藏按钮
+            if (!lockListAdapter.isAnyItemSelected()){
+                if (bt_del.getVisibility() != View.GONE) {
+                    // 隐藏删除按钮
+                    Animation animation = AnimationUtils.loadAnimation(parentActivity,
+                            R.anim.listview_cleanbutton_bottom_out);
+                    animation.setFillAfter(true);
+                    animation.setAnimationListener(new Animation.AnimationListener() {
+                        @Override
+                        public void onAnimationStart(Animation animation) {}
+
+                        @Override
+                        public void onAnimationEnd(Animation animation) {
+                            bt_del.setVisibility(View.GONE);
+                        }
+
+                        @Override
+                        public void onAnimationRepeat(Animation animation) {}
+                    });
+                    bt_del.startAnimation(animation);
                 }
             }
-        });
+        }
     }
 }

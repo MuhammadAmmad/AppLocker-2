@@ -114,10 +114,11 @@ class AppLockListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             cb_selected = (CheckBox)itemView.findViewById(id.cb_selected);
 
             // 选中按钮点击事件
-            cb_selected.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            cb_selected.setOnClickListener(new View.OnClickListener() {
                 @Override
-                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                public void onClick(View v) {
                     int pos = getAdapterPosition();
+                    boolean isChecked = cb_selected.isChecked();
                     AppLockInfo appLockInfo = lockConfigManager.getAppLockInfo(pos);
                     appLockInfo.setSelected(isChecked);
 
