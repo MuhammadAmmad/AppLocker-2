@@ -97,9 +97,16 @@ public class AppLockListFragment extends Fragment {
         ll_header.setListener(new ListHeaderView.ClickListener() {
             @Override
             public void onCheckAllSetListener(boolean isChecked) {
-                lockConfigManager.selectAllApp(isChecked);
-                showDeleteButton(isChecked);
-                updateTotalCountShow();
+                if (lockConfigManager.getAppListCount() > 0) {
+                    lockConfigManager.selectAllApp(isChecked);
+                    showDeleteButton(isChecked);
+                    updateTotalCountShow();
+                }
+            }
+
+            @Override
+            public void onDoubleClickedListener() {
+                rcv_list.smoothScrollToPosition(0);
             }
         });
     }
@@ -115,6 +122,23 @@ public class AppLockListFragment extends Fragment {
         rcv_list.addItemDecoration(new LockListViewItemDecoration());
         rcv_list.setItemAnimator(new LockListViewItemAnimator());
         rcv_list.setAdapter(lockListAdapter);
+
+        // 配置滚动事件
+        rcv_list.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+                if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                    ll_header.showReturnTopAlert(false);
+                }
+            }
+
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                ll_header.showReturnTopAlert(dy < 0);
+            }
+        });
 
         // 初始化空白显示页
         if (lockListAdapter.getItemCount() == 0) {
@@ -188,7 +212,7 @@ public class AppLockListFragment extends Fragment {
      * 更新标题中数量显示
      */
     private void updateTotalCountShow () {
-        ll_header.setTitle(getString(R.string.total_count,
+        ll_header.setTitle(getString(R.string.selected_count,
                 lockConfigManager.selectedAppCount(),
                 lockConfigManager.getAppListCount()));
     }

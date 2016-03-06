@@ -10,11 +10,14 @@ import android.app.Fragment;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AbsListView;
 import android.widget.ExpandableListView;
+import android.widget.Toast;
 
 import com.eeontheway.android.applocker.R;
 import com.eeontheway.android.applocker.app.AppInfo;
@@ -22,6 +25,7 @@ import com.eeontheway.android.applocker.app.AppInfoManager;
 import com.eeontheway.android.applocker.app.BaseAppInfo;
 import com.eeontheway.android.applocker.lock.AppLockInfo;
 import com.eeontheway.android.applocker.lock.LockConfigManager;
+import com.eeontheway.android.applocker.ui.ListHeaderView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +38,7 @@ import java.util.List;
  */
 public class AppSelectActivity extends AppCompatActivity {
     private View rl_loading;
+    private ListHeaderView ll_header;
     private ExpandableListView el_listview;
     private FloatingActionButton fab_add;
     private AppSelectAdapter el_adapter;
@@ -62,7 +67,7 @@ public class AppSelectActivity extends AppCompatActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.fragment_applocker_config);
+        setContentView(R.layout.activity_app_select);
 
         appInfoManager = new AppInfoManager(this);
         lockConfigManager = LockConfigManager.getInstance(this);
@@ -73,7 +78,6 @@ public class AppSelectActivity extends AppCompatActivity {
 
         setTitle(R.string.select_app);
         initView();
-        initToolBar();
 
         startLoadAllAppInfo(AppInfoManager.AppType.ALL_APP);
     }
@@ -95,41 +99,10 @@ public class AppSelectActivity extends AppCompatActivity {
         // 修改进度条
         rl_loading = findViewById(R.id.rl_loading);
 
-        // 配置显示列表
-        el_listview = (ExpandableListView)findViewById(R.id.el_listview);
-        el_listview.setAdapter(el_adapter);
-        el_listview.setOnChildClickListener(new ExpandableListView.OnChildClickListener() {
-            @Override
-            public boolean onChildClick(ExpandableListView parent, View v,
-                                                    int groupPosition, int childPosition, long id) {
-                List<AppSelectInfo> listInfo = (List<AppSelectInfo>)el_adapter.getGroup(groupPosition);
-
-                // 按下后，切换CheckBox状态
-                AppSelectInfo info = listInfo.get(childPosition);
-                info.setSelected(!info.isSelected());
-                el_adapter.notifyDataSetChanged();
-
-                // 根据是否有任何项选中，配置fab的按钮状态
-                if (info.isSelected()) {
-                    fab_add.setEnabled(true);
-                } else {
-                    long count = el_adapter.getChildSelectedCount(0);
-                    count += el_adapter.getChildSelectedCount(1);
-                    fab_add.setEnabled(count > 0);
-                }
-                return false;
-            }
-        });
-
-        fab_add = (FloatingActionButton) findViewById(R.id.fab_add);
-        fab_add.setEnabled(false);
-        fab_add.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                setResult(saveSelectedApps());
-                finish();
-            }
-        });
+        initToolBar();
+        initHeader();
+        initListView();
+        initButton();
     }
 
     /**
@@ -144,6 +117,116 @@ public class AppSelectActivity extends AppCompatActivity {
         actionBar.setHomeButtonEnabled(true);
     }
 
+    /**
+     * 初始化表头
+     */
+    private void initHeader () {
+        ll_header = (ListHeaderView) findViewById(R.id.ll_header);
+        ll_header.setListener(new ListHeaderView.ClickListener() {
+            @Override
+            public void onCheckAllSetListener(boolean isChecked) {
+                boolean added = false;
+                for (AppSelectInfo info : userInfoList) {
+                    info.setSelected(isChecked);
+                    added = true;
+                }
+
+                for (AppSelectInfo info : systemInfoList) {
+                    info.setSelected(isChecked);
+                    added = true;
+                }
+
+                // 如果有添加，刷新界面，使能确认按钮
+                if (added) {
+                    el_adapter.notifyDataSetChanged();
+                    updateTotalCountShow();
+                    fab_add.setEnabled(true);
+                }
+            }
+
+            @Override
+            public void onDoubleClickedListener() {
+                if (el_listview.getChildCount() > 0) {
+                    el_listview.smoothScrollToPosition(0);
+                }
+            }
+        });
+
+        updateTotalCountShow();
+    }
+
+    /**
+     * 初始化列表显示
+     */
+    private void initListView () {
+        el_listview = (ExpandableListView) findViewById(R.id.el_listview);
+        el_listview.setAdapter(el_adapter);
+        el_listview.setOnChildClickListener(new ExpandableListView.OnChildClickListener() {
+            @Override
+            public boolean onChildClick(ExpandableListView parent, View v,
+                                        int groupPosition, int childPosition, long id) {
+                List<AppSelectInfo> listInfo = (List<AppSelectInfo>) el_adapter.getGroup(groupPosition);
+
+                // 按下后，切换CheckBox状态
+                AppSelectInfo info = listInfo.get(childPosition);
+                info.setSelected(!info.isSelected());
+                el_adapter.notifyDataSetChanged();
+
+                // 根据是否有任何项选中，配置fab的按钮状态
+                if (info.isSelected()) {
+                    fab_add.setEnabled(true);
+                } else {
+                    // 有任何项未选中，取消选选
+                    ll_header.setCheckAll(false);
+
+                    // 根据可用的子项数，设置fab_add按钮的状态
+                    long count = el_adapter.getChildSelectedCount(0);
+                    count += el_adapter.getChildSelectedCount(1);
+                    fab_add.setEnabled(count > 0);
+                }
+
+                // 刷新标题显示
+                updateTotalCountShow();
+                return false;
+            }
+        });
+
+        // 配置滚动事件
+        el_listview.setOnScrollListener(new AbsListView.OnScrollListener() {
+            int lastVisiableItem = el_listview.getFirstVisiblePosition();
+
+            @Override
+            public void onScrollStateChanged(AbsListView listView, int newState) {
+                if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                    ll_header.showReturnTopAlert(false);
+                }
+            }
+
+            @Override
+            public void onScroll(AbsListView view, int firstVisibleItem,
+                                 int visibleItemCount, int totalItemCount) {
+                if (firstVisibleItem < lastVisiableItem) {
+                    ll_header.showReturnTopAlert(true);
+                }
+                lastVisiableItem = firstVisibleItem;
+            }
+        });
+    }
+
+    /**
+     * 初始化按钮
+     */
+    private void initButton () {
+        fab_add = (FloatingActionButton) findViewById(R.id.fab_add);
+        fab_add.setEnabled(false);
+        fab_add.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                setResult(saveSelectedApps());
+                finish();
+            }
+        });
+    }
 
     /**
      * Activiy的onCreateOptionMenu回调
@@ -201,6 +284,9 @@ public class AppSelectActivity extends AppCompatActivity {
                     AppLockInfo appLockInfo = new AppLockInfo();
                     appLockInfo.setAppInfo(appSelectInfo.getAppInfo());
 
+                    // 默认是使能状态
+                    appLockInfo.setEnable(true);
+
                     // 保存至数据库中
                     boolean ok = lockConfigManager.addAppInfoToMode(appLockInfo);
                     if (ok) count++;
@@ -208,6 +294,7 @@ public class AppSelectActivity extends AppCompatActivity {
             }
         }
 
+        Toast.makeText(this, getString(R.string.add_app_ok, count), Toast.LENGTH_SHORT).show();
         return count;
     }
 
@@ -268,9 +355,22 @@ public class AppSelectActivity extends AppCompatActivity {
                 // 隐藏进度条，展开第0组
                 el_adapter.notifyDataSetChanged();
                 rl_loading.setVisibility(View.GONE);
-                el_listview.expandGroup(0);
+                if (el_adapter.getChildrenCount(0) > 0) {
+                    el_listview.expandGroup(0);
+                } else {
+                    el_listview.expandGroup(1);
+                }
             }
         }.execute();
+    }
+
+    /**
+     * 更新标题中数量显示
+     */
+    private void updateTotalCountShow () {
+        ll_header.setTitle(getString(R.string.selected_count,
+                el_adapter.getChildSelectedCount(0) + el_adapter.getChildSelectedCount(1),
+                userInfoList.size() + systemInfoList.size()));
     }
 
     /**
