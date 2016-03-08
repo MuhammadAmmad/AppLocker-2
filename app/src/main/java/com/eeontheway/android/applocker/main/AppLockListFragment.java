@@ -1,23 +1,34 @@
 package com.eeontheway.android.applocker.main;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
+import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.eeontheway.android.applocker.R;
+import com.eeontheway.android.applocker.lock.BaseLockCondition;
 import com.eeontheway.android.applocker.lock.LockConfigManager;
+import com.eeontheway.android.applocker.lock.PositionLockCondition;
+import com.eeontheway.android.applocker.lock.TimeLockCondition;
 import com.eeontheway.android.applocker.ui.ListHeaderView;
+import com.eeontheway.android.applocker.ui.WaitingProgressDialog;
 
 import java.util.Observable;
 import java.util.Observer;
@@ -39,6 +50,7 @@ public class AppLockListFragment extends Fragment {
     private Activity parentActivity;
     private LockConfigManager lockConfigManager;
     private Observer observer;
+    private WaitingProgressDialog progressDialog;
 
     /**
      * Fragment的OnCreate()回调
@@ -51,6 +63,7 @@ public class AppLockListFragment extends Fragment {
         parentActivity = getActivity();
         lockConfigManager = LockConfigManager.getInstance(parentActivity);
 
+        initProgressDialog();
         initAdapter();
         initDataObserver();
     }
@@ -147,6 +160,21 @@ public class AppLockListFragment extends Fragment {
     }
 
     /**
+     * 初始化进度对话框
+     */
+    private void initProgressDialog () {
+        progressDialog = new WaitingProgressDialog(parentActivity);
+        progressDialog.setMessage(getString(R.string.deleting));
+    }
+
+    /**
+     * 显示等待进度对话框
+     */
+    private void showWaitingProgressDialog (boolean show) {
+        progressDialog.show(show);
+    }
+
+    /**
      * 初始化Button
      */
     private void initButtons () {
@@ -154,9 +182,32 @@ public class AppLockListFragment extends Fragment {
         bt_del.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                lockListAdapter.removeSelectedApp();
-                Toast.makeText(parentActivity, R.string.deleteOk, Toast.LENGTH_SHORT).show();
-                showDeleteButton(false);
+                // 额外开辟线程去删除，以防止删除大批量数据卡死
+                new AsyncTask<Void, Void, Void>() {
+                    @Override
+                    protected void onPreExecute() {
+                        showWaitingProgressDialog(true);
+
+                        // Bug: 需要注册监听，否则后台线程会操作UI
+                        lockConfigManager.setObserverEnable(false);
+                    }
+
+                    @Override
+                    protected Void doInBackground(Void... params) {
+                        lockListAdapter.removeSelectedApp();
+                        return null;
+                    }
+
+                    @Override
+                    protected void onPostExecute(Void aVoid) {
+                        Toast.makeText(parentActivity, R.string.deleteOk, Toast.LENGTH_SHORT).show();
+                        showDeleteButton(false);
+                        showWaitingProgressDialog(false);
+
+                        // 删除完毕后，恢复监听，通知数据发生变化
+                        lockConfigManager.setObserverEnable(true);
+                    }
+                }.execute();
             }
         });
 
@@ -175,11 +226,32 @@ public class AppLockListFragment extends Fragment {
      */
     private void initAdapter () {
         lockListAdapter = new AppLockListAdapter(parentActivity, lockConfigManager);
-        lockListAdapter.setItemSelectedListener(new AppLockListAdapter.ItemSelectedListener() {
+        lockListAdapter.setItemSelectedListener(new RecyleViewItemSelectedListener() {
             @Override
             public void onItemSelected(int pos, boolean selected) {
                 showDeleteButton(selected);
                 updateTotalCountShow();
+            }
+
+            @Override
+            public boolean onItemLongClicked(final int pos) {
+                // 创建一个弹出式的对话框，当作上下文菜单
+                AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
+                ArrayAdapter<String> adapter = new ArrayAdapter<>(parentActivity,
+                        android.R.layout.simple_list_item_1);
+                adapter.add(getString(R.string.delete));
+                builder.setAdapter(adapter, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        switch (which) {
+                            case 0: // Delete
+                                lockConfigManager.deleteAppInfo(pos);
+                                break;
+                        }
+                    }
+                });
+                builder.create().show();
+                return true;
             }
         });
     }

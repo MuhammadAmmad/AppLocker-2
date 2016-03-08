@@ -11,7 +11,8 @@
     <dimen name="view_width_padding">10dp</dimen>
     <dimen name="view_larget_margin">20dp</dimen>
 
-    <dimen name="small_text_size">12dp</dimen>
-    <dimen name="large_text_size">20dp</dimen>
+    <dimen name="small_text_size">12sp</dimen>
+    <dimen name="normal_text_size">15sp</dimen>
+    <dimen name="large_text_size">18sp</dimen>
 
 </resources>

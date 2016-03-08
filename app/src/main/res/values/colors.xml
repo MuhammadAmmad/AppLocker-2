@@ -154,7 +154,7 @@
     <color name="colorFirstBackground">@color/white</color>
     <color name="colorSecondaryBackground">@color/whitesmoke</color>
     <color name="colorSecondTextColor">@color/dimgrey</color>
-    <color name="colorPressBackground">@color/colorSecondaryBackground</color>
+    <color name="colorPressBackground">#c0c4cc</color>
     <color name="light_blue">#6892da</color>
     <color name="tooBarBackgroud">#e3e4e7</color>
 

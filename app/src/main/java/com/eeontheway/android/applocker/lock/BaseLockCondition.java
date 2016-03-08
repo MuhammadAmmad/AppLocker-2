@@ -1,7 +1,6 @@
 package com.eeontheway.android.applocker.lock;
 
-import android.app.Fragment;
-
+import android.content.ContentValues;
 import java.io.Serializable;
 
 /**
@@ -86,5 +85,34 @@ public abstract class BaseLockCondition implements Cloneable, Serializable {
      */
     public void setEnable(boolean enable) {
         this.enable = enable;
+    }
+
+    /**
+     * 获取对像名称
+     * 该名称要求与数据库中表名相同
+     * @return 对像名称
+     */
+    abstract public String getName ();
+
+    /**
+     * 获取HashMap的值列表
+     * 该名称要求与数据库中表名相同
+     * @return 值列表
+     */
+    public ContentValues getMapValues () {
+        ContentValues values = new ContentValues();
+
+        values.put(ConditionDatabaseOpenHelper.BASE_COND_FIELD_ENABLE, enable);
+        return values;
+    }
+
+    /**
+     * 用ContentValues的值更新结构中的数据
+     * ContentValues列名称要求与数据库中表名相同
+     * @return 值列表
+     */
+    public void setMapValues (ContentValues values) {
+        id = values.getAsInteger(ConditionDatabaseOpenHelper.BASE_COND_FIELD_ID);
+        enable = values.getAsBoolean(ConditionDatabaseOpenHelper.BASE_COND_FIELD_ENABLE);
     }
 }

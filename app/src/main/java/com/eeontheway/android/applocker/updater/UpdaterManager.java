@@ -11,7 +11,7 @@ import android.support.v7.app.AlertDialog;
 import android.widget.Toast;
 
 import com.eeontheway.android.applocker.R;
-import com.eeontheway.android.applocker.lock.SettingsManager;
+import com.eeontheway.android.applocker.main.SettingsManager;
 import com.eeontheway.android.applocker.utils.SystemUtils;
 
 import java.io.File;

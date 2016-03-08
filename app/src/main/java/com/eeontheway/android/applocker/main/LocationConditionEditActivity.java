@@ -2,13 +2,17 @@ package com.eeontheway.android.applocker.main;
 
 import android.app.Fragment;
 import android.content.Intent;
+import android.location.Location;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -16,18 +20,24 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
+import android.widget.ImageView;
 import android.widget.RadioGroup;
 import android.widget.Toast;
 
 import com.baidu.mapapi.map.BaiduMap;
 import com.baidu.mapapi.map.BitmapDescriptor;
 import com.baidu.mapapi.map.BitmapDescriptorFactory;
+import com.baidu.mapapi.map.InfoWindow;
 import com.baidu.mapapi.map.MapPoi;
 import com.baidu.mapapi.map.MapStatus;
 import com.baidu.mapapi.map.MapStatusUpdateFactory;
 import com.baidu.mapapi.map.MapView;
+import com.baidu.mapapi.map.Marker;
 import com.baidu.mapapi.map.MarkerOptions;
 import com.baidu.mapapi.map.MyLocationData;
+import com.baidu.mapapi.map.UiSettings;
 import com.baidu.mapapi.model.LatLng;
 import com.baidu.mapapi.overlayutil.PoiOverlay;
 import com.baidu.mapapi.search.core.PoiInfo;
@@ -50,7 +60,8 @@ import com.baidu.mapapi.search.sug.SuggestionSearchOption;
 import com.eeontheway.android.applocker.R;
 import com.eeontheway.android.applocker.locate.LocationService;
 import com.eeontheway.android.applocker.locate.Position;
-import com.eeontheway.android.applocker.lock.GpsLockCondition;
+import com.eeontheway.android.applocker.lock.PositionLockCondition;
+import com.eeontheway.android.applocker.ui.MapMakerWindow;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,27 +73,29 @@ import java.util.List;
  * @version v1.0
  * @Time 2016-2-8
  */
-public class LocationConditionEditActivity extends AppCompatActivity {
+public class LocationConditionEditActivity extends AppCompatActivity
+        implements View.OnClickListener {
     private static final String PARAM_EDIT_MODE = "add_mode";
     private static final String PARAM_POS_CONFIG = "position";
 
-    private boolean marked;
-    private GpsLockCondition gpsLockCondition;
+    private PositionLockCondition positionLockCondition;
     private Position position;
 
     private MapView mapView;
-    private RadioGroup rg_map_type;
     private View bt_show_my_location;
+    private CheckBox iv_layers;
     private AutoCompleteTextView act_search;
-    private Button bt_sumbit;
+    private Button bt_search;
     private ArrayAdapter<String> act_adapter;
 
     private BaiduMap baiduMap;
     private LocationService locationService;
+    private LocationService.PositionChangeListener positionChangeListener;
     private GeoCoder geocoderSearch;
     private PoiSearch mPoiSearch;
     private SuggestionSearch mSuggestionSearch;
-    private BitmapDescriptor bdA;
+    private BitmapDescriptor markerIcon;
+    private MapMakerWindow mapMakerWindow;
 
     private boolean editMode;
 
@@ -92,7 +105,7 @@ public class LocationConditionEditActivity extends AppCompatActivity {
      * @param condition 编辑条件
      * @param requestCode 请求码
      */
-    public static void start (Fragment fragment, GpsLockCondition condition, int requestCode) {
+    public static void start (Fragment fragment, PositionLockCondition condition, int requestCode) {
         Intent intent = new Intent(fragment.getActivity(), LocationConditionEditActivity.class);
         intent.putExtra(PARAM_EDIT_MODE, true);
         intent.putExtra(PARAM_POS_CONFIG, condition);
@@ -114,8 +127,8 @@ public class LocationConditionEditActivity extends AppCompatActivity {
      * @param intent
      * @return 时间条件
      */
-    public static GpsLockCondition getCondition (Intent intent) {
-        return (GpsLockCondition)intent.getSerializableExtra(PARAM_POS_CONFIG);
+    public static PositionLockCondition getCondition (Intent intent) {
+        return (PositionLockCondition)intent.getSerializableExtra(PARAM_POS_CONFIG);
     }
 
     /**
@@ -138,11 +151,9 @@ public class LocationConditionEditActivity extends AppCompatActivity {
 
         setTitle(R.string.select_time);
 
-        initToolBar();
         initView ();
         initMap();
         initLocation();
-        rg_map_type.check(R.id.rb_normal);
     }
 
     /**
@@ -152,6 +163,7 @@ public class LocationConditionEditActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
 
+        locationService.removePositionListener(positionChangeListener);
         mapView.onDestroy();
     }
 
@@ -173,49 +185,6 @@ public class LocationConditionEditActivity extends AppCompatActivity {
         mapView.onPause();
     }
 
-
-    /**
-     * Activiy的onCreateOptionMenu回调
-     *
-     * @param menu 创建的菜单
-     * @return
-     */
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = new MenuInflater(this);
-        inflater.inflate(R.menu.menu_position_sumbit, menu);
-        return super.onCreateOptionsMenu(menu);
-    }
-
-    /**
-     * 处理返回按钮按下的响应
-     *
-     * @param item 被按下的项
-     * @return
-     */
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case android.R.id.home:
-                setResult(RESULT_CANCELED);
-                finish();
-                return true;
-            case R.id.action_submit:
-                if (marked) {
-                    Intent intent = getIntent();
-                    intent.putExtra(PARAM_POS_CONFIG, gpsLockCondition);
-                    setResult(RESULT_OK, intent);
-                    finish();
-                } else {
-                    Toast.makeText(LocationConditionEditActivity.this,
-                            R.string.postion_not_marked, Toast.LENGTH_SHORT).show();
-                }
-                return true;
-            default:
-                return super.onContextItemSelected(item);
-        }
-    }
-
     /**
      * 按返回键时的处理
      */
@@ -227,15 +196,22 @@ public class LocationConditionEditActivity extends AppCompatActivity {
     }
 
     /**
-     * 初始化ToolBar
+     * 按键处理
+     * @param keyCode
+     * @param event
+     * @return
      */
-    private void initToolBar() {
-        Toolbar toolbar = (Toolbar) findViewById(R.id.tl_header);
-        setSupportActionBar(toolbar);
-
-        ActionBar actionBar = getSupportActionBar();
-        actionBar.setDisplayHomeAsUpEnabled(true);
-        actionBar.setHomeButtonEnabled(true);
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_SEARCH) {
+            String keyWords = act_search.getText().toString();
+            if (!keyWords.isEmpty()) {
+                startSearch(keyWords);
+            }
+            return true;
+        } else {
+            return super.onKeyDown(keyCode, event);
+        }
     }
 
     /**
@@ -244,25 +220,77 @@ public class LocationConditionEditActivity extends AppCompatActivity {
     private void initView () {
         initSearchEdit();
 
+        // 初始化标记窗口
+        mapMakerWindow = new MapMakerWindow(this);
+        mapMakerWindow.initViews();
+        mapMakerWindow.setStyle(MapMakerWindow.STYLE_NORMAL);
+        mapMakerWindow.SetUsePostionListener(new MapMakerWindow.OnSetUsePostionListener() {
+            @Override
+            public void useMarkerPostion() {
+                Intent intent = getIntent();
+                intent.putExtra(PARAM_POS_CONFIG, positionLockCondition);
+                setResult(RESULT_OK, intent);
+                finish();
+            }
+        });
+
         // 配置自我定位按钮
         bt_show_my_location = findViewById(R.id.bt_show_my_location);
-        bt_show_my_location.setOnClickListener(new View.OnClickListener() {
+        bt_show_my_location.setOnClickListener(this);
+
+        // 获取地图对像
+        mapView = (MapView) findViewById(R.id.map_baidu);
+        baiduMap = mapView.getMap();
+
+        // 初始化图层选择监听器，进入卫星模式
+        iv_layers = (CheckBox) findViewById(R.id.iv_layers);
+        iv_layers.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
-            public void onClick(View v) {
-                // 显示我的位置
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    baiduMap.setMapType(BaiduMap.MAP_TYPE_SATELLITE);
+                    mapMakerWindow.setStyle(MapMakerWindow.STYLE_STATELLITE);
+                } else {
+                    baiduMap.setMapType(BaiduMap.MAP_TYPE_NORMAL);
+                    mapMakerWindow.setStyle(MapMakerWindow.STYLE_NORMAL);
+                }
+
+                // 重刷Marker点
+                baiduMap.clear();
+                if (position != null) {
+                    LatLng latLng = new LatLng(position.getLatitude(), position.getLongitude());
+                    showMarker(latLng, position.getAddress());
+                }
+            }
+        });
+        iv_layers.setChecked(true);
+    }
+
+    /**
+     * 点击事件处理
+     * @param v
+     */
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.bt_show_my_location:
                 Position myPosition = locationService.getLastPosition();
                 if (myPosition != null) {
                     showLocation(myPosition);
                 }
-            }
-        });
+                break;
+        }
+    }
 
-        // 获取地图对像
-        mapView = (MapView) findViewById(R.id.map_baidu);
-
-        // 初始化图层选择监听器，进入普通地图模式
-        rg_map_type = (RadioGroup)findViewById(R.id.rg_map_type);
-        rg_map_type.setOnCheckedChangeListener(new MapTypeChangeListener());
+    /**
+     * 开始搜索关键字
+     */
+    private void startSearch (String keywords) {
+        // 请求查询，以获取查询列表
+        SuggestionSearchOption option = new SuggestionSearchOption();
+        option.city("广州");
+        option.keyword(keywords);
+        mSuggestionSearch.requestSuggestion(option);
     }
 
     /**
@@ -271,7 +299,7 @@ public class LocationConditionEditActivity extends AppCompatActivity {
     private void initSearchEdit() {
         // 配置自动完成输入框
         act_search = (AutoCompleteTextView) findViewById(R.id.act_search);
-        act_adapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line);
+        act_adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1);
         act_search.setAdapter(act_adapter);
         act_search.setThreshold(1);
         act_search.addTextChangedListener(new TextWatcher() {
@@ -287,11 +315,7 @@ public class LocationConditionEditActivity extends AppCompatActivity {
                     return;
                 }
 
-                // 请求查询，以获取查询列表
-                SuggestionSearchOption option = new SuggestionSearchOption();
-                option.city("广州");
-                option.keyword(s.toString());
-                mSuggestionSearch.requestSuggestion(option);
+                startSearch(s.toString());
             }
         });
 
@@ -319,13 +343,12 @@ public class LocationConditionEditActivity extends AppCompatActivity {
                 act_adapter.notifyDataSetChanged();
                 act_adapter.addAll(suggestList);
                 act_adapter.notifyDataSetChanged();
-                act_search.showDropDown();
             }
         });
 
         // 配置搜索按钮
-        bt_sumbit = (Button) findViewById(R.id.bt_sumbit);
-        bt_sumbit.setOnClickListener(new View.OnClickListener() {
+        bt_search = (Button) findViewById(R.id.bt_search);
+        bt_search.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 String keyWords = act_search.getText().toString();
@@ -347,19 +370,29 @@ public class LocationConditionEditActivity extends AppCompatActivity {
      * 初始化地图
      */
     private void initMap () {
-        bdA = BitmapDescriptorFactory.fromResource(R.drawable.icon_marka);
+        // 初始化百度地图
+        initBaiduMap();
+
+        // 初始化PIO Search
+        initPIOSearch();
+
+        // 初始化反向地址编码
+        initGeocoderSearch();
+    }
+
+    /**
+     * 初始化地图区域
+     */
+    private void initBaiduMap () {
+        // 初始化Marker
+        markerIcon = BitmapDescriptorFactory.fromResource(R.drawable.icon_gcoding);
 
         // 初始化地图对像
-        baiduMap = mapView.getMap();
         baiduMap.setOnMapClickListener(new BaiduMap.OnMapClickListener() {
             @Override
             public void onMapClick(LatLng latLng) {
-                // 清除之前的所有选中点
-                baiduMap.clear();
-
                 // 添加标记
-                MarkerOptions option = new MarkerOptions().title("hello").icon(bdA).position(latLng);
-                baiduMap.addOverlay(option);
+                showMarker(latLng, null);
 
                 // 同时保存选中的位置, 保存当前位置
                 position.setLatitude(latLng.latitude);
@@ -367,40 +400,38 @@ public class LocationConditionEditActivity extends AppCompatActivity {
 
                 // 搜索找到其地址
                 geocoderSearch.reverseGeoCode(new ReverseGeoCodeOption().location(latLng));
-
-                // 标记为已经选择地址
-                marked = true;
             }
 
             @Override
             public boolean onMapPoiClick(MapPoi mapPoi) {
-                return false;
+                LatLng pos = mapPoi.getPosition();
+
+                // 添加标记
+                showMarker(mapPoi.getPosition(), mapPoi.getName());
+
+                // 同时保存选中的位置, 保存当前位置
+                position.setLatitude(pos.latitude);
+                position.setLongitude(pos.longitude);
+                position.setAddress(mapPoi.getName());
+                return true;
             }
         });
+    }
 
-        // 初始化PIO Search
-        initPIOSearch();
+    /**
+     * 在地图上显示标记和信息窗
+     * @param latLng 显示的位置
+     */
+    private void showMarker (LatLng latLng, String address) {
+        baiduMap.clear();
 
-        // 初始化反向地址编码
-        geocoderSearch = GeoCoder.newInstance();
-        geocoderSearch.setOnGetGeoCodeResultListener(new OnGetGeoCoderResultListener() {
-            @Override
-            public void onGetGeoCodeResult(GeoCodeResult geoCodeResult) {
-            }
-
-            @Override
-            public void onGetReverseGeoCodeResult(ReverseGeoCodeResult reverseGeoCodeResult) {
-                if ((reverseGeoCodeResult == null) ||
-                        (reverseGeoCodeResult.error != SearchResult.ERRORNO.NO_ERROR)) {
-                    Toast.makeText(LocationConditionEditActivity.this,
-                                        R.string.unknwon_location,Toast.LENGTH_LONG).show();
-                    return;
-                }
-
-                // 保存当前地址
-                position.setAddress(reverseGeoCodeResult.getAddress());
-            }
-        });
+        MarkerOptions option = new MarkerOptions().title("hello").icon(markerIcon).position(latLng);
+        baiduMap.addOverlay(option);
+        if (address != null) {
+            mapMakerWindow.setTitle(address);
+            InfoWindow win = new InfoWindow(mapMakerWindow.getView(), latLng, -47);
+            baiduMap.showInfoWindow(win);
+        }
     }
 
     /**
@@ -414,7 +445,7 @@ public class LocationConditionEditActivity extends AppCompatActivity {
                 if ((poiResult == null) ||
                         (poiResult.error == SearchResult.ERRORNO.RESULT_NOT_FOUND)) {
                     Toast.makeText(LocationConditionEditActivity.this,
-                                        R.string.no_result, Toast.LENGTH_LONG).show();
+                                        R.string.no_result, Toast.LENGTH_SHORT).show();
                     return;
                 } else if (poiResult.error == SearchResult.ERRORNO.NO_ERROR) {
                     baiduMap.clear();
@@ -441,7 +472,56 @@ public class LocationConditionEditActivity extends AppCompatActivity {
 
             }
         });
+    }
 
+    /**
+     * 初始化反向地址编码
+     */
+    private void initGeocoderSearch() {
+        geocoderSearch = GeoCoder.newInstance();
+        geocoderSearch.setOnGetGeoCodeResultListener(new OnGetGeoCoderResultListener() {
+            @Override
+            public void onGetGeoCodeResult(GeoCodeResult geoCodeResult) {
+            }
+
+            @Override
+            public void onGetReverseGeoCodeResult(ReverseGeoCodeResult reverseGeoCodeResult) {
+                if ((reverseGeoCodeResult == null) ||
+                        (reverseGeoCodeResult.error != SearchResult.ERRORNO.NO_ERROR)) {
+                    Toast.makeText(LocationConditionEditActivity.this,
+                            R.string.unknwon_location,Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                // 找出最近的一个地址
+                List<PoiInfo> poiList = reverseGeoCodeResult.getPoiList();
+
+                double minDistance = 10000000;      // 设置一个很大的地址
+                LatLng myLocation = reverseGeoCodeResult.getLocation();
+                PoiInfo nearestPoi = null;
+                for (PoiInfo poiInfo : poiList) {
+                    float [] result = new float[1];
+                    Location.distanceBetween(poiInfo.location.latitude, poiInfo.location.longitude,
+                            myLocation.latitude, myLocation.longitude, result);
+                    if (result[0] < minDistance) {
+                        nearestPoi = poiInfo;
+                        minDistance = result[0];
+                    }
+                }
+
+                // 保存找到的地址，如果失败，则使用其原始返回的地址
+                String address;
+                if (nearestPoi != null) {
+                    address = nearestPoi.address + " " + nearestPoi.name;
+                } else {
+                    address = reverseGeoCodeResult.getAddress();
+                }
+                position.setAddress(address);
+
+                // 在地图上显示标记
+                showMarker(myLocation, address);
+            }
+        });
     }
 
     /**
@@ -452,30 +532,44 @@ public class LocationConditionEditActivity extends AppCompatActivity {
         // 配置定位监听
         baiduMap.setMyLocationEnabled(true);
         locationService = ((StartupApplcation)getApplication()).locationService;
-        locationService.setPositionListener(new LocationService.PositionChangeListener() {
+        if (locationService.getLastErrorCode() != 0) {
+            // 在启动界面的时候也打印一下，用于再次提醒用户
+            Toast.makeText(this, R.string.locate_error, Toast.LENGTH_SHORT).show();
+        }
+
+        // 配置位置变化监听器
+        positionChangeListener = new LocationService.PositionChangeListener() {
             @Override
             public void onPositionChanged(Position oldPosition, Position newPosition) {
                 updateMyLocation(newPosition);
             }
-        });
 
-        // 读取配置参数
+            @Override
+            public void onLocateResult(int errorCode, String errorMsg) {
+            }
+        };
+        locationService.addPositionListener(positionChangeListener);
+
+        // 读取配置参数，根据模式来加载当前位置
         Intent intent = getIntent();
         editMode = intent.getBooleanExtra(PARAM_EDIT_MODE, false);
         if (editMode) {
-            gpsLockCondition = (GpsLockCondition) intent.getSerializableExtra(PARAM_POS_CONFIG);
-            position = gpsLockCondition.getPosition();
+            positionLockCondition = (PositionLockCondition) intent.getSerializableExtra(PARAM_POS_CONFIG);
+            position = positionLockCondition.getPosition();
 
-            // 添加标记
+            // 添加标记该位置
             LatLng latLng = new LatLng(position.getLatitude(), position.getLongitude());
-            MarkerOptions option = new MarkerOptions().title("hello").icon(bdA).position(latLng);
-            baiduMap.addOverlay(option);
+            showMarker(latLng, position.getAddress());
         } else {
-            // 创建一个缺省对像,使能
-            gpsLockCondition = new GpsLockCondition();
-            position = locationService.getLastPosition().clone();
-            gpsLockCondition.setPosition(position);
-            gpsLockCondition.setEnable(true);
+            // 创建一个缺省对像,用于新建
+            positionLockCondition = new PositionLockCondition();
+            position = locationService.getLastPosition();
+            if (position == null) {
+                position = new Position();
+            }
+
+            positionLockCondition.setPosition(position);
+            positionLockCondition.setEnable(true);
         }
 
         // 刷新下自己的位置，显示定位
@@ -488,12 +582,14 @@ public class LocationConditionEditActivity extends AppCompatActivity {
      * @param position 当前位置
      */
     private void updateMyLocation (Position position) {
-        // 在地图上显示我的位置
-        MyLocationData locData = new MyLocationData.Builder()
-                .accuracy(position.getRadius())
-                .direction(100).latitude(position.getLatitude())
-                .longitude(position.getLongitude()).build();
-        baiduMap.setMyLocationData(locData);
+        if (position != null) {
+            // 在地图上显示我的位置
+            MyLocationData locData = new MyLocationData.Builder()
+                    .accuracy(position.getRadius())
+                    .direction(100).latitude(position.getLatitude())
+                    .longitude(position.getLongitude()).build();
+            baiduMap.setMyLocationData(locData);
+        }
     }
 
     /**
@@ -501,26 +597,11 @@ public class LocationConditionEditActivity extends AppCompatActivity {
      * @param position 指定位置
      */
     private void showLocation (Position position) {
-        LatLng ll = new LatLng(position.getLatitude(), position.getLongitude());
-        MapStatus.Builder builder = new MapStatus.Builder();
-        builder.target(ll).zoom(18.0f);
-        baiduMap.animateMapStatus(MapStatusUpdateFactory.newMapStatus(builder.build()));
-    }
-
-    /**
-     * 图层选择监听器
-     */
-    private class MapTypeChangeListener implements RadioGroup.OnCheckedChangeListener {
-        @Override
-        public void onCheckedChanged(RadioGroup group, int checkedId) {
-            switch (checkedId) {
-                case R.id.rb_normal:        // 普通图层
-                    baiduMap.setMapType(BaiduMap.MAP_TYPE_NORMAL);
-                    break;
-                case R.id.rb_satellite:     // 卫星图层
-                    baiduMap.setMapType(BaiduMap.MAP_TYPE_SATELLITE);
-                    break;
-            }
+        if (position != null) {
+            LatLng ll = new LatLng(position.getLatitude(), position.getLongitude());
+            MapStatus.Builder builder = new MapStatus.Builder();
+            builder.target(ll).zoom(18.0f);
+            baiduMap.animateMapStatus(MapStatusUpdateFactory.newMapStatus(builder.build()));
         }
     }
 

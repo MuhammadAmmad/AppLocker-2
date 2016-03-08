@@ -1,4 +1,4 @@
-package com.eeontheway.android.applocker.lock;
+package com.eeontheway.android.applocker.main;
 
 import android.content.Context;
 import android.content.SharedPreferences;

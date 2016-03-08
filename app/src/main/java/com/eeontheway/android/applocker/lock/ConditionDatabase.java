@@ -6,7 +6,6 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import com.eeontheway.android.applocker.app.AppInfo;
 import com.eeontheway.android.applocker.app.AppInfoManager;
-import com.eeontheway.android.applocker.locate.Position;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,19 +16,19 @@ import java.util.List;
  * @version v1.0
  * @Time 2016-12-15
  */
-public class LockConfigDatabase {
+public class ConditionDatabase {
     private Context context;
     private SQLiteDatabase db;
-    private LockDatabaseOpenHelper lockListDatabase;
+    private ConditionDatabaseOpenHelper lockListDatabase;
     private AppInfoManager appInfoManager;
 
     /**
      * 构造函数
      * @param context
      */
-    public LockConfigDatabase(Context context) {
+    public ConditionDatabase(Context context) {
         this.context = context;
-        lockListDatabase = new LockDatabaseOpenHelper(context);
+        lockListDatabase = new ConditionDatabaseOpenHelper(context);
         appInfoManager = new AppInfoManager(context);
     }
 
@@ -208,48 +207,47 @@ public class LockConfigDatabase {
     public List<BaseLockCondition> queryLockCondition(LockModeInfo modeInfo) {
         List<BaseLockCondition> configList = new ArrayList<>();
 
-        // 查找时间配置
-        Cursor cursor = db.query("time_lock_config",
-                    new String[]{"id", "start_time", "end_time", "day", "enable" },
-                    "mode_id=?",
-                    new String[] {modeInfo.getId() + ""}, null, null, null);
-        boolean ok = cursor.moveToFirst();
-        while (ok) {
-            TimeLockCondition info = new TimeLockCondition();
-            info.setId(cursor.getInt(0));
-            info.setStartTime(cursor.getString(1));
-            info.setEndTime(cursor.getString(2));
-            info.setDay(cursor.getInt(3));
-            info.setEnable(cursor.getInt(4) > 0);
-            configList.add(info);
+        // 扫描所有支持的类型
+        List<Integer> typeList = LockConditionFactory.getConditionTypeList();
+        for (Integer type : typeList) {
+            // 查询数据库对像
+            String tableName = LockConditionFactory.createConditionTypeName(type);
+            Cursor cursor = db.query(tableName,
+                                     LockConditionFactory.createConditionFieldNames(type),
+                                     "mode_id=?",
+                                     new String[] {modeInfo.getId() + ""},
+                                     null, null, null);
+            boolean ok = cursor.moveToFirst();
+            while (ok) {
+                // 转换结果
+                ContentValues contentValues = new ContentValues();
+                for (int i = 0; i < cursor.getColumnCount(); i++) {
+                    int dataType = cursor.getType(i);
+                    switch (dataType) {
+                        case Cursor.FIELD_TYPE_STRING:
+                            contentValues.put(cursor.getColumnName(i), cursor.getString(i));
+                            break;
+                        case Cursor.FIELD_TYPE_FLOAT:
+                            contentValues.put(cursor.getColumnName(i), cursor.getFloat(i));
+                            break;
+                        case Cursor.FIELD_TYPE_INTEGER:
+                            contentValues.put(cursor.getColumnName(i), cursor.getInt(i));
+                            break;
+                        case Cursor.FIELD_TYPE_BLOB:
+                            contentValues.put(cursor.getColumnName(i), cursor.getBlob(i));
+                            break;
+                    }
+                }
 
-            ok = cursor.moveToNext();
+                // 生成对像并保留到队列中
+                BaseLockCondition condition = LockConditionFactory.createCondition(type);
+                condition.setMapValues(contentValues);
+                configList.add(condition);
+
+                ok = cursor.moveToNext();
+            }
+            cursor.close();
         }
-        cursor.close();
-
-        // 查找gps配置信息
-        cursor = db.query("gps_lock_config",
-                new String[]{"id", "enable", "latitude", "longitude", "radius", "address"},
-                "mode_id=?",
-                new String[] {modeInfo.getId() + ""}, null, null, null);
-        ok = cursor.moveToFirst();
-        while (ok) {
-            GpsLockCondition lockCondition = new GpsLockCondition();
-            lockCondition.setId(cursor.getInt(0));
-            lockCondition.setEnable(cursor.getInt(1) > 0);
-
-            Position position = new Position();
-            position.setLatitude(cursor.getDouble(2));
-            position.setLongitude(cursor.getDouble(3));
-            position.setRadius((float)cursor.getDouble(4));
-            position.setAddress(cursor.getString(5));
-            lockCondition.setPosition(position);
-
-            configList.add(lockCondition);
-
-            ok = cursor.moveToNext();
-        }
-        cursor.close();
 
         return configList;
     }
@@ -259,14 +257,7 @@ public class LockConfigDatabase {
      * @param config 待删除的配置
      */
     public boolean deleteLockCondition(BaseLockCondition config) {
-        String tableName;
-        if (config instanceof TimeLockCondition) {
-            tableName = "time_lock_config";
-        } else {
-            tableName = "gps_lock_config";
-        }
-
-        int row = db.delete(tableName, "id=?", new String[]{config.getId() + ""});
+        int row = db.delete(config.getName(), "id=?", new String[]{config.getId() + ""});
         return (row > 0);
     }
 
@@ -276,31 +267,10 @@ public class LockConfigDatabase {
      * @return true 成功; false 失败
      */
     public boolean updateLockCondition(BaseLockCondition config) {
-        if (config instanceof TimeLockCondition) {
-            TimeLockCondition timeLockCondition = (TimeLockCondition)config;
-
-            ContentValues values = new ContentValues();
-            values.put("start_time", timeLockCondition.getStartTime());
-            values.put("end_time", timeLockCondition.getEndTime());
-            values.put("day", timeLockCondition.getDay());
-            values.put("enable", timeLockCondition.isEnable());
-            int row = db.update("time_lock_config", values, "id=?", new String[] {config.getId() + ""});
-            return (row > 0);
-        } else {
-            GpsLockCondition gpsLockCondition = (GpsLockCondition)config;
-
-            ContentValues values = new ContentValues();
-            values.put("enable", gpsLockCondition.isEnable());
-            Position position = gpsLockCondition.getPosition();
-            values.put("latitude", position.getLatitude());
-            values.put("longitude", position.getLongitude());
-            values.put("radius", position.getRadius());
-            values.put("address", position.getAddress());
-            int row = db.update("gps_lock_config", values, "id=?", new String[] {config.getId() + ""});
-            return (row > 0);
-        }
+        ContentValues values = new ContentValues(config.getMapValues());
+        int row = db.update(config.getName(), values, "id=?", new String[] {config.getId() + ""});
+        return (row > 0);
     }
-
 
     /**
      * 在指定模式下添加一个锁定时机信息
@@ -309,36 +279,13 @@ public class LockConfigDatabase {
      * @return true 成功; false 失败
      */
     public boolean addLockConditionIntoMode(BaseLockCondition config, LockModeInfo modeInfo) {
-        if (config instanceof TimeLockCondition) {
-            TimeLockCondition timeLockCondition = (TimeLockCondition)config;
+        ContentValues values = new ContentValues(config.getMapValues());
+        values.put("mode_id", modeInfo.getId());
 
-            ContentValues values = new ContentValues();
-            values.put("start_time", timeLockCondition.getStartTime());
-            values.put("end_time", timeLockCondition.getEndTime());
-            values.put("day", timeLockCondition.getDay());
-            values.put("enable", timeLockCondition.isEnable());
-            values.put("mode_id", modeInfo.getId());
-            long rowId = db.insert("time_lock_config", null, values);
-            if (rowId != -1) {
-                config.setId((int)rowId);
-                return true;
-            }
-        } else {
-            GpsLockCondition gpsLockCondition = (GpsLockCondition)config;
-
-            ContentValues values = new ContentValues();
-            values.put("enable", gpsLockCondition.isEnable());
-            values.put("mode_id", modeInfo.getId());
-            Position position = gpsLockCondition.getPosition();
-            values.put("latitude", position.getLatitude());
-            values.put("longitude", position.getLongitude());
-            values.put("radius", position.getRadius());
-            values.put("address", position.getAddress());
-            long rowId = db.insert("gps_lock_config", null, values);
-            if (rowId != -1) {
-                config.setId((int)rowId);
-                return true;
-            }
+        long rowId = db.insert(config.getName(), null, values);
+        if (rowId != -1) {
+            config.setId((int)rowId);
+            return true;
         }
 
         return false;

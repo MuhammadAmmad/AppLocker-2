@@ -23,7 +23,7 @@
         android:layout_height="40dp" />
     <TextView
         android:id="@+id/tv_name"
-        android:paddingLeft="@dimen/viewNormalMargin"
+        android:paddingLeft="@dimen/view_common_margin"
         android:text="@string/name"
         android:layout_weight="1"
         style="@style/Common.TextView"

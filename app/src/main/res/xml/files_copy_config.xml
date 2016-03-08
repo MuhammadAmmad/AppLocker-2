@@ -1,19 +1,3 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FilesCopy>
-    <item>
-        <SourcePath>antivirus.db</SourcePath>
-        <DestPath>antivirus.db</DestPath>
-    </item>
-    <item>
-        <SourcePath>city.db</SourcePath>
-        <DestPath>city.db</DestPath>
-    </item>
-    <item>
-        <SourcePath>numlocation.db</SourcePath>
-        <DestPath>numlocation.db</DestPath>
-    </item>
-    <item>
-        <SourcePath>phoneowner.db</SourcePath>
-        <DestPath>phoneowner.db</DestPath>
-    </item>
 </FilesCopy>

@@ -1,11 +1,9 @@
 package com.eeontheway.android.applocker.lock;
 
-import android.app.Fragment;
+import android.content.ContentValues;
 import android.content.Context;
 
 import com.eeontheway.android.applocker.R;
-import com.eeontheway.android.applocker.main.LocationConditionEditActivity;
-import com.eeontheway.android.applocker.main.TimeConditionEditActivity;
 import com.eeontheway.android.applocker.utils.SystemUtils;
 
 import java.util.Calendar;
@@ -28,7 +26,7 @@ public class TimeLockCondition extends BaseLockCondition {
 
     private String startTime;
     private String endTime;
-    private int day;
+    private int day = DAY1|DAY2|DAY3|DAY4|DAY5|DAY6|DAY7;
 
     /**
      * 复制锁定信息
@@ -120,26 +118,30 @@ public class TimeLockCondition extends BaseLockCondition {
     public String getDayString (Context context) {
         StringBuffer stringBuffer = new StringBuffer();
 
-        if (isDaySet(DAY1)) {
-            stringBuffer.append(context.getString(R.string.week, context.getString(R.string.day1)));
-        }
-        if (isDaySet(DAY2)) {
-            stringBuffer.append(context.getString(R.string.week, context.getString(R.string.day2)));
-        }
-        if (isDaySet(DAY3)) {
-            stringBuffer.append(context.getString(R.string.week, context.getString(R.string.day3)));
-        }
-        if (isDaySet(DAY4)) {
-            stringBuffer.append(context.getString(R.string.week, context.getString(R.string.day4)));
-        }
-        if (isDaySet(DAY5)) {
-            stringBuffer.append(context.getString(R.string.week, context.getString(R.string.day5)));
-        }
-        if (isDaySet(DAY6)) {
-            stringBuffer.append(context.getString(R.string.week, context.getString(R.string.day6)));
-        }
-        if (isDaySet(DAY7)) {
-            stringBuffer.append(context.getString(R.string.week, context.getString(R.string.day7)));
+        if (day == 0) {
+            stringBuffer.append(context.getString(R.string.all_day));
+        } else {
+            if (isDaySet(DAY1)) {
+                stringBuffer.append(context.getString(R.string.week, context.getString(R.string.day1)));
+            }
+            if (isDaySet(DAY2)) {
+                stringBuffer.append(context.getString(R.string.week, context.getString(R.string.day2)));
+            }
+            if (isDaySet(DAY3)) {
+                stringBuffer.append(context.getString(R.string.week, context.getString(R.string.day3)));
+            }
+            if (isDaySet(DAY4)) {
+                stringBuffer.append(context.getString(R.string.week, context.getString(R.string.day4)));
+            }
+            if (isDaySet(DAY5)) {
+                stringBuffer.append(context.getString(R.string.week, context.getString(R.string.day5)));
+            }
+            if (isDaySet(DAY6)) {
+                stringBuffer.append(context.getString(R.string.week, context.getString(R.string.day6)));
+            }
+            if (isDaySet(DAY7)) {
+                stringBuffer.append(context.getString(R.string.week, context.getString(R.string.day7)));
+            }
         }
 
         return stringBuffer.toString();
@@ -207,5 +209,42 @@ public class TimeLockCondition extends BaseLockCondition {
         }
 
         return false;
+    }
+
+    /**
+     * 获取对像名称
+     * 该名称要求与数据库中表名相同
+     * @return 对像名称
+     */
+    public String getName () {
+        return "time_lock_config";
+    }
+
+    /**
+     * 获取HashMap的值列表
+     * 该名称要求与数据库中表名相同
+     * @return 值列表
+     */
+    public ContentValues getMapValues () {
+        ContentValues values = new ContentValues();
+
+        values.putAll(super.getMapValues());
+        values.put(ConditionDatabaseOpenHelper.TIME_FIELD_START_TIME, startTime);
+        values.put(ConditionDatabaseOpenHelper.TIME_FIELD_END_TIME, endTime);
+        values.put(ConditionDatabaseOpenHelper.TIME_FIELD_DAY, day);
+
+        return values;
+    }
+
+    /**
+     * 用ContentValues的值更新结构中的数据
+     * ContentValues列名称要求与数据库中表名相同
+     * @return 值列表
+     */
+    public void setMapValues (ContentValues values) {
+        super.setMapValues(values);
+        startTime = values.getAsString(ConditionDatabaseOpenHelper.TIME_FIELD_START_TIME);
+        endTime = values.getAsString(ConditionDatabaseOpenHelper.TIME_FIELD_END_TIME);
+        day = values.getAsInteger(ConditionDatabaseOpenHelper.TIME_FIELD_DAY);
     }
 }

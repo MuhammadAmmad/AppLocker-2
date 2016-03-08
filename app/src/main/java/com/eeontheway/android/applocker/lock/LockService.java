@@ -8,19 +8,27 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
+import android.location.LocationListener;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
 import android.text.TextUtils;
 import android.util.Log;
+import android.widget.Toast;
 
+import com.eeontheway.android.applocker.R;
 import com.eeontheway.android.applocker.app.AppInfo;
 import com.eeontheway.android.applocker.app.AppInfoManager;
 import com.eeontheway.android.applocker.app.BaseAppInfo;
+import com.eeontheway.android.applocker.locate.LocationService;
+import com.eeontheway.android.applocker.locate.Position;
+import com.eeontheway.android.applocker.main.SettingsManager;
 import com.eeontheway.android.applocker.utils.ServiceUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -40,6 +48,10 @@ public class LockService extends Service {
 
     private AppInfoManager appInfoManager;
     private LockConfigManager lockConfigManager;
+    private Calendar calendar;
+    private LocationService locationService;
+    private LocationService.PositionChangeListener positionChangeListener;
+    private boolean locateServiceIsOk;
 
     private BroadcastReceiver screenLockReceiver;
     private BroadcastReceiver screenUnLockReceiver;
@@ -92,6 +104,7 @@ public class LockService extends Service {
         // 获取所有的包信息
         appInfoManager = new AppInfoManager(this);
         appInfoList = appInfoManager.queryAllAppInfo(AppInfoManager.AppType.ALL_APP);
+        calendar = Calendar.getInstance();
 
         lockConfigManager = LockConfigManager.getInstance(this);
         settingsManager = SettingsManager.getInstance(this);
@@ -109,6 +122,8 @@ public class LockService extends Service {
             }
         };
 
+        initLocation();
+
         // 注册监听器
         registerAppUnlockReceiver();
         registerScreenLockReceiver();
@@ -118,6 +133,27 @@ public class LockService extends Service {
 
         // 创建监控线程
         createWatchThread();
+    }
+
+    /**
+     * 初始化定位
+     */
+    private void initLocation () {
+        locationService = LocationService.getInstance(this);
+        positionChangeListener = new LocationService.PositionChangeListener() {
+            @Override
+            public void onLocateResult(int errorCode, String errorMsg) {
+                locateServiceIsOk = (errorCode == 0);
+                Toast.makeText(LockService.this, errorMsg, Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onPositionChanged(Position oldPosition, Position newPosition) {
+
+            }
+        };
+        locationService.addPositionListener(positionChangeListener);
+        locationService.start();
     }
 
     /**
@@ -142,6 +178,7 @@ public class LockService extends Service {
     @Override
     public void onDestroy() {
         lockConfigManager.freeInstance();
+        locationService.removePositionListener(positionChangeListener);
 
         // 停止监听器和线程
         unregisterAppUnlockReceiver();
@@ -451,7 +488,12 @@ public class LockService extends Service {
             }
 
             // 其它情况，由配置管理器决定是否需要锁定
-            boolean lock = lockConfigManager.isPackageNeedLock(packageName);
+            // 获取当前时间及位置后判断
+            calendar.setTime(new Date());
+            calendar.set(0, 0, 0);
+            Position position = locationService.getLastPosition();
+            boolean lock = lockConfigManager.isPackageNeedLock(packageName, calendar,
+                    locateServiceIsOk, position);
             if (lock) {
                 Log.d("AppLocker", packageName + ":lockConfigManager lock");
             }

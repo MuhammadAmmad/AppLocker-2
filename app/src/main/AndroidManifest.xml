@@ -281,6 +281,13 @@
             android:windowSoftInputMode="adjustPan" />
         <activity android:name=".main.TimeConditionEditActivity" />
         <activity android:name=".main.LocationConditionEditActivity"></activity>
+
+        <!-- 百度地图配置 -->
+        <service
+            android:name="com.baidu.location.f"
+            android:enabled="true"
+            android:process=":remote" >
+        </service>
     </application>
 
 </manifest>

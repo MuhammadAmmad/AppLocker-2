@@ -36,6 +36,8 @@ import com.eeontheway.android.applocker.utils.Configuration;
 import com.eeontheway.android.applocker.utils.SystemUtils;
 
 import java.util.Date;
+import java.util.Observable;
+import java.util.Observer;
 
 /**
  * 主界面左侧滑动页面显示的内容
@@ -69,6 +71,7 @@ public class MainLeftFragment extends Fragment {
     private Button bt_logout;
     private Button bt_share;
     private Button bt_feedback;
+    private Observer observer;
 
     /**
      * Fragment的onCreate回调
@@ -83,6 +86,7 @@ public class MainLeftFragment extends Fragment {
         lockConfigManager = LockConfigManager.getInstance(parentActivity);
 
         initUserManager();
+        initObserver();
     }
 
     /**
@@ -118,6 +122,7 @@ public class MainLeftFragment extends Fragment {
      */
     @Override
     public void onDestroy() {
+        lockConfigManager.unregisterObserver(observer);
         lockConfigManager.freeInstance();
         userManager.unInit();
 
@@ -132,6 +137,20 @@ public class MainLeftFragment extends Fragment {
         super.onResume();
 
         updateHeaderView();
+    }
+
+    /**
+     * 初始化监听器
+     */
+    private void initObserver () {
+        observer = new Observer() {
+            @Override
+            public void update(Observable observable, Object data) {
+                ev_adapter.notifyDataSetChanged();
+            }
+        };
+
+        lockConfigManager.registerObserver(observer);
     }
 
     /**
@@ -175,7 +194,6 @@ public class MainLeftFragment extends Fragment {
                     } else {
                         // 切换模式
                         lockConfigManager.switchModeInfo(childPosition);
-                        ev_adapter.notifyDataSetChanged();
                     }
                 }
                 return false;
@@ -306,7 +324,6 @@ public class MainLeftFragment extends Fragment {
                     if (lockConfigManager.getLockModeCount() == 1) {
                         lockConfigManager.switchModeInfo(0);
                     }
-                    ev_adapter.notifyDataSetChanged();
                     Toast.makeText(parentActivity, getString(R.string.mode_add_ok, modeInfo.getName()),
                             Toast.LENGTH_SHORT).show();
                 } else {
@@ -332,7 +349,6 @@ public class MainLeftFragment extends Fragment {
                 modeInfo.setName(newName);
                 boolean ok = lockConfigManager.updateModeInfo(modeInfo);
                 if (ok) {
-                    ev_adapter.notifyDataSetChanged();
                     Toast.makeText(parentActivity, R.string.mode_rename_ok, Toast.LENGTH_SHORT).show();
                 } else {
                     Toast.makeText(parentActivity, R.string.mode_rename_failed, Toast.LENGTH_SHORT).show();
@@ -361,11 +377,8 @@ public class MainLeftFragment extends Fragment {
         bt_del.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (lockConfigManager.getLockModeCount() > 0) {
-                    lockConfigManager.switchModeInfo(0);
-                }
+                // 最后一项不允许删除，通过不使能删除按钮来实现，所以此处不必检查
                 lockConfigManager.deleteModeInfo(modeInfo);
-                ev_adapter.notifyDataSetChanged();
 
                 dialog.dismiss();
                 Toast.makeText(parentActivity, R.string.deleteOk, Toast.LENGTH_SHORT).show();
@@ -388,6 +401,10 @@ public class MainLeftFragment extends Fragment {
         // 弹出对话框
         PopupMenu popupMenu = new PopupMenu(parentActivity, view, Gravity.BOTTOM);
         popupMenu.inflate(R.menu.menu_mode_modify);
+        if (lockConfigManager.getLockModeCount() == 1) {
+            // 不允许删除最后一项
+            popupMenu.getMenu().findItem(R.id.action_delete).setVisible(false);
+        }
         popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {

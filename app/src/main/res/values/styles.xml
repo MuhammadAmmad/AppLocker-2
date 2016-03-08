@@ -7,7 +7,7 @@
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
         <item name="android:textColor">#161515</item>
-        <item name="android:textSize">15sp</item>
+        <item name="android:textSize">14sp</item>
         <item name="windowNoTitle">true</item>
     </style>
 
@@ -42,6 +42,10 @@
 
     <style name="Common.TextView" parent="AppTheme">
         <item name="android:textSize">15dp</item>
+    </style>
+
+    <style name="Common.MidTextView" parent="AppTheme">
+        <item name="android:textSize">13dp</item>
     </style>
 
     <style name="Common.TinyTextView" parent="AppTheme">
@@ -92,9 +96,11 @@
 
     <style name="dayCheck" parent="AppTheme">
         <item name="android:button">@null</item>
-        <item name="android:background">@drawable/day_check_selector</item>
+        <item name="android:checked">true</item>
+        <item name="android:textColor">@drawable/day_textcolor_selector</item>
+        <item name="android:background">@drawable/day_background_selector</item>
         <item name="android:padding">@dimen/view_width_padding</item>
-        <item name="android:textSize">@dimen/large_text_size</item>
+        <item name="android:textSize">@dimen/normal_text_size</item>
     </style>
 
     <style name="Bubble.TextAppearance.Dark" parent="android:TextAppearance.Medium">
@@ -112,4 +118,25 @@
         <item name="android:textStyle">bold</item>
     </style>
 
+    <!-- 浮动按钮 -->
+    <style name="FloatingActionButton" parent="AppTheme">
+        <item name="android:layout_alignParentBottom">true</item>
+        <item name="android:layout_alignParentRight">true</item>
+        <item name="android:layout_marginRight">20dp</item>
+        <item name="android:layout_marginBottom">20dp</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+    </style>
+
+    <!-- 列表底部的删除按钮 -->
+    <style name="ListDelButton" parent="AppTheme">
+        <item name="android:textColor">@color/white</item>
+        <item name="android:visibility">gone</item>
+        <item name="android:layout_margin">@dimen/view_common_margin</item>
+        <item name="android:layout_alignParentBottom">true</item>
+        <item name="android:background">@drawable/button_delte_selector</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+
+    </style>
 </resources>

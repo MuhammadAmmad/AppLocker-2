@@ -12,7 +12,7 @@ import com.eeontheway.android.applocker.utils.Configuration;
 import com.eeontheway.android.applocker.utils.SystemUtils;
 
 /**
- * 微信分享接口
+ * 支付宝分享接口
  * @author lishutong
  * @version v1.0
  * @Time 2016-12-15

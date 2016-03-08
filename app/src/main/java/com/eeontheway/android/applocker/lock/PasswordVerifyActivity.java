@@ -19,6 +19,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.eeontheway.android.applocker.R;
+import com.eeontheway.android.applocker.main.SettingsManager;
 import com.eeontheway.android.applocker.utils.CameraUtils;
 import com.eeontheway.android.applocker.utils.DisplayUtil;
 import com.eeontheway.android.applocker.ui.NumberPasswordView;

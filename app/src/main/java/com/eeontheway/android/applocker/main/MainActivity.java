@@ -26,7 +26,6 @@ import com.eeontheway.android.applocker.R;
 import com.eeontheway.android.applocker.feedback.FeedBackListActivity;
 import com.eeontheway.android.applocker.lock.LockService;
 import com.eeontheway.android.applocker.lock.PasswordSetActivity;
-import com.eeontheway.android.applocker.lock.SettingsManager;
 import com.eeontheway.android.applocker.ui.FragmentPagerViewAdapter;
 import com.eeontheway.android.applocker.ui.FragmentPagerViewInfo;
 import com.eeontheway.android.applocker.updater.UpdaterManager;

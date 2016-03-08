@@ -12,7 +12,7 @@ import android.widget.TextView;
 import com.eeontheway.android.applocker.R;
 import com.eeontheway.android.applocker.locate.Position;
 import com.eeontheway.android.applocker.lock.BaseLockCondition;
-import com.eeontheway.android.applocker.lock.GpsLockCondition;
+import com.eeontheway.android.applocker.lock.PositionLockCondition;
 import com.eeontheway.android.applocker.lock.LockConfigManager;
 import com.eeontheway.android.applocker.lock.TimeLockCondition;
 
@@ -30,7 +30,7 @@ class LockConditionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
 
     private Context context;
     private LockConfigManager lockConfigManager;
-    private ItemSelectedListener listener;
+    private RecyleViewItemSelectedListener listener;
 
     /**
      * Adapter的构造函数
@@ -46,7 +46,7 @@ class LockConditionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
      * 设置点击的回调处理器
      * @param listener 回调处理器
      */
-    public void setItemSelectedListener (ItemSelectedListener listener) {
+    public void setItemSelectedListener (RecyleViewItemSelectedListener listener) {
         this.listener = listener;
     }
 
@@ -71,40 +71,17 @@ class LockConditionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
         if (viewType == ITEM_TYPE_TIME) {
             View view = LayoutInflater.from(parent.getContext())
                     .inflate(R.layout.item_time_lock_config, parent, false);
-            return new ItemTimeViewHolder(view);
+            return new TimeConditionViewHolder(view);
         } else {
             View view = LayoutInflater.from(parent.getContext())
                     .inflate(R.layout.item_postion_lock_config, parent, false);
-            return new ItemPositionViewHolder(view);
+            return new PositionConditionViewHolder(view);
         }
     }
 
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-        BaseLockCondition config = lockConfigManager.getLockCondition(position);
-
-        if (config instanceof TimeLockCondition) {
-            TimeLockCondition timeLockCondition = (TimeLockCondition)config;
-            ItemTimeViewHolder viewHolder = (ItemTimeViewHolder)holder;
-
-            viewHolder.tv_start_time.setText(
-                    context.getString(R.string.start_time, timeLockCondition.getStartTime()));
-            viewHolder.tv_end_time.setText(
-                    context.getString(R.string.end_time, timeLockCondition.getEndTime()));
-            viewHolder.tv_day.setText(timeLockCondition.getDayString(context));
-            viewHolder.cb_enable.setChecked(timeLockCondition.isEnable());
-            viewHolder.cb_selected.setChecked(timeLockCondition.isSelected());
-        } else if (config instanceof GpsLockCondition){
-            GpsLockCondition gpsLockCondition = (GpsLockCondition)config;
-            ItemPositionViewHolder viewHolder = (ItemPositionViewHolder)holder;
-
-            Position pos = gpsLockCondition.getPosition();
-            viewHolder.tv_address.setText(pos.getAddress());
-            viewHolder.tv_postion.setText(context.getString(R.string.Longitude_Latitude,
-                                        pos.getLongitude(), pos.getLatitude()));
-            viewHolder.cb_enable.setChecked(gpsLockCondition.isEnable());
-            viewHolder.cb_selected.setChecked(gpsLockCondition.isSelected());
-        }
+        ((BaseConditionViewHolder)holder).setConfig(lockConfigManager.getLockCondition(position));
     }
 
     @Override
@@ -112,13 +89,12 @@ class LockConditionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
         return lockConfigManager.getLockConditionCount();
     }
 
-
     @Override
     public int getItemViewType(int position) {
         BaseLockCondition config = lockConfigManager.getLockCondition(position);
         if (config instanceof TimeLockCondition) {
             return ITEM_TYPE_TIME;
-        } else if (config instanceof GpsLockCondition){
+        } else if (config instanceof PositionLockCondition){
             return ITEM_TYPE_GPS;
         }
 
@@ -126,33 +102,26 @@ class LockConditionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
     }
 
     /**
-     * 某个项选中事件
-     */
-    interface ItemSelectedListener {
-        void onItemClicked (int pos);
-        void onItemSelected (int pos, boolean selected);
-    }
-
-    /**
      * 基础的ItemViewHolder
      */
-    class BaseItemViewHolder extends RecyclerView.ViewHolder {
+    abstract class BaseConditionViewHolder extends RecyclerView.ViewHolder {
         public View ll_item;
         public CheckBox cb_enable;
         public CheckBox cb_selected;
 
-        public BaseItemViewHolder(View itemView) {
+        public BaseConditionViewHolder(View itemView) {
             super(itemView);
 
             cb_enable = (CheckBox) itemView.findViewById(R.id.cb_enable);
             ll_item = itemView.findViewById(R.id.ll_item);
-            cb_selected = (CheckBox)itemView.findViewById(R.id.cb_selected);
+            cb_selected = (CheckBox) itemView.findViewById(R.id.cb_selected);
 
             // 选中按钮点击事件
-            cb_selected.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            cb_selected.setOnClickListener(new View.OnClickListener() {
                 @Override
-                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                public void onClick(View v) {
                     int pos = getAdapterPosition();
+                    boolean isChecked = cb_selected.isChecked();
                     BaseLockCondition config = lockConfigManager.getLockCondition(pos);
                     config.setSelected(isChecked);
 
@@ -163,60 +132,85 @@ class LockConditionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
             });
 
             // 普通点击事件，切换锁定使能
-            cb_enable.setOnClickListener(new View.OnClickListener() {
+            ll_item.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    int pos = getAdapterPosition();
-
                     // 切换使能状态
+                    int pos = getAdapterPosition();
                     BaseLockCondition oldConfig = lockConfigManager.getLockCondition(pos);
-                    BaseLockCondition newConfig = (BaseLockCondition)oldConfig.clone();
+                    BaseLockCondition newConfig = (BaseLockCondition) oldConfig.clone();
                     newConfig.setEnable(!oldConfig.isEnable());
                     lockConfigManager.updateLockCondition(newConfig);
                 }
             });
 
             // 长点击事件
-            ll_item.setOnClickListener(new View.OnClickListener() {
+            ll_item.setOnLongClickListener(new View.OnLongClickListener() {
                 @Override
-                public void onClick(View v) {
+                public boolean onLongClick(View v) {
                     if (listener != null) {
-                        listener.onItemClicked(getAdapterPosition());
+                        return listener.onItemLongClicked(getAdapterPosition());
                     }
+                    return false;
                 }
             });
+        }
+
+        abstract public void setConfig(BaseLockCondition config);
+    }
+
+    /**
+     * 位置信息的ViewHolder
+     */
+    class PositionConditionViewHolder extends BaseConditionViewHolder {
+        public TextView tv_address;
+        public TextView tv_latitude;
+        public TextView tv_longitude;
+
+        public PositionConditionViewHolder(View itemView) {
+            super(itemView);
+
+            tv_latitude = (TextView) itemView.findViewById(R.id.tv_latitude);
+            tv_longitude = (TextView) itemView.findViewById(R.id.tv_longitude);
+            tv_address = (TextView) itemView.findViewById(R.id.tv_address);
+        }
+
+        public void setConfig (BaseLockCondition config) {
+            PositionLockCondition positionLockCondition = (PositionLockCondition)config;
+
+            Position pos = positionLockCondition.getPosition();
+            tv_address.setText(pos.getAddress());
+            tv_latitude.setText(context.getString(R.string.latitude, pos.getLatitude()));
+            tv_longitude.setText(context.getString(R.string.longitude, pos.getLongitude()));
+            cb_enable.setChecked(positionLockCondition.isEnable());
+            cb_selected.setChecked(positionLockCondition.isSelected());
         }
     }
 
     /**
      * 时间配置的ViewHolder
      */
-    class ItemTimeViewHolder extends BaseItemViewHolder {
+    class TimeConditionViewHolder extends BaseConditionViewHolder {
         public TextView tv_start_time;
         public TextView tv_end_time;
         public TextView tv_day;
 
-        public ItemTimeViewHolder(final View itemView) {
+        public TimeConditionViewHolder(final View itemView) {
             super(itemView);
 
             tv_start_time = (TextView)itemView.findViewById(R.id.tv_start_time);
             tv_end_time = (TextView)itemView.findViewById(R.id.tv_end_time);
             tv_day = (TextView)itemView.findViewById(R.id.tv_day);
         }
-    }
 
-    /**
-     * 位置信息的ViewHolder
-     */
-    class ItemPositionViewHolder extends BaseItemViewHolder {
-        public TextView tv_postion;
-        public TextView tv_address;
+        public void setConfig (BaseLockCondition config) {
+            TimeLockCondition timeLockCondition = (TimeLockCondition)config;
 
-        public ItemPositionViewHolder(View itemView) {
-            super(itemView);
-
-            tv_postion = (TextView) itemView.findViewById(R.id.tv_postion);
-            tv_address = (TextView) itemView.findViewById(R.id.tv_address);
+            tv_start_time.setText(context.getString(R.string.start_time, timeLockCondition.getStartTime()));
+            tv_end_time.setText(context.getString(R.string.end_time, timeLockCondition.getEndTime()));
+            tv_day.setText(timeLockCondition.getDayString(context));
+            cb_enable.setChecked(timeLockCondition.isEnable());
+            cb_selected.setChecked(timeLockCondition.isSelected());
         }
     }
 }

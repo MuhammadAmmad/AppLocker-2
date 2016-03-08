@@ -2,6 +2,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:padding="@dimen/viewNormalMargin"
     android:descendantFocusability="blocksDescendants"
+    android:background="@drawable/background_normal_clickable_item"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">

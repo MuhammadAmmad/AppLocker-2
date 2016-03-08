@@ -13,6 +13,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.TimePicker;
+import android.widget.Toast;
 
 import com.eeontheway.android.applocker.R;
 import com.eeontheway.android.applocker.lock.TimeLockCondition;
@@ -109,6 +110,7 @@ public class TimeConditionEditActivity extends AppCompatActivity {
         setTitle(R.string.select_time);
         initToolBar();
         initViews();
+        initTimePicker();
     }
 
     /**
@@ -225,6 +227,44 @@ public class TimeConditionEditActivity extends AppCompatActivity {
                 intent.putExtra(PARAM_TIME_CONFIG, timeLockCondition);
                 setResult(RESULT_OK, intent);
                 finish();
+            }
+        });
+    }
+
+    /**
+     * 配置TimePicker
+     * 主要作用是检查起始时间和结束时间的合理性，保证起始时间<=结束时间
+     */
+    private void initTimePicker () {
+        // 检查开始时间的变化
+        tp_start_time.setOnTimeChangedListener(new TimePicker.OnTimeChangedListener() {
+            @Override
+            public void onTimeChanged(TimePicker view, int hourOfDay, int minute) {
+                int endHourOfDay = tp_end_time.getCurrentHour();
+                int endMinute = tp_end_time.getCurrentMinute();
+                if ((hourOfDay > endHourOfDay)     // 时大于结束时
+                    || (hourOfDay == endHourOfDay) && (minute > endMinute)) { // 时相同但分更大
+
+                    // 提示错误，同时进行纠正
+                    tp_start_time.setCurrentHour(endHourOfDay);
+                    tp_start_time.setCurrentMinute(endMinute);
+                }
+            }
+        });
+
+        // 检查结束时间的变化
+        tp_end_time.setOnTimeChangedListener(new TimePicker.OnTimeChangedListener() {
+            @Override
+            public void onTimeChanged(TimePicker view, int hourOfDay, int minute) {
+                int startHourOfDay = tp_start_time.getCurrentHour();
+                int startMinute = tp_start_time.getCurrentMinute();
+                if ((startHourOfDay > hourOfDay)     // 结束时比超始时更小
+                        || (startHourOfDay == hourOfDay) && (minute < startMinute)) { // 时相同但分更小
+
+                    // 提示错误，同时进行纠正
+                    tp_end_time.setCurrentHour(startHourOfDay);
+                    tp_end_time.setCurrentMinute(startMinute);
+                }
             }
         });
     }

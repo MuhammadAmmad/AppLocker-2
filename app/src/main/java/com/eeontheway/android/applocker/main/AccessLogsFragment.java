@@ -42,6 +42,7 @@ public class AccessLogsFragment extends Fragment {
     private View rl_loading;
     private TextView tv_empty_show;
     private CheckBox cb_select_all;
+    private Observer observer;
 
     private Activity parentActivity;
     private LockConfigManager lockConfigManager;
@@ -71,6 +72,7 @@ public class AccessLogsFragment extends Fragment {
      */
     @Override
     public void onDestroy() {
+        lockConfigManager.unregisterObserver(observer);
         lockConfigManager.freeInstance();
 
         super.onDestroy();
@@ -128,6 +130,7 @@ public class AccessLogsFragment extends Fragment {
         layoutManager.setOrientation(LinearLayoutManager.VERTICAL);
         rcv_list.setLayoutManager(layoutManager);
         rcv_list.setHasFixedSize(true);
+        rcv_list.addItemDecoration(new LockListViewItemDecoration());
 
         // 配置选中事件
         rcv_adapter.setItemSelectedListener(new AccessLogsAdapter.ItemSelectedListener() {
@@ -296,12 +299,13 @@ public class AccessLogsFragment extends Fragment {
      * 注册数据变化监听器
      */
     private void initDataObserver () {
-        lockConfigManager.registerObserver(new Observer() {
+        observer = new Observer() {
             @Override
             public void update(Observable observable, Object data) {
                 // 通知数据发生改变，刷新界面
                 rcv_adapter.notifyDataSetChanged();
             }
-        });
+        };
+        lockConfigManager.registerObserver(observer);
     }
 }

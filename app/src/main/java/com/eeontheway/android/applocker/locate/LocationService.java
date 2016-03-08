@@ -2,12 +2,19 @@ package com.eeontheway.android.applocker.locate;
 
 import android.content.Context;
 import android.location.Location;
+import android.os.Debug;
+import android.util.Log;
+import android.widget.Toast;
 
 import com.baidu.location.BDLocation;
 import com.baidu.location.BDLocationListener;
 import com.baidu.location.LocationClient;
 import com.baidu.location.LocationClientOption;
 import com.baidu.location.LocationClientOption.LocationMode;
+import com.eeontheway.android.applocker.R;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 后台定位服务
@@ -16,39 +23,38 @@ import com.baidu.location.LocationClientOption.LocationMode;
  * @Time 2016-2-8
  */
 public class LocationService {
+    private Context context;
 	private LocationClient client;
 	private LocationClientOption mOption;
 	private LocationClientOption diyOption;
     private MyLocationListener bdListener;
-    private PositionChangeListener positionListener;
+    private List<PositionChangeListener> positionListenerList = new ArrayList<>();
 
 	private static LocationService instance;
 	private static Object objLock = new Object();
 
     private Position lastPosition;
+    private int lastErrorCode = -1;
     private int maxDistance = 10;
 
     /**
      * 位置状态监听器
      */
     public interface PositionChangeListener {
+        void onLocateResult (int errorCode, String errorMsg);
         void onPositionChanged (Position oldPosition, Position newPosition);
     }
 
     /**
-     * 获取位置监听器
-     * @return 监听器
-     */
-    public PositionChangeListener getPositionListener() {
-        return positionListener;
-    }
-
-    /**
-     * 设置位置监听器
+     * 添加位置监听器
      * @param positionListener 位置监听器
      */
-    public void setPositionListener(PositionChangeListener positionListener) {
-        this.positionListener = positionListener;
+    public void addPositionListener(PositionChangeListener positionListener) {
+        positionListenerList.add(positionListener);
+    }
+
+    public void removePositionListener (PositionChangeListener positionListener) {
+        positionListenerList.remove(positionListener);
     }
 
 	/**
@@ -56,20 +62,30 @@ public class LocationService {
 	 * @return 上一次位置，如果之前没有定位，返回null
      */
 	public Position getLastPosition() {
-		return lastPosition;
+		if (lastPosition != null) {
+			return lastPosition.clone();
+		} else {
+			return null;
+		}
 	}
 
 	/***
 	 * 构造函数
 	 */
-	public LocationService() {
+	public LocationService(Context context) {
+        this.context = context;
 	}
 
+    /**
+     * 获取实例，单例化
+     * @param context 上下文
+     * @return
+     */
 
 	public static LocationService getInstance (Context context) {
 		synchronized (objLock) {
 			if(instance == null){
-				instance = new LocationService();
+				instance = new LocationService(context);
 				instance.client = new LocationClient(context);
 				instance.bdListener = instance.new MyLocationListener();
 				instance.client.setLocOption(instance.getDefaultLocationClientOption());
@@ -79,7 +95,15 @@ public class LocationService {
 		return instance;
 	}
 
-	/***
+    /**
+     * 获取上一次的结果
+     * @return 结果码，非0表示定位失败
+     */
+    public int getLastErrorCode() {
+        return lastErrorCode;
+    }
+
+    /***
 	 * 设置定位选项
 	 * @param option 选项
 	 * @return isSuccessSetOption 是否设置成功
@@ -106,7 +130,7 @@ public class LocationService {
 		return diyOption;
 	}
 
-	/***
+    /***
 	 * 获取缺省的定位设置
 	 * @return DefaultLocationClientOption
 	 */
@@ -121,6 +145,7 @@ public class LocationService {
 			mOption.setCoorType("bd09ll");
 
             //可选，默认0，即仅定位一次，设置发起定位请求的间隔需要大于等于1000ms才是有效的
+			// 做成可配置的!!
 			mOption.setScanSpan(3000);
 
             //可选，设置是否需要地址信息，默认不需要
@@ -157,6 +182,7 @@ public class LocationService {
 		synchronized (objLock) {
 			if(client != null && !client.isStarted()){
                 client.registerLocationListener(bdListener);
+				client.requestLocation();
 				client.start();
 			}
 		}
@@ -175,18 +201,48 @@ public class LocationService {
 	}
 
     /**
+     * 显示定位结果
+     * @param errorCode 错误码，非0表示有错误发生
+     * @param errorMsg 定位结果消息
+     */
+    private void showLocateResult (int errorCode, String errorMsg) {
+        // 状态未改变时，只需显示一次结果
+        if (errorCode != lastErrorCode) {
+            // 调用回调
+            for (PositionChangeListener listener : positionListenerList) {
+                listener.onLocateResult(errorCode, errorMsg);
+            }
+        }
+    }
+
+    /**
      * 定位SDK监听器
      */
     public class MyLocationListener implements BDLocationListener {
         @Override
         public void onReceiveLocation(BDLocation location) {
-            if (location == null || location.getLocType() == BDLocation.TypeServerError
-                    || location.getLocType() == BDLocation.TypeNetWorkException
-                    || location.getLocType() == BDLocation.TypeCriteriaException) {
+            if (location == null) {
                 return;
             }
 
-            if(lastPosition == null){
+            // 检查错误码
+            String errorMsg;
+            switch (location.getLocType()) {
+                case BDLocation.TypeNetWorkLocation:    // 定位成功
+                case BDLocation.TypeGpsLocation:
+                    errorMsg = context.getString(R.string.locate_ok);
+                    showLocateResult(0, errorMsg);
+                    lastErrorCode = 0;
+                    break;
+                default:
+                    errorMsg = context.getString(R.string.locate_error);
+                    showLocateResult(location.getLocType(), errorMsg);
+                    lastErrorCode = location.getLocType();
+                    return;
+            }
+
+            // 定位成功时的处理
+			if(lastPosition == null){
                 // 保存当前位置
 				lastPosition = new Position();
 				lastPosition.setRadius(location.getRadius());
@@ -209,9 +265,9 @@ public class LocationService {
 					newPosition.setAddress(location.getAddrStr());
 
                     // 通知外界，地点发生了变化
-					if (positionListener != null) {
-						positionListener.onPositionChanged(lastPosition, newPosition);
-					}
+                    for (PositionChangeListener listener : positionListenerList) {
+                        listener.onPositionChanged(lastPosition, newPosition);
+                    }
 
 					lastPosition.update(newPosition);
 				}

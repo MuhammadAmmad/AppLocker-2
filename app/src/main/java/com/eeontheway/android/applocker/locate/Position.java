@@ -12,7 +12,7 @@ public class Position implements Serializable, Cloneable {
     private float radius;
     private double latitude;
     private double longitude;
-    private String address;
+    private String address = "unknown";
 
     /**
      * 用一个位置更新本位置

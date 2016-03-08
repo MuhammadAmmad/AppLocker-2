@@ -26,6 +26,7 @@ import com.eeontheway.android.applocker.app.BaseAppInfo;
 import com.eeontheway.android.applocker.lock.AppLockInfo;
 import com.eeontheway.android.applocker.lock.LockConfigManager;
 import com.eeontheway.android.applocker.ui.ListHeaderView;
+import com.eeontheway.android.applocker.ui.WaitingProgressDialog;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +42,7 @@ public class AppSelectActivity extends AppCompatActivity {
     private ListHeaderView ll_header;
     private ExpandableListView el_listview;
     private FloatingActionButton fab_add;
+    private WaitingProgressDialog progressDialog;
     private AppSelectAdapter el_adapter;
 
     private AppInfoManager appInfoManager;
@@ -99,6 +101,7 @@ public class AppSelectActivity extends AppCompatActivity {
         // 修改进度条
         rl_loading = findViewById(R.id.rl_loading);
 
+        initProgressDialog();
         initToolBar();
         initHeader();
         initListView();
@@ -222,10 +225,51 @@ public class AppSelectActivity extends AppCompatActivity {
         fab_add.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                setResult(saveSelectedApps());
-                finish();
+                // 借助进度条来适应长时间的插入操作
+                new AsyncTask<Void, Void, Integer>() {
+                    @Override
+                    protected void onPostExecute(Integer result) {
+                        // 恢复所有的数据监听
+                        lockConfigManager.setObserverEnable(true);
+
+                        Toast.makeText(AppSelectActivity.this,
+                                                getString(R.string.add_app_ok, result.intValue()),
+                                                Toast.LENGTH_SHORT).show();
+                        showWaitingProgressDialog(false);
+                        setResult(result);
+                        finish();
+                    }
+
+                    @Override
+                    protected Integer doInBackground(Void... params) {
+                        return saveSelectedApps();
+                    }
+
+                    @Override
+                    protected void onPreExecute() {
+                        showWaitingProgressDialog(true);
+
+                        // 暂时取消监听
+                        lockConfigManager.setObserverEnable(false);
+                    }
+                }.execute();
             }
         });
+    }
+
+    /**
+     * 初始化进度对话框
+     */
+    private void initProgressDialog () {
+        progressDialog = new WaitingProgressDialog(this);
+        progressDialog.setMessage(getString(R.string.adding));
+    }
+
+    /**
+     * 显示等待进度对话框
+     */
+    private void showWaitingProgressDialog (boolean show) {
+        progressDialog.show(show);
     }
 
     /**
@@ -294,7 +338,6 @@ public class AppSelectActivity extends AppCompatActivity {
             }
         }
 
-        Toast.makeText(this, getString(R.string.add_app_ok, count), Toast.LENGTH_SHORT).show();
         return count;
     }
 

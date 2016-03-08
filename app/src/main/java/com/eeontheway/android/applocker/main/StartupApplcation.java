@@ -40,7 +40,6 @@ public class StartupApplcation extends Application {
         // 初始化百度地图SDK
         SDKInitializer.initialize(getApplicationContext());
         locationService = LocationService.getInstance(getApplicationContext());
-        locationService.start();
         mVibrator =(Vibrator)getApplicationContext().getSystemService(Service.VIBRATOR_SERVICE);
 
         // 初始化BMOB SDK

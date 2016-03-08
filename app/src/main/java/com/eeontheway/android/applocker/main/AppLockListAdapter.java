@@ -27,7 +27,7 @@ import static com.eeontheway.android.applocker.R.*;
 class AppLockListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private Context context;
     private LockConfigManager lockConfigManager;
-    private ItemSelectedListener listener;
+    private RecyleViewItemSelectedListener listener;
 
     /**
      * Adapter的构造函数
@@ -43,7 +43,7 @@ class AppLockListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
      * 设置点击的回调处理器
      * @param listener 回调处理器
      */
-    public void setItemSelectedListener (ItemSelectedListener listener) {
+    public void setItemSelectedListener (RecyleViewItemSelectedListener listener) {
         this.listener = listener;
     }
 
@@ -88,13 +88,6 @@ class AppLockListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     /**
-     * 某个项选中事件
-     */
-    interface ItemSelectedListener {
-        void onItemSelected (int pos, boolean selected);
-    }
-
-    /**
      * 列表项的ViewHolder
      */
     class ItemViewHolder extends RecyclerView.ViewHolder {
@@ -136,10 +129,18 @@ class AppLockListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     // 切换是否锁定状态
                     int pos = getAdapterPosition();
                     AppLockInfo appLockInfo = lockConfigManager.getAppLockInfo(pos);
-                    boolean ok = lockConfigManager.setAppLockEnable(appLockInfo, !appLockInfo.isEnable());
-                    if (ok) {
-                        notifyDataSetChanged();
+                    lockConfigManager.setAppLockEnable(appLockInfo, !appLockInfo.isEnable());
+                }
+            });
+
+            // 长点击事件
+            ll_item.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    if (listener != null) {
+                        return listener.onItemLongClicked(getAdapterPosition());
                     }
+                    return false;
                 }
             });
         }

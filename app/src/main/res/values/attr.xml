@@ -7,4 +7,11 @@
         <attr name="passwordErrorDelay" format="integer" />
         <attr name="maxRetryCount" format="integer" />
     </declare-styleable>
+
+    <declare-styleable name="ListHeaderView">
+        <attr name="header_title" format="string|reference" />
+        <attr name="textColor" format="color|reference" />
+        <attr name="textSize" format="dimension|reference" />
+        <attr name="checkAll_text" format="string|reference" />
+    </declare-styleable>
 </resources>
