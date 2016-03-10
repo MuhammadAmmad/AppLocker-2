@@ -113,27 +113,37 @@
     <string name="select_all">全选</string>
     <string name="password_err_counter">密码输错次数：%d</string>
     <string name="already_deleted_count">%d项已删除</string>
-    <string name="time_args">时间:%s</string>
-    <string name="appLocker_err_detect">这个人想访问您的%s</string>
+    <string name="time_args">时间：%s</string>
+    <string name="location_args">地址：%s</string>
+    <string name="attention">请注意</string>
+    <string name="appLocker_err_detect">这个人想访问您的 %s </string>
     <string name="add_tag_to_photo_summary">添加时间、应用名称、密码错误次数等标记</string>
     <string name="child_selected_count" formatted="false">(%d/%d)</string>
 
     <string name="title_activity_app_locker_settings">应用锁设置</string>
     <string name="total_delete_count">%d项等待删除</string>
     <string name="no_item_exist">恭喜，纪录为空</string>
+    <string name="no_body_access">非常棒，没有拦截到任何纪录!</string>
     <string name="no_more_items">没有更多纪录了</string>
     <string name="loading">正在加载...</string>
     <string name="location">位置:%s</string>
     <string name="name">名称</string>
     <string name="settings">设置</string>
     <string name="about">关于</string>
-    <string name="access_logs">访问日志</string>
+    <string name="access_logs">拦截纪录</string>
     <string name="applock_list">应用列表</string>
+    <string name="app_start">首页</string>
     <string name="rom">内部存储器</string>
     <string name="sdcard">外部SD卡</string>
     <string name="unable_start">无法启动</string>
     <string name="unable_uninstall">无法移除</string>
-
+    <string name="sort_by_name">按名称排序</string>
+    <string name="sort_by_time">按时间排序</string>
+    <string name="today">今天</string>
+    <string name="yesterday">昨天</string>
+    <string name="lastweek">过去一周</string>
+    <string name="lastmonth">过去一月</string>
+    <string name="lastolder">更早前</string>
 
     <string name="mode_list">切换模式</string>
     <string name="default_mode">缺省模式</string>
@@ -250,6 +260,7 @@
     <string name="feedback_content">反馈内容</string>
     <string name="share_not_unsupported">分享失败：不支持该类型的分享，或未安装相应App!</string>
     <string name="download_failed">下载失败:%s</string>
+    <string name="feed_back_not_login">你还未登陆，将无法收到反馈回复通知!</string>
 
     <string name="no_updateinfo">错误，不存在升级信息!</string>
     <string name="network_unavaliable">错误：网络不可用!</string>
@@ -325,7 +336,8 @@
     <string name="phonenum_not_verified">错误：该手机号未与任何账户关联</string>
     <string name="query_failed">查询失败:%s</string>
     <string name="welcome_to_use_app">欢迎您，%s！</string>
-    <string name="current_date">今天是%s</string>
+    <string name="current_date" formatted="false">今天是%s 星期%s</string>
+    <string name="current_location">所在位置：%s</string>
     <string name="register_or_login">注册/登陆</string>
     <string name="logout">退出登陆</string>
     <string name="you_are_not_logined_yet">您还未登陆</string>

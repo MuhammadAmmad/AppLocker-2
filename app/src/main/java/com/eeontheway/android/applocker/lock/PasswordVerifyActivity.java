@@ -19,6 +19,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.eeontheway.android.applocker.R;
+import com.eeontheway.android.applocker.locate.LocationService;
+import com.eeontheway.android.applocker.locate.Position;
 import com.eeontheway.android.applocker.main.SettingsManager;
 import com.eeontheway.android.applocker.utils.CameraUtils;
 import com.eeontheway.android.applocker.utils.DisplayUtil;
@@ -48,7 +50,7 @@ public class PasswordVerifyActivity extends AppCompatActivity {
     private LockConfigManager lockConfigManager;
     private CameraUtils cameraUtils;
     private String photoName;
-    private AccessLog accessLog = new AccessLog();
+    private AccessLog accessLog;
 
     private static AppCompatActivity activity;
     private static String lastPasswordErrorPackageName;
@@ -271,11 +273,22 @@ public class PasswordVerifyActivity extends AppCompatActivity {
                 settingsManager.getCaptureOnFailCount();
 
         // 生成日志信息
+        accessLog = new AccessLog();
         accessLog.setPackageName(packageName);
         accessLog.setAppName(appName);
         accessLog.setPasswordErrorCount(settingsManager.getCaptureOnFailCount());
         dateFormat.applyPattern("yyyy-MM-dd KK:mm:ss");
         accessLog.setTime(dateFormat.format(date));
+
+        LocationService service = LocationService.getInstance(this);
+        Position position = service.getLastPosition();
+        String address;
+        if ((position == null) || (position.getAddress() == null)) {
+            address = getString(R.string.unknwon_location);
+        } else {
+            address = position.getAddress();
+        }
+        accessLog.setLocation(address);
 
         // 先启动照相并保存后，才能获取最近路径
         if (settingsManager.isCaptureOnFailEnable()) {
@@ -327,7 +340,7 @@ public class PasswordVerifyActivity extends AppCompatActivity {
 
         // 再打上标记
         if (settingsManager.isAddTagToPhoto()) {
-            float textSize = DisplayUtil.sp2px(this, 20.0f);
+            float textSize = DisplayUtil.sp2px(this, 15);
             paint.setTextSize(textSize);
             paint.setColor(getResources().getColor(R.color.red));
             float startX = 10, startY = 10;
@@ -352,7 +365,7 @@ public class PasswordVerifyActivity extends AppCompatActivity {
 
         // 刷新照片存储路径
         accessLog.setPhotoPath(path);
-        //lockConfigManager.updateLogInfo(--);
+        lockConfigManager.updateAccessLog(accessLog);
 
         // 释放资源
         newBitmap.recycle();

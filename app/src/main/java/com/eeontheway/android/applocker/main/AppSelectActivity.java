@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.database.DataSetObservable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Fragment;
@@ -24,6 +25,7 @@ import com.eeontheway.android.applocker.app.AppInfo;
 import com.eeontheway.android.applocker.app.AppInfoManager;
 import com.eeontheway.android.applocker.app.BaseAppInfo;
 import com.eeontheway.android.applocker.lock.AppLockInfo;
+import com.eeontheway.android.applocker.lock.DataObservable;
 import com.eeontheway.android.applocker.lock.LockConfigManager;
 import com.eeontheway.android.applocker.ui.ListHeaderView;
 import com.eeontheway.android.applocker.ui.WaitingProgressDialog;
@@ -230,7 +232,7 @@ public class AppSelectActivity extends AppCompatActivity {
                     @Override
                     protected void onPostExecute(Integer result) {
                         // 恢复所有的数据监听
-                        lockConfigManager.setObserverEnable(true);
+                        lockConfigManager.setObserverEnable(DataObservable.DataType.APP_LIST, true);
 
                         Toast.makeText(AppSelectActivity.this,
                                                 getString(R.string.add_app_ok, result.intValue()),
@@ -250,7 +252,7 @@ public class AppSelectActivity extends AppCompatActivity {
                         showWaitingProgressDialog(true);
 
                         // 暂时取消监听
-                        lockConfigManager.setObserverEnable(false);
+                        lockConfigManager.setObserverEnable(DataObservable.DataType.APP_LIST, false);
                     }
                 }.execute();
             }

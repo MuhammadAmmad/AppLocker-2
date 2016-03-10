@@ -15,6 +15,7 @@ public class UserInfo {
     private boolean phoneNumberVerified;
     private String lastLoginTime;
     private String registerTime;
+    private String cid;
 
     /**
      * 构造函数
@@ -152,5 +153,21 @@ public class UserInfo {
      */
     public void setRegisterTime (String createTime) {
         this.registerTime = createTime;
+    }
+
+    /**
+     * 该用户的唯一id
+     * @return id
+     */
+    public String getCid() {
+        return cid;
+    }
+
+    /**
+     * 设置该用户的id
+     * @param cid 用户id
+     */
+    public void setCid(String cid) {
+        this.cid = cid;
     }
 }

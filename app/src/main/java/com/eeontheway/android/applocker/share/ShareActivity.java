@@ -106,7 +106,7 @@ public class ShareActivity extends AppCompatActivity {
      */
     private void shareInfo(int type) {
         final IShare iShare = ShareFactory.create(ShareActivity.this, type);
-        ((ShareBase)iShare).setListener(new IShare.OnFinishListener() {
+        iShare.setListener(new IShare.OnFinishListener() {
             @Override
             public void onFinish(int code, String msg) {
                 iShare.uninit();
@@ -117,7 +117,8 @@ public class ShareActivity extends AppCompatActivity {
         if (iShare.isSupported()) {
             iShare.share((ShareInfo) getIntent().getParcelableExtra(PARAM_SHARE_INFO));
         } else {
-            Toast.makeText(ShareActivity.this, R.string.share_not_unsupported, Toast.LENGTH_SHORT).show();
+            Toast.makeText(ShareActivity.this, R.string.share_not_unsupported,
+                                                                Toast.LENGTH_SHORT).show();
         }
     }
 

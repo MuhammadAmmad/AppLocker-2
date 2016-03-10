@@ -302,7 +302,8 @@ public class ConditionDatabase {
         values.put("packageName", accessLog.getPackageName());
         values.put("passErrorCount", accessLog.getPasswordErrorCount());
         values.put("photoPath", accessLog.getPhotoPath());
-        values.put("resason", "unknown");
+        values.put("time", accessLog.getTime());
+        values.put("location", accessLog.getLocation());
 
         long row = db.insert("app_log_list", null, values);
         if (row >= 0) {
@@ -310,6 +311,24 @@ public class ConditionDatabase {
             return true;
         }
         return false;
+    }
+
+    /**
+     * 更新日志纪录
+     * @param accessLog 锁定日志
+     * @return true 操作成功; false 操作失败
+     */
+    public boolean updateAccessInfo(AccessLog accessLog) {
+        ContentValues values = new ContentValues();
+        values.put("appName", accessLog.getAppName());
+        values.put("packageName", accessLog.getPackageName());
+        values.put("passErrorCount", accessLog.getPasswordErrorCount());
+        values.put("photoPath", accessLog.getPhotoPath());
+        values.put("time", accessLog.getTime());
+        values.put("location", accessLog.getLocation());
+
+        long row = db.update("app_log_list", values, "id=?", new String[]{accessLog.getId() + ""});
+        return row > 0;
     }
 
     /**
@@ -330,7 +349,7 @@ public class ConditionDatabase {
         List<AccessLog> logList = new ArrayList<>();
 
         String queryString = "select id, appName, packageName, " +
-                " passErrorCount, photoPath, resason from app_log_list " +
+                " passErrorCount, photoPath, time, location from app_log_list " +
                 " limit ? offset ?;";
         Cursor cursor = db.rawQuery(queryString, new String[] {"" + count, "" + startPos});
         boolean ok = cursor.moveToFirst();
@@ -341,6 +360,8 @@ public class ConditionDatabase {
             info.setPackageName(cursor.getString(2));
             info.setPasswordErrorCount(cursor.getInt(3));
             info.setPhotoPath(cursor.getString(4));
+            info.setTime(cursor.getString(5));
+            info.setLocation(cursor.getString(6));
             logList.add(info);
 
             ok = cursor.moveToNext();

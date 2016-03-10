@@ -1,5 +1,8 @@
 package com.eeontheway.android.applocker.feedback;
 
+import com.eeontheway.android.applocker.login.BmobUserInfo;
+import com.eeontheway.android.applocker.login.UserInfo;
+
 import cn.bmob.v3.BmobObject;
 
 /**
@@ -17,6 +20,8 @@ public class BmobFeedBackInfo extends BmobObject {
     private boolean responsed;
     private boolean isTopic;
     private String from;
+    private BmobUserInfo bmobUserInfo;
+    private String cid;
 
     /**
      * 构造函数
@@ -32,6 +37,13 @@ public class BmobFeedBackInfo extends BmobObject {
         parentId = baseInfo.getParentId();
         isTopic = baseInfo.isTopic();
         from = baseInfo.getFrom();
+
+        // 用户可能未登陆
+        UserInfo userInfo = baseInfo.getUserInfo();
+        if (userInfo != null) {
+            bmobUserInfo = new BmobUserInfo(userInfo);
+        }
+        cid = baseInfo.getCid();
     }
 
     /**
@@ -48,6 +60,12 @@ public class BmobFeedBackInfo extends BmobObject {
         info.setTopic(isTopic);
         info.setId(getObjectId());
         info.setFrom(from);
+
+        // 用户可能未登陆
+        if (bmobUserInfo != null) {
+            info.setUserInfo(bmobUserInfo.toUserInfo());
+        }
+        info.setCid(cid);
         return info;
     }
 }

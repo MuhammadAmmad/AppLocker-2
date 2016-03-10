@@ -10,4 +10,5 @@ package com.eeontheway.android.applocker.main;
 interface RecyleViewItemSelectedListener {
     void onItemSelected (int pos, boolean selected);
     boolean onItemLongClicked (int pos);
+    void onItemClicked (int pos);
 }

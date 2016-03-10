@@ -3,27 +3,18 @@ package com.eeontheway.android.applocker.main;
 import android.app.Fragment;
 import android.content.Intent;
 import android.location.Location;
-import android.support.design.widget.FloatingActionButton;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.SearchView;
-import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.KeyEvent;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
-import android.widget.ImageView;
-import android.widget.RadioGroup;
 import android.widget.Toast;
 
 import com.baidu.mapapi.map.BaiduMap;
@@ -34,10 +25,8 @@ import com.baidu.mapapi.map.MapPoi;
 import com.baidu.mapapi.map.MapStatus;
 import com.baidu.mapapi.map.MapStatusUpdateFactory;
 import com.baidu.mapapi.map.MapView;
-import com.baidu.mapapi.map.Marker;
 import com.baidu.mapapi.map.MarkerOptions;
 import com.baidu.mapapi.map.MyLocationData;
-import com.baidu.mapapi.map.UiSettings;
 import com.baidu.mapapi.model.LatLng;
 import com.baidu.mapapi.overlayutil.PoiOverlay;
 import com.baidu.mapapi.search.core.PoiInfo;
@@ -358,7 +347,11 @@ public class LocationConditionEditActivity extends AppCompatActivity
                 } else {
                     // 开始搜索
                     PoiCitySearchOption option = new PoiCitySearchOption();
-                    option.city("广州");
+                    String city = locationService.getCity();
+                    if (city == null) {
+                        city = "北京";
+                    }
+                    option.city(city);
                     option.keyword(act_search.getText().toString());
                     mPoiSearch.searchInCity(option);
                 }

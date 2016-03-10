@@ -14,5 +14,5 @@ public interface IPush {
      * 推送消息给客户端
      * @param info
      */
-    void pushMsg (PushInfo info);
+    void pushMsg (PushInfo info, String clientId);
 }

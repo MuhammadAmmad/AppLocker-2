@@ -78,6 +78,7 @@
     <style name="mainLeftDrawerButton" parent="AppTheme">
         <item name="android:background">@drawable/trans_button_selector</item>
         <item name="android:layout_weight">1</item>
+        <item name="android:textSize">@dimen/small_text_size</item>
         <item name="android:paddingLeft">@dimen/view_common_padding</item>
         <item name="android:gravity">left|center</item>
         <item name="android:layout_width">wrap_content</item>
@@ -99,7 +100,7 @@
         <item name="android:checked">true</item>
         <item name="android:textColor">@drawable/day_textcolor_selector</item>
         <item name="android:background">@drawable/day_background_selector</item>
-        <item name="android:padding">@dimen/view_width_padding</item>
+        <item name="android:padding">@dimen/view_common_padding</item>
         <item name="android:textSize">@dimen/normal_text_size</item>
     </style>
 
@@ -123,7 +124,7 @@
         <item name="android:layout_alignParentBottom">true</item>
         <item name="android:layout_alignParentRight">true</item>
         <item name="android:layout_marginRight">20dp</item>
-        <item name="android:layout_marginBottom">20dp</item>
+        <item name="android:layout_marginBottom">40dp</item>
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
     </style>

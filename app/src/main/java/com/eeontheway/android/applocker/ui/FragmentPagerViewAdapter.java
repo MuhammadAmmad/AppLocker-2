@@ -13,7 +13,8 @@ public class FragmentPagerViewAdapter extends FragmentPagerAdapter {
     private FragmentPagerViewInfo[] infos;
     private FragmentManager fm;
 
-    public FragmentPagerViewAdapter (Context context, FragmentManager fm, FragmentPagerViewInfo[] infos) {
+    public FragmentPagerViewAdapter (Context context, FragmentManager fm,
+                                                FragmentPagerViewInfo[] infos) {
         super(fm);
 
         this.context = context;

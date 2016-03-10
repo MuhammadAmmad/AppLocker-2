@@ -2,10 +2,12 @@ package com.eeontheway.android.applocker.main;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.PopupMenu;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -18,12 +20,16 @@ import android.widget.BaseExpandableListAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.ExpandableListView;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.eeontheway.android.applocker.R;
 import com.eeontheway.android.applocker.feedback.FeedBackListActivity;
+import com.eeontheway.android.applocker.locate.LocationService;
+import com.eeontheway.android.applocker.locate.Position;
+import com.eeontheway.android.applocker.lock.DataObservable;
 import com.eeontheway.android.applocker.lock.LockConfigManager;
 import com.eeontheway.android.applocker.lock.LockModeInfo;
 import com.eeontheway.android.applocker.login.IUserManager;
@@ -48,25 +54,30 @@ import java.util.Observer;
  * @Time 2016-12-15
  */
 public class MainLeftFragment extends Fragment {
+    public static final int REQUEST_LOGIN = 2;
+
     // 顶层菜单项
     private static final int MODE_LIST_ROW = 0;
     private static final int SETTING_ROW = 1;
     private static final int ABOUT_ROW = 2;
     private static final MenuInfo [] topMenuInfos = {
-            new MenuInfo(R.string.mode_list, MenuInfo.ICON_INVALID),                // 模式列表
-            new MenuInfo(R.string.settings, R.drawable.ic_settings_black_24dp),     // 设置
-            new MenuInfo(R.string.about, MenuInfo.ICON_INVALID)                     // 关于
+            new MenuInfo(R.string.mode_list, R.drawable.ic_mode),                // 模式列表
+            new MenuInfo(R.string.settings, R.drawable.ic_settings),                // 设置
+            new MenuInfo(R.string.about, R.drawable.ic_about)                     // 关于
     };
 
     private Activity parentActivity;
     private LockConfigManager lockConfigManager;
     private IUserManager userManager;
+    private LocationService locationService;
+    private LocationService.PositionChangeListener positionChangeListener;
 
     private ExpandableListView ev_menu;
     private BaseExpandableListAdapter ev_adapter;
     private ImageView iv_head;
     private TextView tv_welcome;
     private TextView tv_current_time;
+    private TextView tv_current_address;
     private Button bt_reg_login;
     private Button bt_logout;
     private Button bt_share;
@@ -84,9 +95,11 @@ public class MainLeftFragment extends Fragment {
         parentActivity = getActivity();
         ev_adapter = new TopMenuAdapter();
         lockConfigManager = LockConfigManager.getInstance(parentActivity);
+        locationService = LocationService.getInstance(parentActivity);
 
         initUserManager();
         initObserver();
+        initLocateService();
     }
 
     /**
@@ -104,6 +117,7 @@ public class MainLeftFragment extends Fragment {
         tv_welcome = (TextView)view.findViewById(R.id.tv_welcome);
         iv_head = (ImageView) view.findViewById(R.id.iv_head);
         tv_current_time = (TextView)view.findViewById(R.id.tv_current_time);
+        tv_current_address = (TextView) view.findViewById(R.id.tv_current_address);
         bt_reg_login = (Button) view.findViewById(R.id.bt_reg_login);
         bt_logout = (Button) view.findViewById(R.id.bt_logout);
         bt_feedback = (Button)view.findViewById(R.id.bt_feedback);
@@ -122,6 +136,7 @@ public class MainLeftFragment extends Fragment {
      */
     @Override
     public void onDestroy() {
+        locationService.removePositionListener(positionChangeListener);
         lockConfigManager.unregisterObserver(observer);
         lockConfigManager.freeInstance();
         userManager.unInit();
@@ -129,14 +144,49 @@ public class MainLeftFragment extends Fragment {
         super.onDestroy();
     }
 
-    /**
-     * Fragment的onResume回调
-     */
     @Override
     public void onResume() {
         super.onResume();
+        updateLoginState();
+        updateHeaderView(new Date(), locationService.getLastPosition());
+    }
 
-        updateHeaderView();
+    /**
+     * 等待初始密码的设置结果
+     * @param requestCode
+     * @param resultCode
+     * @param data
+     */
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        switch (requestCode) {
+            case REQUEST_LOGIN:         // 登陆进去
+                updateLoginState();
+                if (resultCode == Activity.RESULT_OK) {
+                    Toast.makeText(parentActivity, R.string.login_scuess, Toast.LENGTH_SHORT).show();
+                }
+                break;
+        }
+    }
+
+    /**
+     * 初始化位置监听服务
+     */
+    private void initLocateService () {
+        positionChangeListener = new LocationService.PositionChangeListener() {
+            @Override
+            public void onLocateResult(int errorCode, String errorMsg) {
+            }
+
+            @Override
+            public void onPositionChanged(Position oldPosition, Position newPosition) {
+                updateHeaderView(new Date(), newPosition);
+            }
+        };
+
+        locationService.addPositionListener(positionChangeListener);
     }
 
     /**
@@ -146,7 +196,13 @@ public class MainLeftFragment extends Fragment {
         observer = new Observer() {
             @Override
             public void update(Observable observable, Object data) {
-                ev_adapter.notifyDataSetChanged();
+                // 通知Adapter数据发生变化
+                DataObservable.ObserverInfo info = (DataObservable.ObserverInfo)data;
+                if (info.dataType != DataObservable.DataType.MODE_LIST) {
+                    return;
+                } else {
+                    ev_adapter.notifyDataSetChanged();
+                }
             }
         };
 
@@ -188,13 +244,7 @@ public class MainLeftFragment extends Fragment {
             public boolean onChildClick(ExpandableListView parent, View v, int groupPosition,
                                         int childPosition, long id) {
                 if (groupPosition == MODE_LIST_ROW) {
-                    if (childPosition == (lockConfigManager.getLockModeCount())) {
-                        // 显示添加模式
-                        showCreateModeDialog();
-                    } else {
-                        // 切换模式
-                        lockConfigManager.switchModeInfo(childPosition);
-                    }
+                    lockConfigManager.switchModeInfo(childPosition);
                 }
                 return false;
             }
@@ -247,8 +297,7 @@ public class MainLeftFragment extends Fragment {
         bt_reg_login.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                LoginOrRegisterActivity.startForResult(parentActivity, true,
-                                                                MainActivity.REQUEST_LOGIN);
+                LoginOrRegisterActivity.startForResult(MainLeftFragment.this, true, REQUEST_LOGIN);
             }
         });
 
@@ -257,7 +306,8 @@ public class MainLeftFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 userManager.logout();
-                updateHeaderView();
+                updateHeaderView(new Date(), locationService.getLastPosition());
+                updateLoginState();
 
                 Toast.makeText(parentActivity, R.string.you_have_login_out,
                                                                 Toast.LENGTH_SHORT).show();
@@ -276,7 +326,7 @@ public class MainLeftFragment extends Fragment {
     /**
      * 更新用户登陆状态显示
      */
-    public void updateHeaderView () {
+    private void updateLoginState () {
         UserInfo userInfo = userManager.getMyUserInfo();
         if (userInfo == null) {
             // 未登陆
@@ -289,10 +339,23 @@ public class MainLeftFragment extends Fragment {
             bt_reg_login.setVisibility(View.GONE);
             bt_logout.setVisibility(View.VISIBLE);
             tv_welcome.setText(getString(R.string.welcome_to_use_app, userInfo.getUserName()));
-            iv_head.setImageResource(R.drawable.ic_known_person);
+            iv_head.setImageResource(R.drawable.ic_known_user);
         }
+    }
+
+    /**
+     * 更新时间和地址等其它头部信息
+     */
+    public void updateHeaderView (Date date, Position position) {
         tv_current_time.setText(getString(R.string.current_date,
-                SystemUtils.formatDate(new Date(), "yyyy-MM-dd")));
+                SystemUtils.formatDate(date, "yyyy-MM-dd"), date.getDay()));
+        if ((position == null) || (position.getAddress() == null)) {
+            tv_current_address.setText(getString(R.string.current_location,
+                                                getString(R.string.unknwon_location)));
+        } else {
+            tv_current_address.setText(getString(R.string.current_location,
+                                                locationService.getLastPosition().getAddress()));
+        }
     }
 
     /**
@@ -467,8 +530,18 @@ public class MainLeftFragment extends Fragment {
 
             // 仅在模式列表上显示指示器
             if (groupPosition == MODE_LIST_ROW) {
-                CheckBox checkBox = (CheckBox)vs_indicator.inflate();
+                View hidView = vs_indicator.inflate();
+                CheckBox checkBox = (CheckBox) hidView.findViewById(R.id.iv_indicator);
                 checkBox.setChecked(menuInfo.isSelected());
+
+                // 添加模式按钮
+                ImageButton btn_add = (ImageButton) hidView.findViewById(R.id.btn_add);
+                btn_add.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        showCreateModeDialog();
+                    }
+                });
             }
 
             return view;
@@ -479,7 +552,7 @@ public class MainLeftFragment extends Fragment {
             int cnt = 0;
 
             if (groupPosition == MODE_LIST_ROW) {
-                cnt = lockConfigManager.getLockModeCount() + 1;
+                cnt = lockConfigManager.getLockModeCount();
             }
             return cnt;
         }
@@ -521,19 +594,13 @@ public class MainLeftFragment extends Fragment {
         public View getChildView(int groupPosition, final int childPosition, boolean isLastChild,
                                  View convertView, ViewGroup parent) {
             View view = View.inflate(parentActivity, R.layout.item_menu_main_left_sub, null);
-            ImageView iv_icon = (ImageView)view.findViewById(R.id.iv_icon);
             TextView tv_title = (TextView)view.findViewById(R.id.tv_title);
             CheckBox cb_enable = (CheckBox) view.findViewById(R.id.cb_enable);
 
             if (groupPosition == MODE_LIST_ROW) {
-                if (isLastChild) {
-                    tv_title.setText(R.string.mode_add);
-                    cb_enable.setVisibility(View.GONE);
-                } else {
-                    LockModeInfo lockModeInfo = lockConfigManager.getLockModeInfo(childPosition);
-                    tv_title.setText(lockModeInfo.getName());
-                    cb_enable.setChecked(lockModeInfo.isEnabled());
-                }
+                LockModeInfo lockModeInfo = lockConfigManager.getLockModeInfo(childPosition);
+                tv_title.setText(lockModeInfo.getName());
+                cb_enable.setChecked(lockModeInfo.isEnabled());
             }
 
             return view;

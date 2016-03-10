@@ -10,6 +10,7 @@ import com.eeontheway.android.applocker.locate.Position;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -18,6 +19,8 @@ import java.util.Observer;
 
 /**
  * 锁定配置管理器
+ * 该配置器中的有些数据将被UI线程和后台锁监控线程同时访问，所以要加synchronized
+ * 考虑到UI需要支持读和写，而后台监控线程只需要支持读，所以只需要对写操作加synchronized
  * @author lishutong
  * @version v1.0
  * @Time 2016-12-15
@@ -38,8 +41,7 @@ public class LockConfigManager {
     private List<BaseLockCondition> lockConditionList = new ArrayList<>();
     private List<AccessLog> accessLogList = new ArrayList<>();
 
-    private ConfigObservable observable;
-    private boolean observableEnable = true;
+    private DataObservable observable;
 
     /**
      * 获取初始实例
@@ -78,7 +80,7 @@ public class LockConfigManager {
     private LockConfigManager(Context context) {
         this.context = context;
         conditionDatabase = new ConditionDatabase(context);
-        observable = new ConfigObservable();
+        observable = new DataObservable();
     }
 
     /**
@@ -100,14 +102,15 @@ public class LockConfigManager {
 
     /**
      * 配置是否使能监听器
+     * @param dataType 指定的数据类型
      * @param enable 是否使能
      */
-    public void setObserverEnable (boolean enable) {
-        observableEnable = enable;
+    public void setObserverEnable (DataObservable.DataType dataType, boolean enable) {
+        observable.setEnable(enable);
 
         // 手动触发一次
         if (enable) {
-            observable.notifyObservers();
+            observable.notifyItemChanged(dataType);
         }
     }
 
@@ -151,7 +154,6 @@ public class LockConfigManager {
         if (modeInfo == null) {
             throw new IllegalStateException("Add default mode failed");
         }
-        modeInfo.setEnabled(true);
         return modeInfo;
     }
 
@@ -179,12 +181,11 @@ public class LockConfigManager {
     }
 
     /**
-     * 当前的模式信息
-     *
-     * @return 当前模式信息
+     * 获取当前模式的名称
+     * @return 当前模式名
      */
-    public LockModeInfo getCurrentLockModeInfo() {
-        return currentLockModeInfo;
+    public String getCurrentLockModeName () {
+        return currentLockModeInfo.getName();
     }
 
     /**
@@ -196,8 +197,10 @@ public class LockConfigManager {
     public LockModeInfo addModeInfo(String modeName) {
         LockModeInfo modeInfo = conditionDatabase.addModeInfo(modeName);
         if (modeInfo != null) {
+            modeInfo.setEnabled(false);
             lockModeInfoList.add(modeInfo);
-            observable.notifyObservers();
+            observable.notifyItemInserted(DataObservable.DataType.MODE_LIST,
+                                            lockModeInfoList.size() - 1);
         }
         return modeInfo;
     }
@@ -209,8 +212,10 @@ public class LockConfigManager {
      */
     public boolean deleteModeInfo(LockModeInfo modeInfo) {
         if (lockModeInfoList.size() > 1) {
+            int index = lockModeInfoList.indexOf(modeInfo);
             conditionDatabase.deleteModeInfo(modeInfo);
-            lockModeInfoList.remove(modeInfo);
+            lockModeInfoList.remove(index);
+            observable.notifyItemRangeRemoved(DataObservable.DataType.MODE_LIST, index, 1);
 
             // 删除后，需要切换模式
             switchModeInfo(0);
@@ -227,9 +232,10 @@ public class LockConfigManager {
      * @return 是否成功 true/false
      */
     public boolean updateModeInfo(LockModeInfo modeInfo) {
+        int index = lockModeInfoList.indexOf(modeInfo);
         boolean ok = conditionDatabase.updateModeInfo(modeInfo);
         if (ok) {
-            observable.notifyObservers();
+            observable.notifyItemChanged(DataObservable.DataType.MODE_LIST, index);
         }
         return ok;
     }
@@ -265,7 +271,11 @@ public class LockConfigManager {
         editor.putInt(lastModeIdKey, currentLockModeInfo.getId());
         editor.commit();
 
-        observable.notifyObservers();
+        // 通知所有的数据类型都发生变化
+        observable.notifyItemChanged(DataObservable.DataType.MODE_LIST);
+        observable.notifyItemChanged(DataObservable.DataType.APP_LIST);
+        observable.notifyItemChanged(DataObservable.DataType.CONDITION_LIST);
+        observable.notifyItemChanged(DataObservable.DataType.LOG_LIST);
     }
 
     /**
@@ -303,7 +313,7 @@ public class LockConfigManager {
             lockInfo.setSelected(selected);
         }
 
-        observable.notifyObservers();
+        observable.notifyItemChanged(DataObservable.DataType.APP_LIST);
     }
 
     /**
@@ -320,7 +330,7 @@ public class LockConfigManager {
      * 加载所有的APp列表
      * @param modeInfo 指定的模式
      */
-    public void loadAppInfoList (LockModeInfo modeInfo) {
+    synchronized public void loadAppInfoList (LockModeInfo modeInfo) {
         appLockInfoList = conditionDatabase.getAppInfoByMode(modeInfo);
         observable.notifyObservers();
     }
@@ -336,7 +346,7 @@ public class LockConfigManager {
      * @param lockModeInfo 指定的App信息
      * @return 是否添加成功; true/false
      */
-    public boolean addAppInfoToMode(AppLockInfo appLockInfo, LockModeInfo lockModeInfo) {
+    synchronized public boolean addAppInfoToMode(AppLockInfo appLockInfo, LockModeInfo lockModeInfo) {
         for (AppLockInfo lockInfo : appLockInfoList) {
             // 如果已经在列表中，则无需插入
             if (lockInfo.getPackageName().equals(appLockInfo.getPackageName())) {
@@ -348,7 +358,8 @@ public class LockConfigManager {
         boolean ok = conditionDatabase.addAppInfoToMode(appLockInfo, lockModeInfo);
         if (ok) {
             appLockInfoList.add(appLockInfo);
-            observable.notifyObservers();
+            observable.notifyItemInserted(DataObservable.DataType.APP_LIST,
+                                                        appLockInfoList.size() - 1);
         }
         return ok;
     }
@@ -364,13 +375,14 @@ public class LockConfigManager {
      * @param enable      是否锁定
      * @return 操作是否成功
      */
-    public boolean setAppLockEnable(AppLockInfo appLockInfo, boolean enable) {
+    synchronized public boolean setAppLockEnable(AppLockInfo appLockInfo, boolean enable) {
         boolean ok;
 
         ok = conditionDatabase.updateAppInfo(appLockInfo, enable);
         if (ok) {
+            int index = appLockInfoList.indexOf(appLockInfo);
             appLockInfo.setEnable(enable);
-            observable.notifyObservers();
+            observable.notifyItemChanged(DataObservable.DataType.APP_LIST, index);
         }
         return ok;
     }
@@ -396,7 +408,7 @@ public class LockConfigManager {
      *
      * @return 移除的数量
      */
-    public int deleteSelectedAppInfo() {
+    synchronized public int deleteSelectedAppInfo() {
         int count = 0;
         List<AppLockInfo> removeList = new ArrayList<>();
 
@@ -424,6 +436,7 @@ public class LockConfigManager {
             observable.notifyObservers();
         }
 
+        observable.notifyItemChanged(DataObservable.DataType.APP_LIST);
         return count;
     }
 
@@ -432,12 +445,12 @@ public class LockConfigManager {
      * @param positon 待删除的App信息序号
      * @return 成功/失败
      */
-    public boolean deleteAppInfo (int positon) {
+    synchronized public boolean deleteAppInfo (int positon) {
         AppLockInfo appLockInfo = appLockInfoList.get(positon);
         boolean ok = conditionDatabase.deleteAppInfo(appLockInfo);
         if (ok) {
             appLockInfoList.remove(appLockInfo);
-            observable.notifyObservers();
+            observable.notifyItemRangeRemoved(DataObservable.DataType.APP_LIST, positon, 1);
         }
 
         return ok;
@@ -450,7 +463,7 @@ public class LockConfigManager {
         loadLockConditionList(currentLockModeInfo);
     }
 
-    public void loadLockConditionList(LockModeInfo modeInfo) {
+    synchronized public void loadLockConditionList(LockModeInfo modeInfo) {
         lockConditionList = conditionDatabase.queryLockCondition(modeInfo);
         observable.notifyObservers();
     }
@@ -460,12 +473,13 @@ public class LockConfigManager {
      * @param positon 待删除的锁定条件序号
      * @return 成功/失败
      */
-    public boolean deleteLockCondition (int positon) {
+    synchronized public boolean deleteLockCondition (int positon) {
         BaseLockCondition condition = lockConditionList.get(positon);
         boolean ok = conditionDatabase.deleteLockCondition(condition);
         if (ok) {
             lockConditionList.remove(condition);
             observable.notifyObservers();
+            observable.notifyItemRangeRemoved(DataObservable.DataType.CONDITION_LIST, positon, 1);
         }
 
         return ok;
@@ -475,7 +489,7 @@ public class LockConfigManager {
      * 删除选中的锁定配置
      * @return 移除的数量
      */
-    public int deleteSelectedLockCondition() {
+    synchronized public int deleteSelectedLockCondition() {
         int count = 0;
         List<BaseLockCondition> removeList = new ArrayList<>();
 
@@ -503,6 +517,7 @@ public class LockConfigManager {
             observable.notifyObservers();
         }
 
+        observable.notifyItemChanged(DataObservable.DataType.CONDITION_LIST);
         return count;
     }
 
@@ -531,7 +546,7 @@ public class LockConfigManager {
             condition.setSelected(selected);
         }
 
-        observable.notifyObservers();
+        observable.notifyItemChanged(DataObservable.DataType.CONDITION_LIST);
     }
 
     /**
@@ -558,17 +573,21 @@ public class LockConfigManager {
      * @param config 待更新的配置
      * @return 是否成功 true/false
      */
-    public boolean updateLockCondition(BaseLockCondition config) {
+    synchronized public boolean updateLockCondition(BaseLockCondition config) {
         boolean ok = conditionDatabase.updateLockCondition(config);
         if (ok) {
             // 如果数据库写成功了，则更新缓存
-            for (BaseLockCondition condition : lockConditionList) {
+            int index = 0;
+            for (int i = 0; i < lockConditionList.size(); i++) {
+                BaseLockCondition condition = lockConditionList.get(i);
                 if (condition.getId() == config.getId()) {
                     condition.copy(config);
+                    index = i;
                     break;
                 }
             }
-            observable.notifyObservers();
+
+            observable.notifyItemChanged(DataObservable.DataType.CONDITION_LIST, index);
         }
         return ok;
     }
@@ -580,30 +599,18 @@ public class LockConfigManager {
      * @param lockModeInfo 指定的App信息
      * @return 是否添加成功; true/false
      */
-    public boolean addLockConditionIntoMode(BaseLockCondition config, LockModeInfo lockModeInfo) {
+    synchronized public boolean addLockConditionIntoMode(BaseLockCondition config, LockModeInfo lockModeInfo) {
         boolean ok = conditionDatabase.addLockConditionIntoMode(config, lockModeInfo);
         if (ok) {
             lockConditionList.add(config);
-            observable.notifyObservers();
+            observable.notifyItemInserted(DataObservable.DataType.CONDITION_LIST,
+                                                        lockConditionList.size() - 1);
         }
         return ok;
     }
 
     public boolean addLockConditionIntoMode(BaseLockCondition config) {
         return addLockConditionIntoMode(config, currentLockModeInfo);
-    }
-
-    /**
-     * 数据变化通知器
-     */
-    class ConfigObservable extends Observable {
-        @Override
-        public void notifyObservers() {
-            if (observableEnable) {
-                setChanged();
-                super.notifyObservers();
-            }
-        }
     }
 
     /**
@@ -677,13 +684,52 @@ public class LockConfigManager {
      * @param accessLog  待保存的日志信息
      * @return 是否添加成功; true/false
      */
-    public boolean addAccessLog (AccessLog accessLog) {
+    synchronized public boolean addAccessLog (AccessLog accessLog) {
         boolean ok = conditionDatabase.addAccessInfo(accessLog);
         if (ok) {
             // 新生成的日志，添加到头部
             accessLogList.add(0, accessLog);
-            observable.notifyObservers();
+            observable.notifyItemInserted(DataObservable.DataType.LOG_LIST, accessLogList.size() - 1);
         }
+        return ok;
+    }
+
+    /**
+     * 更新日志信息
+     * @param accessLog 更新日志信息
+     * @return 是否成功 true/false
+     */
+    synchronized public boolean updateAccessLog (AccessLog accessLog) {
+        boolean ok = conditionDatabase.updateAccessInfo(accessLog);
+        if (ok) {
+            // 如果数据库写成功了，则更新缓存
+            int index = 0;
+            for (int i = 0; i < accessLogList.size(); i++) {
+                AccessLog log = accessLogList.get(i);
+                if (log.getId() == accessLog.getId()) {
+                    log.copy(accessLog);
+                    index = i;
+                    break;
+                }
+            }
+            observable.notifyItemChanged(DataObservable.DataType.LOG_LIST, index);
+        }
+        return ok;
+    }
+
+    /**
+     * 删除指定的日志信息
+     * @param positon 待删除的App信息序号
+     * @return 成功/失败
+     */
+    synchronized public boolean deleteAccessLog (int positon) {
+        AccessLog accessLog = accessLogList.get(positon);
+        boolean ok = conditionDatabase.deleteAccessLog(accessLog);
+        if (ok) {
+            accessLogList.remove(accessLog);
+            observable.notifyItemRangeRemoved(DataObservable.DataType.LOG_LIST, positon, 1);
+        }
+
         return ok;
     }
 
@@ -691,7 +737,7 @@ public class LockConfigManager {
      * 删除选中的锁定配置
      * @return 移除的数量
      */
-    public int deleteSelectedAccessLogs () {
+    synchronized public int deleteSelectedAccessLogs () {
         int count = 0;
         List<AccessLog> removeList = new ArrayList<>();
 
@@ -724,7 +770,7 @@ public class LockConfigManager {
 
         // 通知外界数据发生变化
         if (count > 0) {
-            observable.notifyObservers();
+            observable.notifyItemChanged(DataObservable.DataType.LOG_LIST);
         }
 
         return count;
@@ -735,10 +781,11 @@ public class LockConfigManager {
      * @param moreCount 期望获取的更多数量
      * @return 实际获取的数量
      */
-    public int loadAccessLogsMore (int moreCount) {
-        List<AccessLog> accessLogs = conditionDatabase.queryAccessLog(accessLogList.size(), moreCount);
+    synchronized public int loadAccessLogsMore (int moreCount) {
+        List<AccessLog> accessLogs = conditionDatabase.queryAccessLog(
+                                                accessLogList.size(), moreCount);
         if (accessLogs.size() > 0) {
-            accessLogs.addAll(accessLogs);
+            accessLogList.addAll(accessLogs);
             observable.notifyObservers();
         }
         return accessLogs.size();
@@ -752,16 +799,21 @@ public class LockConfigManager {
      * @param position 当前地址
      * @return true/false
      */
-    public boolean isPackageNeedLock (String packageName, Calendar calendar,
+    synchronized public boolean isPackageNeedLock (String packageName, Calendar calendar,
                                         boolean locateServiceIsOk, Position position) {
         // 遍历App列表，查找其是否在其中
         for (AppLockInfo appLockInfo : appLockInfoList) {
             // 如果找到相应的App信息，则进一步判断是否符合锁定条件
             AppInfo appInfo = appLockInfo.getAppInfo();
             if (appInfo.getPackageName().equals(packageName)) {
-                // 如果未启动，则不需要锁定
+                // 如果未使能，则不需要锁定
                 if (!appLockInfo.isEnable()) {
                     return false;
+                }
+
+                // 没有锁定条件，即意味着无条件满足
+                if (lockConditionList.size() == 0) {
+                    return true;
                 }
 
                 // 遍历锁定条件队列，判断是否满足所有锁定条件

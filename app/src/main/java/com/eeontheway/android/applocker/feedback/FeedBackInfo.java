@@ -1,5 +1,7 @@
 package com.eeontheway.android.applocker.feedback;
 
+import com.eeontheway.android.applocker.login.UserInfo;
+
 import java.io.Serializable;
 
 /**
@@ -18,6 +20,8 @@ public class FeedBackInfo implements Serializable {
 	private String from;
 	private boolean responsed;
 	private boolean isTopic;
+	private UserInfo userInfo;
+	private String cid;
 
 	/**
 	 * 刷新信息
@@ -154,5 +158,39 @@ public class FeedBackInfo implements Serializable {
      */
 	public void setResponsed(boolean responsed) {
 		this.responsed = responsed;
+	}
+
+	/**
+	 * 获取该feedback的用户信息
+	 * @return 用户信息
+     */
+	public UserInfo getUserInfo() {
+		return userInfo;
+	}
+
+	/**
+	 * 设置该feedback的用户信息
+	 * @param userInfo 该feedback的用户信息
+     */
+	public void setUserInfo(UserInfo userInfo) {
+		this.userInfo = userInfo;
+	}
+
+	/**
+	 * 获取cid
+	 * 如果发表该评论的用户是已注册用户，则返回null。从userinfo中查询cid
+	 * @return 获取cid
+     */
+	public String getCid() {
+		return cid;
+	}
+
+	/**
+	 * 设置用户cid
+	 * 仅当用户未登陆时使用
+	 * @param cid 用户cid
+     */
+	public void setCid(String cid) {
+		this.cid = cid;
 	}
 }

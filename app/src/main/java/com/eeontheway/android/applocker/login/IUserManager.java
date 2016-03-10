@@ -240,4 +240,16 @@ public interface IUserManager {
      * @param phoneNumber
      */
     void checkPhoneNumberVerified (String phoneNumber);
+
+    /**
+     * 获取自己的cid
+     * @return
+     */
+    String getMyCid ();
+
+    /**
+     * 设置自己的cid
+     * @return 设置成功或失败。用户未登陆时，失败
+     */
+    boolean setMyCid (String cid);
 }

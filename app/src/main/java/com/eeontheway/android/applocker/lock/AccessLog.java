@@ -22,6 +22,20 @@ public class AccessLog implements Serializable {
     private boolean selected;
 
     /**
+     * 复制一个AccessLog
+     * @param log 复制源
+     */
+    public void copy (AccessLog log) {
+        this.id = log.id;
+        this.appName = new String(log.appName);
+        this.packageName = new String(log.packageName);
+        this.photoPath = new String(log.photoPath);
+        this.time = log.time;
+        this.location = new String(log.location);
+        this.passwordErrorCount = log.passwordErrorCount;
+    }
+
+    /**
      * 获取内部ID
      * @return 内部ID
      */

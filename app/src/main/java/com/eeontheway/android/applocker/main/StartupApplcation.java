@@ -6,6 +6,7 @@ import android.os.Vibrator;
 
 import com.baidu.mapapi.SDKInitializer;
 import com.eeontheway.android.applocker.locate.LocationService;
+import com.eeontheway.android.applocker.utils.Configuration;
 import com.igexin.sdk.PushManager;
 
 import cn.bmob.v3.Bmob;

@@ -14,10 +14,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.eeontheway.android.applocker.R;
+import com.eeontheway.android.applocker.login.IUserManager;
+import com.eeontheway.android.applocker.login.UserInfo;
+import com.eeontheway.android.applocker.login.UserManagerFactory;
 import com.eeontheway.android.applocker.push.IPush;
 import com.eeontheway.android.applocker.push.PushFactory;
 import com.eeontheway.android.applocker.push.PushInfo;
 import com.eeontheway.android.applocker.push.PushMessageProcessor;
+import com.eeontheway.android.applocker.push.PushMessageReceiver;
 import com.eeontheway.android.applocker.utils.Configuration;
 
 import java.util.List;
@@ -41,6 +45,7 @@ public class FeedBackInfoActivity extends AppCompatActivity {
     private View pb_progress;
 
     private FeedBackBase feedBackManager;
+    private IUserManager userManager;
     private FeedBackTopic topic;
     private IPush iPush;
 
@@ -70,6 +75,7 @@ public class FeedBackInfoActivity extends AppCompatActivity {
         initFeedBack();
         initToolBar();
         initViews();
+        initUserManager();
     }
 
     /**
@@ -79,6 +85,14 @@ public class FeedBackInfoActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         feedBackManager.unInit();
+    }
+
+    /**
+     * 初始化用户管理器
+     */
+    private void initUserManager () {
+        userManager = UserManagerFactory.create(this);
+        userManager.init(this);
     }
 
     /**
@@ -172,19 +186,32 @@ public class FeedBackInfoActivity extends AppCompatActivity {
 
             @Override
             public void onSuccess() {
-                // 完成写入成功后，推送消息，告知有反馈信息
-                PushInfo pushInfo = new PushInfo();
-                pushInfo.createJSONFeedBack(topic.getTopic().getId(), getString(R.string.recv_feedback),
-                        et_response_content.getText().toString());
-                iPush.pushMsg(pushInfo);
+                // 获取发表反馈的已登陆用户cid或未登陆用户的icd
+                String cid;
+                UserInfo userInfo = topic.getTopic().getUserInfo();
+                if (userInfo != null) {
+                    cid = userInfo.getCid();
+                } else {
+                    cid = topic.getTopic().getCid();
+                }
 
-                // 提示反馈发送成功
-                Toast.makeText(FeedBackInfoActivity.this, R.string.feedback_send_ok,
-                        Toast.LENGTH_SHORT).show();
-                pb_progress.setVisibility(View.GONE);
+                // 如果cid有效，则推送反馈消息回去
+                if (cid != null) {
+                    // 完成写入成功后，推送消息，告知有反馈信息
+                    PushInfo pushInfo = new PushInfo();
+                    pushInfo.createJSONFeedBack(topic.getTopic().getId(),
+                                                    getString(R.string.recv_feedback),
+                                                    et_response_content.getText().toString());
+                    iPush.pushMsg(pushInfo, cid);
 
-                // 提交成功，结束反馈
-                finish();
+                    // 提示反馈发送成功
+                    Toast.makeText(FeedBackInfoActivity.this, R.string.feedback_send_ok,
+                            Toast.LENGTH_SHORT).show();
+                    pb_progress.setVisibility(View.GONE);
+
+                    // 提交成功，结束反馈
+                    finish();
+                }
             }
 
             @Override
@@ -226,6 +253,7 @@ public class FeedBackInfoActivity extends AppCompatActivity {
      * 提交对反馈的回复
      */
     public void submitResponse () {
+        // 获取用户cid
         if (topic.getTopic().isResponsed()) {
             FeedBackInfo responseInfo = topic.getResponseAt(0);
             responseInfo.setContent(et_response_content.getText().toString());
@@ -236,6 +264,7 @@ public class FeedBackInfoActivity extends AppCompatActivity {
             feedBackInfo.setContact(getString(R.string.app_author));
             feedBackInfo.setTopic(false);
             feedBackInfo.setParentId(topic.getTopic().getId());
+
             feedBackManager.sendFeedBack(feedBackInfo);
         }
     }
@@ -289,7 +318,6 @@ public class FeedBackInfoActivity extends AppCompatActivity {
                     et_response_content.setText(responseInfo.getContent());
                     tv_response_time.setText(getString(R.string.feed_back_time, responseInfo.getCreateTime()));
                 } else {
-                    et_response_content.setText(R.string.no_feedback_response_yet);
                     tv_response_time.setText(R.string.unknwon);
                 }
 

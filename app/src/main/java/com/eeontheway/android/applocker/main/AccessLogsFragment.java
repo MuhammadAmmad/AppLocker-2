@@ -1,10 +1,11 @@
 package com.eeontheway.android.applocker.main;
 
 import android.app.Activity;
-import android.app.Fragment;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.v7.app.AlertDialog;
+import android.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -12,48 +13,44 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.CheckBox;
-import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.eeontheway.android.applocker.R;
-import com.eeontheway.android.applocker.lock.LockConfigManager;
 import com.eeontheway.android.applocker.lock.AccessLog;
+import com.eeontheway.android.applocker.lock.DataObservable;
+import com.eeontheway.android.applocker.lock.LockConfigManager;
+import com.eeontheway.android.applocker.ui.ListHeaderView;
+import com.eeontheway.android.applocker.ui.WaitingProgressDialog;
 
 import java.util.Observable;
 import java.util.Observer;
 
 /**
- * 应用锁访问日志查看列表
+ * 按日期访问日志查看列表
  *
  * @author lishutong
  * @version v1.0
  * @Time 2016-2-9
  */
-public class AccessLogsFragment extends Fragment {
-    private static final int LOAD_MORE_COUNT = 20;
-
+public class AccessLogsFragment extends Fragment implements View.OnClickListener {
     private RecyclerView rcv_list;
-    private Button bt_remove;
-    private TextView tv_count;
-    private View rl_loading;
-    private TextView tv_empty_show;
-    private CheckBox cb_select_all;
-    private Observer observer;
+    private TextView tv_empty;
+    private Button bt_del;
+    private ListHeaderView ll_header;
 
+    private AccessLogListAdapter logListAdapter;
     private Activity parentActivity;
     private LockConfigManager lockConfigManager;
-    private AccessLogsAdapter rcv_adapter;
+    private Observer observer;
+    private WaitingProgressDialog progressDialog;
 
-    private CompoundButton.OnCheckedChangeListener cb_all_listener;
-    private Animation animationRemoveButtonIn;
-    private Animation animationRemoveButtonOut;
 
     /**
-     * Activity的onCreate回调
+     * Fragment的onCreate回调
      * @param savedInstanceState
      */
     @Override
@@ -62,172 +59,251 @@ public class AccessLogsFragment extends Fragment {
 
         parentActivity = getActivity();
         lockConfigManager = LockConfigManager.getInstance(parentActivity);
-        rcv_adapter = new AccessLogsAdapter(parentActivity, lockConfigManager);
 
+        initProgressDialog();
+        initAdapter();
         initDataObserver();
     }
 
     /**
-     * Activity的onDestroy回调
+     * Fragment的onDestroy回调
      */
     @Override
     public void onDestroy() {
         lockConfigManager.unregisterObserver(observer);
         lockConfigManager.freeInstance();
-
         super.onDestroy();
     }
 
-    @Nullable
+    /**
+     * Fragment的onCreateView回调
+     * @param inflater
+     * @param container
+     * @param savedInstanceState
+     * @return
+     */
     @Override
-    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
-        View view = View.inflate(parentActivity, R.layout.fragment_app_lock_log_list, null);
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_access_logs_data_sort, container, false);
 
-        // 获取各种View引用
+        ll_header = (ListHeaderView) view.findViewById(R.id.ll_header);
+        bt_del = (Button) view.findViewById(R.id.bt_del);
         rcv_list = (RecyclerView) view.findViewById(R.id.rcv_list);
-        bt_remove = (Button)view.findViewById(R.id.bt_remove);
-        tv_count = (TextView)view.findViewById(R.id.tv_count);
-        //rl_loading = view.findViewById(R.id.rl_loading);
-        cb_select_all = (CheckBox)view.findViewById(R.id.cb_select_all);
-        //tv_empty_show = (TextView)view.findViewById(R.id.tv_empty_show);
+        tv_empty = (TextView) view.findViewById(R.id.tv_empty);
 
-        initAnimation();
-        initRemoveButton();
-        initRcvList();
-        initCheckAll();
-
-        updateTotalCountShow(0);
-        startLoadingLogList();
+        initHeader();
+        initListView();
+        initButtons();
         return view;
     }
 
     /**
-     * 配置全选按钮
+     * 更新标题中数量显示
      */
-    private void initCheckAll() {
-        // 配置全选及监听事件
-        cb_select_all.setChecked(false);
-        cb_all_listener = new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                boolean selectAll = cb_select_all.isChecked();
-                lockConfigManager.selectAllAccessLogs(selectAll);
-
-                // 更新按钮状态
-                updateRemoveButtonState();
-            }
-        };
-        cb_select_all.setOnCheckedChangeListener(cb_all_listener);
+    private void updateTotalCountShow () {
+        ll_header.setTitle(getString(R.string.selected_count,
+                                        lockConfigManager.selectedAccessLogs(),
+                                        lockConfigManager.getAcessLogsCount()));
     }
 
     /**
-     * 配置显示列表
+     * 初始化头部
      */
-    private void initRcvList() {
-        // 配置布局管理器
+    private void initHeader () {
+        // 更改标题计数
+        updateTotalCountShow();
+
+        // 配置全选监听器
+        ll_header.setListener(new ListHeaderView.ClickListener() {
+            @Override
+            public void onCheckAllSetListener(boolean isChecked) {
+                if (lockConfigManager.getAcessLogsCount() > 0) {
+                    lockConfigManager.selectAllAccessLogs(isChecked);
+                    showDeleteButton(isChecked);
+                    updateTotalCountShow();
+                }
+            }
+
+            @Override
+            public void onDoubleClickedListener() {
+                rcv_list.smoothScrollToPosition(0);
+            }
+        });
+    }
+
+    /**
+     * 初始化ListView
+     */
+    private void initListView () {
+        rcv_list.setHasFixedSize(false);
         LinearLayoutManager layoutManager = new LinearLayoutManager(parentActivity);
         layoutManager.setOrientation(LinearLayoutManager.VERTICAL);
         rcv_list.setLayoutManager(layoutManager);
-        rcv_list.setHasFixedSize(true);
         rcv_list.addItemDecoration(new LockListViewItemDecoration());
+        rcv_list.setItemAnimator(new LockListViewItemAnimator());
+        rcv_list.setAdapter(logListAdapter);
 
-        // 配置选中事件
-        rcv_adapter.setItemSelectedListener(new AccessLogsAdapter.ItemSelectedListener() {
+        // 配置滚动事件
+        rcv_list.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
-            public void onItemClicked(int pos) {
-                AccessLog log = lockConfigManager.getAccessLog(pos);
-                showDetailLogDialog(log);
+            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+
+                // 停止画动时，隐藏快速回到顶部的提示
+                if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                    ll_header.showReturnTopAlert(false);
+                }
+
+                // 加载更多判断
+                LinearLayoutManager layoutManager = (LinearLayoutManager)recyclerView.getLayoutManager();
+                int lastVisibleItem = layoutManager.findLastCompletelyVisibleItemPosition();
+                if ((newState ==RecyclerView.SCROLL_STATE_IDLE) &&
+                        (lastVisibleItem != -1) &&
+                        (lastVisibleItem + 1 == lockConfigManager.getAcessLogsCount())) {
+                    // 没有，或者到了最后一个
+                    loadMoreItem();
+                }
             }
 
             @Override
-            public void onItemLongClicked(int pos) {}
-
-            @Override
-            public void onItemSelected(int pos, boolean selected) {}
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                ll_header.showReturnTopAlert(dy < 0);
+            }
         });
-        rcv_list.setAdapter(rcv_adapter);
+
+        // 初始化空白显示页
+        if (logListAdapter.getItemCount() == 0) {
+            tv_empty.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void loadMoreItem () {
+        logListAdapter.loadMoreItem(20);
     }
 
     /**
-     * 配置删除按钮
+     * 初始化进度对话框
      */
-    private void initRemoveButton() {
-        bt_remove.setVisibility(View.GONE);
-        bt_remove.setOnClickListener(new View.OnClickListener() {
+    private void initProgressDialog () {
+        progressDialog = new WaitingProgressDialog(parentActivity);
+        progressDialog.setMessage(getString(R.string.deleting));
+    }
+
+    /**
+     * 显示等待进度对话框
+     */
+    private void showWaitingProgressDialog (boolean show) {
+        progressDialog.show(show);
+    }
+
+    /**
+     * 初始化Button
+     */
+    private void initButtons () {
+        // 配置删除按钮
+        bt_del.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                removeSeletedItems();
+                // 额外开辟线程去删除，以防止删除大批量数据卡死
+                new AsyncTask<Void, Void, Void>() {
+                    @Override
+                    protected void onPreExecute() {
+                        showWaitingProgressDialog(true);
+
+                        // Bug: 需要注册监听，否则后台线程会操作UI
+                        lockConfigManager.setObserverEnable(DataObservable.DataType.LOG_LIST, false);
+                    }
+
+                    @Override
+                    protected Void doInBackground(Void... params) {
+                        lockConfigManager.deleteSelectedAccessLogs();
+                        return null;
+                    }
+
+                    @Override
+                    protected void onPostExecute(Void aVoid) {
+                        Toast.makeText(parentActivity, R.string.deleteOk, Toast.LENGTH_SHORT).show();
+                        showDeleteButton(false);
+                        showWaitingProgressDialog(false);
+
+                        // 删除完毕后，恢复监听，通知数据发生变化
+                        lockConfigManager.setObserverEnable(DataObservable.DataType.LOG_LIST, true);
+                    }
+                }.execute();
             }
         });
     }
 
-    /**
-     * 配置删除按钮的移入移出动画
-     */
-    private void initAnimation() {
-        // 按钮移入动画
-        animationRemoveButtonIn = AnimationUtils.loadAnimation(parentActivity,
-                                            R.anim.listview_cleanbutton_bottom_in);
-        animationRemoveButtonIn.setAnimationListener(new Animation.AnimationListener() {
-            @Override
-            public void onAnimationStart(Animation animation) {}
 
+    /**
+     * 初始化适配器
+     */
+    private void initAdapter () {
+        logListAdapter = new AccessLogListAdapter(parentActivity, lockConfigManager, true);
+        logListAdapter.setItemSelectedListener(new RecyleViewItemSelectedListener() {
             @Override
-            public void onAnimationEnd(Animation animation) {
-                bt_remove.setVisibility(View.VISIBLE);
+            public void onItemSelected(int pos, boolean selected) {
+                showDeleteButton(selected);
+                updateTotalCountShow();
             }
 
             @Override
-            public void onAnimationRepeat(Animation animation) {}
+            public boolean onItemLongClicked(final int pos) {
+                // 创建一个弹出式的对话框，当作上下文菜单
+                AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
+                ArrayAdapter<String> adapter = new ArrayAdapter<>(parentActivity,
+                                        android.R.layout.simple_list_item_1);
+                adapter.add(getString(R.string.delete));
+                builder.setAdapter(adapter, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        switch (which) {
+                            case 0: // Delete
+                                lockConfigManager.deleteAccessLog(pos);
+                                break;
+                        }
+                    }
+                });
+                builder.create().show();
+                return true;
+            }
+
+            @Override
+            public void onItemClicked(int pos) {
+                showDetailLogInfoInDialog(lockConfigManager.getAccessLog(pos));
+            }
         });
 
-        // 按钮移出动画
-        animationRemoveButtonOut = AnimationUtils.loadAnimation(parentActivity,
-                                                    R.anim.listview_cleanbutton_bottom_out);
-        animationRemoveButtonOut.setAnimationListener(new Animation.AnimationListener() {
-            @Override
-            public void onAnimationStart(Animation animation) {}
-
-            @Override
-            public void onAnimationEnd(Animation animation) {
-                bt_remove.setVisibility(View.GONE);}
-
-            @Override
-            public void onAnimationRepeat(Animation animation) {}
-        });
+        // 初始加载更多数据
+        loadMoreItem();
     }
 
-    /**
-     * 删除选中项
-     */
-    private void removeSeletedItems () {
-        int count = lockConfigManager.deleteSelectedAccessLogs();
-
-        updateRemoveButtonState();
-        updateTotalCountShow(lockConfigManager.getAcessLogsCount());
-        Toast.makeText(parentActivity, getString(R.string.already_deleted_count, count),
-                                            Toast.LENGTH_SHORT).show();
-    }
 
     /**
      * 显示锁定日志的详细信息
-     * @param accessLog 锁定日志信息
+     * @param accessLog 日志信息
      */
-    private void showDetailLogDialog (AccessLog accessLog) {
+    private void showDetailLogInfoInDialog (AccessLog accessLog) {
         // 渲染界面
         View view = View.inflate(parentActivity, R.layout.dialog_app_lock_log_list, null);
         ImageView iv_photo = (ImageView)view.findViewById(R.id.iv_photo);
         TextView tv_appName = (TextView)view.findViewById(R.id.tv_appName);
         TextView tv_time = (TextView)view.findViewById(R.id.tv_time);
         TextView tv_error_count = (TextView)view.findViewById(R.id.tv_error_count);
+        TextView tv_location = (TextView) view.findViewById(R.id.tv_location);
 
         // 界面设置
-        iv_photo.setImageBitmap(rcv_adapter.loadPhoto(accessLog));
-        tv_appName.setText(accessLog.getAppName());
-        tv_time.setText(accessLog.getTime());
-        tv_error_count.setText(getString(R.string.password_err_counter,
-                            accessLog.getPasswordErrorCount()));
+        iv_photo.setImageBitmap(logListAdapter.loadPhoto(accessLog));
+        tv_appName.setText(getString(R.string.appLocker_err_detect, accessLog.getAppName()));
+        tv_time.setText(getString(R.string.time_args, accessLog.getTime()));
+        tv_error_count.setText(getString(R.string.password_err_counter, accessLog.getPasswordErrorCount()));
+        String location = accessLog.getLocation();
+        if (location == null) {
+            location = getString(R.string.unknwon_location);
+        }
+        tv_location.setText(getString(R.string.location_args, location));
 
         // 显示在窗口中
         AlertDialog dialog = new AlertDialog.Builder(parentActivity).setView(view).create();
@@ -237,61 +313,68 @@ public class AccessLogsFragment extends Fragment {
     }
 
     /**
-     * 刷新删除按钮的状态
+     * 显示删除按钮
+     * @param show 是否显示删除按钮
      */
-    private void updateRemoveButtonState () {
-        int count = lockConfigManager.selectedAppCount();
-        if (count > 0) {
-            // 如果不可见且未播放动画，则播放动画显示移入按钮
-            if ((bt_remove.getVisibility() != View.VISIBLE)) {
-                bt_remove.startAnimation(animationRemoveButtonIn);
-            }
-            bt_remove.setText(getString(R.string.total_delete_count, count));
-        } else {
-            // 如果可见且未播放动画，则播放动画移除删除按钮
-            if ((bt_remove.getVisibility() != View.GONE)) {
-                bt_remove.startAnimation(animationRemoveButtonOut);
-            }
+    private void showDeleteButton (boolean show) {
+        if (show) {
+            if (bt_del.getVisibility() != View.VISIBLE) {
+                // 显示删除按钮
+                Animation animation = AnimationUtils.loadAnimation(parentActivity,
+                        R.anim.listview_cleanbutton_bottom_in);
+                animation.setFillAfter(true);
+                animation.setAnimationListener(new Animation.AnimationListener() {
+                    @Override
+                    public void onAnimationStart(Animation animation) {
+                        bt_del.setVisibility(View.VISIBLE);
+                    }
 
-            bt_remove.setText(getString(R.string.delete));
+                    @Override
+                    public void onAnimationEnd(Animation animation) {}
+
+                    @Override
+                    public void onAnimationRepeat(Animation animation) {}
+                });
+                bt_del.startAnimation(animation);
+            }
+        } else {
+            // 有任意一项未选中，则取消全选
+            ll_header.setCheckAll(false);
+
+            // 如果没有任何项选中，则隐藏按钮
+            if (!logListAdapter.isAnyItemSelected()){
+                if (bt_del.getVisibility() != View.GONE) {
+                    // 隐藏删除按钮
+                    Animation animation = AnimationUtils.loadAnimation(parentActivity,
+                            R.anim.listview_cleanbutton_bottom_out);
+                    animation.setFillAfter(true);
+                    animation.setAnimationListener(new Animation.AnimationListener() {
+                        @Override
+                        public void onAnimationStart(Animation animation) {}
+
+                        @Override
+                        public void onAnimationEnd(Animation animation) {
+                            bt_del.setVisibility(View.GONE);
+                        }
+
+                        @Override
+                        public void onAnimationRepeat(Animation animation) {}
+                    });
+                    bt_del.startAnimation(animation);
+                }
+            }
         }
     }
 
     /**
-     * 更新总的纪录条目数显示
-     * @param count 总的条目纪录数
+     * 点击事件
+     * @param v 被点击的对像
      */
-    private void updateTotalCountShow (int count) {
-        tv_count.setText(getString(R.string.total_applock_log_count, count));
-    }
-
-    /**
-     * 开始加载日志列表
-     */
-    private void startLoadingLogList () {
-        lockConfigManager.loadAccessLogsMore(LOAD_MORE_COUNT);
-    }
-
-    /**
-     * 各个CheckBox状态改变的监听器
-     */
-    class SelectCheckBoxChanged implements CompoundButton.OnCheckedChangeListener {
-        @Override
-        public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-            AccessLog accessLog = (AccessLog)buttonView.getTag();
-
-            // 切换选中状态,如果有任意一项未选中，则去掉全选状态
-            accessLog.setSelected(isChecked);
-            if (!accessLog.isSelected()) {
-                // 临时取消check监听器，避免状态错误
-                cb_select_all.setOnCheckedChangeListener(null);
-                cb_select_all.setChecked(false);
-                cb_select_all.setOnCheckedChangeListener(cb_all_listener);
-            }
-            rcv_adapter.notifyDataSetChanged();
-
-            // 更新按钮状态
-            updateRemoveButtonState();
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.bt_del:
+                break;
         }
     }
 
@@ -302,10 +385,39 @@ public class AccessLogsFragment extends Fragment {
         observer = new Observer() {
             @Override
             public void update(Observable observable, Object data) {
-                // 通知数据发生改变，刷新界面
-                rcv_adapter.notifyDataSetChanged();
+                // 通知Adapter数据发生变化
+                DataObservable.ObserverInfo info = (DataObservable.ObserverInfo)data;
+                if (info.dataType != DataObservable.DataType.LOG_LIST) {
+                    return;
+                } else {
+                    switch (info.changeType) {
+                        case UNKNOWN:
+                            logListAdapter.notifyDataSetChanged();
+                            break;
+                        case INSERT:
+                            logListAdapter.notifyItemRangeInserted(info.startPos, info.count);
+                            break;
+                        case UPDATE:
+                            logListAdapter.notifyItemRangeChanged(info.startPos, info.count);
+                            break;
+                        case REMOVE:
+                            logListAdapter.notifyItemRangeChanged(info.startPos, info.count);
+                            break;
+                    }
+                }
+
+                // 是否显示空白view?
+                if (logListAdapter.getItemCount() > 0) {
+                    tv_empty.setVisibility(View.GONE);
+                } else {
+                    tv_empty.setVisibility(View.VISIBLE);
+                }
+
+                // 更改标题计数
+                updateTotalCountShow();
             }
         };
+
         lockConfigManager.registerObserver(observer);
     }
 }

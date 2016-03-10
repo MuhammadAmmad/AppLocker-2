@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
+    android:background="@drawable/comm_dialog_background"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
     <TextView
         android:id="@+id/tv_title"
         android:text="@string/mode_add"
         android:gravity="center"
-        android:background="@color/colorPrimary"
-        android:layout_marginBottom="@dimen/view_width_padding"
+        android:background="@drawable/comm_dialog_title_background"
         android:padding="@dimen/view_width_padding"
         android:textSize="@dimen/large_text_size"
         android:textColor="@color/white"
@@ -41,8 +41,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:background="@drawable/login_button_selector"
-            android:textColor="@color/white"
+            android:background="@drawable/common_btn_selector"
+            android:textColor="@color/colorSecondTextColor"
             android:text="@string/cancel"/>
     </LinearLayout>
 

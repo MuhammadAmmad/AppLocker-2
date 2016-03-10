@@ -7,6 +7,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.design.widget.TabLayout;
+import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
@@ -24,12 +25,19 @@ import android.widget.Toast;
 
 import com.eeontheway.android.applocker.R;
 import com.eeontheway.android.applocker.feedback.FeedBackListActivity;
+import com.eeontheway.android.applocker.lock.DataObservable;
+import com.eeontheway.android.applocker.lock.LockConfigManager;
 import com.eeontheway.android.applocker.lock.LockService;
 import com.eeontheway.android.applocker.lock.PasswordSetActivity;
 import com.eeontheway.android.applocker.ui.FragmentPagerViewAdapter;
 import com.eeontheway.android.applocker.ui.FragmentPagerViewInfo;
 import com.eeontheway.android.applocker.updater.UpdaterManager;
 import com.eeontheway.android.applocker.utils.Configuration;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Observable;
+import java.util.Observer;
 
 /**
  * 主Activity
@@ -42,7 +50,6 @@ import com.eeontheway.android.applocker.utils.Configuration;
 public class MainActivity extends AppCompatActivity {
     public static final int REQUEST_SET_PASS = 0;
     public static final int REQUEST_INSTALL_APP = 1;
-    public static final int REQUEST_LOGIN = 2;
 
     private Toolbar tb_main;
     private DrawerLayout dl_main;
@@ -52,24 +59,34 @@ public class MainActivity extends AppCompatActivity {
     private SettingsManager settingsManager;
     private MainLeftFragment mainLeftFragment;
     private UpdaterManager updaterManager;
+    private FragmentPagerViewAdapter fragmentPagerAdapter;
+    private List<FragmentPagerViewInfo> fragmentList = new ArrayList<>();
+    private LockConfigManager lockConfigManager;
+    private Observer observer;
 
     // Fragment信息数组
     private final FragmentPagerViewInfo[] fragmentInfoArray = {
             new FragmentPagerViewInfo(
+                    new AccessLogsFragment(),
+                    R.string.access_logs,
+                    R.drawable.ic_app_defense_logs_selected,
+                    R.drawable.ic_app_defense_logs_normal),
+            new FragmentPagerViewInfo(
+                    new SummaryFragment(),
+                    R.string.app_start,
+                    R.drawable.ic_app_home_selected,
+                    R.drawable.ic_app_home_normal),
+            new FragmentPagerViewInfo(
                     new AppLockListFragment(),
                     R.string.applock_list,
-                    R.drawable.widget_search_navigation,
-                    R.drawable.widget_search_navigation),
+                    R.drawable.ic_app_lock_list_selected,
+                    R.drawable.ic_app_lock_list_normal),
             new FragmentPagerViewInfo(
                     new LockConditionFragment(),
                     R.string.lock_condition,
-                    R.drawable.folder_encript_selected,
-                    R.drawable.folder_encript_selected),
-            new FragmentPagerViewInfo(
-                    new AccessLogsFragment(),
-                    R.string.access_logs,
-                    R.drawable.folder_encript_selected,
-                    R.drawable.folder_encript_selected)
+                    R.drawable.ic_app_lock_cond_selected,
+                    R.drawable.ic_app_lock_cond_normal)
+
     };
 
     /**
@@ -93,9 +110,11 @@ public class MainActivity extends AppCompatActivity {
         mainLeftFragment = (MainLeftFragment) getSupportFragmentManager().findFragmentById(
                                                                 R.id.main_left_fragment);
         updaterManager = new UpdaterManager(MainActivity.this, REQUEST_INSTALL_APP);
+        lockConfigManager = LockConfigManager.getInstance(this);
 
         initViews();
         setTitle(R.string.app_locker);
+        initDataObserver();
 
         // 检查密码是否设置，只有当设置后，才能启动
         checkPassword();
@@ -106,6 +125,7 @@ public class MainActivity extends AppCompatActivity {
      */
     @Override
     protected void onDestroy() {
+        lockConfigManager.freeInstance();
         super.onDestroy();
     }
 
@@ -121,6 +141,7 @@ public class MainActivity extends AppCompatActivity {
         ActionBar actionBar = getSupportActionBar();
         actionBar.setHomeButtonEnabled(true);
         actionBar.setDisplayHomeAsUpEnabled(true);
+        updateTitle();
 
         // 配置DrawLayout
         dl_main = (DrawerLayout)findViewById(R.id.dl_main);
@@ -130,9 +151,17 @@ public class MainActivity extends AppCompatActivity {
         dl_main.setDrawerListener(actionBarDrawerToggle);
 
         // 配置显示Tab
+        initFragmentList();
         initTabs();
     }
 
+    /**
+     * 初始化FragmentList
+     * 初始只加载第1个Fragment，余后的在Tap切换时再加载
+     */
+    private void initFragmentList() {
+        fragmentList.add(fragmentInfoArray[0]);
+    }
 
     /**
      *  初始化UI
@@ -143,7 +172,9 @@ public class MainActivity extends AppCompatActivity {
         final ViewPager viewPager = (ViewPager)findViewById(R.id.view_page);
 
         // 初始化适配器及ViewPager
-        viewPager.setAdapter(new FragmentPagerViewAdapter(MainActivity.this, getFragmentManager(), fragmentInfoArray));
+        fragmentPagerAdapter = new FragmentPagerViewAdapter(MainActivity.this,
+                                                getFragmentManager(), fragmentInfoArray);
+        viewPager.setAdapter(fragmentPagerAdapter);
 
         // 关联Tab和Laout
         tabLayout.setupWithViewPager(viewPager);
@@ -167,8 +198,8 @@ public class MainActivity extends AppCompatActivity {
             // 设置监听器，用于切换时更改图标和字体颜色
             tabLayout.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
                 private void showTabSelected (TabLayout.Tab tab, boolean selected) {
-                    FragmentPagerViewInfo info = fragmentInfoArray[tab.getPosition()];
-
+                   // 获取Fragment相关的显示
+                    FragmentPagerViewInfo info = fragmentList.get(tab.getPosition());
                     View tabView = tab.getCustomView();
                     ImageView iconView = (ImageView) tabView.findViewById(R.id.iv_icon);
                     TextView nameView = (TextView) tabView.findViewById(R.id.tv_name);
@@ -188,6 +219,13 @@ public class MainActivity extends AppCompatActivity {
 
                 @Override
                 public void onTabSelected(TabLayout.Tab tab) {
+                    // 延迟加载Fragment
+                    if (tab.getPosition() >= (fragmentList.size())) {
+                        for (int pos = fragmentList.size(); pos <= tab.getPosition(); pos++) {
+                            fragmentList.add(fragmentInfoArray[pos]);
+                        }
+                    }
+
                     showTabSelected(tab, true);
                     viewPager.setCurrentItem(tab.getPosition());
                 }
@@ -203,9 +241,9 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
 
-            // 选中第0个
-            tabLayout.getTabAt(0).select();
         }
+        // 选中第0个
+        tabLayout.getTabAt(0).select();
     }
 
     /**
@@ -236,12 +274,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
         switch (requestCode) {
-            case REQUEST_LOGIN:
-                mainLeftFragment.updateHeaderView();
-                if (resultCode == RESULT_OK) {
-                    Toast.makeText(this, R.string.login_scuess, Toast.LENGTH_SHORT).show();
-                }
-                break;
             case REQUEST_SET_PASS:      // 密码设置
                 if (resultCode == RESULT_OK) {
                     // 密码设置正确，保存密码
@@ -328,5 +360,34 @@ public class MainActivity extends AppCompatActivity {
         if (checkUpdateEnable) {
             updaterManager.autoUpdate(Configuration.updateSiteUrl);
         }
+    }
+
+    /**
+     * 注册数据变化监听器
+     */
+    private void initDataObserver () {
+        observer = new Observer() {
+            @Override
+            public void update(Observable observable, Object data) {
+                // 通知Adapter数据发生变化
+                DataObservable.ObserverInfo info = (DataObservable.ObserverInfo)data;
+                if (info.dataType != DataObservable.DataType.MODE_LIST) {
+                    return;
+                } else {
+                    updateTitle();
+                }
+            }
+        };
+
+        lockConfigManager.registerObserver(observer);
+    }
+
+    /**
+     * 刷新标题栏
+     */
+    private void updateTitle () {
+        String modeName = getString(R.string.app_name) + " - " +
+                                    lockConfigManager.getCurrentLockModeName();
+        tb_main.setTitle(modeName);
     }
 }

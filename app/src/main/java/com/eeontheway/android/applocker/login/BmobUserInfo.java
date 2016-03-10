@@ -2,6 +2,8 @@ package com.eeontheway.android.applocker.login;
 
 import com.eeontheway.android.applocker.updater.UpdateInfo;
 
+import org.w3c.dom.CDATASection;
+
 import cn.bmob.v3.BmobObject;
 import cn.bmob.v3.BmobUser;
 
@@ -13,6 +15,7 @@ import cn.bmob.v3.BmobUser;
  */
 public class BmobUserInfo extends BmobUser {
     private String lastLoginTime;
+    private String cid;
 
     /**
      * 构造函数
@@ -34,6 +37,7 @@ public class BmobUserInfo extends BmobUser {
         setMobilePhoneNumber(info.getPhoneNumber());
         setMobilePhoneNumberVerified(info.isPhoneNumberVerified());
         lastLoginTime = info.getLastLoginTime();
+        cid = info.getCid();
     }
 
     /**
@@ -51,6 +55,15 @@ public class BmobUserInfo extends BmobUser {
         info.setPhoneNumberVerified((phoneVerified == null) ? false : phoneVerified.booleanValue());
         info.setLastLoginTime(lastLoginTime);
         info.setRegisterTime(getCreatedAt());
+        info.setCid(cid);
         return info;
+    }
+
+    public String getCid() {
+        return cid;
+    }
+
+    public void setCid(String cid) {
+        this.cid = cid;
     }
 }

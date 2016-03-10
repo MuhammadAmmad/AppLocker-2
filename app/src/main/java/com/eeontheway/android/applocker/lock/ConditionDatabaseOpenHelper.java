@@ -11,7 +11,7 @@ import android.database.sqlite.SQLiteOpenHelper;
  * @Time 2016-12-15
  */
 public class ConditionDatabaseOpenHelper extends SQLiteOpenHelper {
-    private static final int currentVersion = 25;
+    private static final int currentVersion = 27;
     private static final String dbName = "applocklist.db";
 
     private static final String app_list_tableName = "app_list";
@@ -66,7 +66,8 @@ public class ConditionDatabaseOpenHelper extends SQLiteOpenHelper {
                     "   packageName    STRING  NOT NULL," +
                     "   passErrorCount INTEGER NOT NULL," +
                     "   photoPath      STRING," +
-                    "   resason        STRING  NOT NULL" +
+                    "   time           STRING NOT NULL," +
+                    "   location       STRING  NOT NULL" +
                     ");";
 
     public static final String time_lock_config_tableName = "time_lock_config";

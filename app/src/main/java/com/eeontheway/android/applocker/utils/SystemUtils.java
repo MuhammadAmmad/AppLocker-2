@@ -18,6 +18,7 @@ import com.eeontheway.android.applocker.R;
 import java.io.File;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -56,6 +57,18 @@ public class SystemUtils {
         SimpleDateFormat sdf = new SimpleDateFormat(format);
         return sdf.format(date);
     }
+
+    /**
+     * 格式化时间字符串
+     * @param calendar 指定时间
+     * @param format 格式，参考"yyyy-MM-dd HH:mm:ss"
+     * @return 时间对像
+     */
+    public static String formatDate (Calendar calendar, String format) {
+        SimpleDateFormat sdf = new SimpleDateFormat(format);
+        return sdf.format(calendar.getTime());
+    }
+
 
     /**
      * 获取当前App安装的时间

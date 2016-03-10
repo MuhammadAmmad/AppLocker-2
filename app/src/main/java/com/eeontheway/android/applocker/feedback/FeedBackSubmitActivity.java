@@ -15,6 +15,9 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.eeontheway.android.applocker.R;
+import com.eeontheway.android.applocker.login.IUserManager;
+import com.eeontheway.android.applocker.login.UserManagerFactory;
+import com.eeontheway.android.applocker.push.PushMessageReceiver;
 
 /**
  * 用户反馈Activity
@@ -31,6 +34,7 @@ public class FeedBackSubmitActivity extends AppCompatActivity {
     private String lastContent;
     private FeedBackBase feedBackManager;
     private FeedBackSendListener feedbackListener;
+    private IUserManager userManager;
 
     /**
      * 启动Activity
@@ -55,6 +59,15 @@ public class FeedBackSubmitActivity extends AppCompatActivity {
         initToolBar();
         initViews();
         initFeedBack();
+        initUserManager();
+    }
+
+    /**
+     * 初始化用户管理器
+     */
+    private void initUserManager () {
+        userManager = UserManagerFactory.create(this);
+        userManager.init(this);
     }
 
     /**
@@ -140,11 +153,18 @@ public class FeedBackSubmitActivity extends AppCompatActivity {
                 Toast.makeText(FeedBackSubmitActivity.this,
                         getString(R.string.no_send_feedback_again), Toast.LENGTH_SHORT).show();
             }else {
+                // 获取用户cid
+                String cid = userManager.getMyCid();
+                if (cid == null) {
+                    cid = PushMessageReceiver.cid;
+                }
+
                 // 发送反馈信息
                 FeedBackInfo feedBackInfo = new FeedBackInfo();
                 feedBackInfo.setContent(content);
                 feedBackInfo.setContact(et_contact.getText().toString());
                 feedBackInfo.setTopic(true);
+                feedBackInfo.setCid(cid);
                 feedBackManager.sendFeedBack(feedBackInfo);
             }
         }else {

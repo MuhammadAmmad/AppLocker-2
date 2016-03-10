@@ -20,6 +20,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.eeontheway.android.applocker.R;
+import com.eeontheway.android.applocker.push.PushMessageReceiver;
 
 /**
  * 用户注册或登陆的Activity
@@ -79,6 +80,7 @@ public class LoginOrRegisterActivity extends AppCompatActivity implements View.O
     }
 
     /**
+     *
      * Activity的onCreate回调
      * @param savedInstanceState 之前保存的状态
      */
@@ -176,6 +178,12 @@ public class LoginOrRegisterActivity extends AppCompatActivity implements View.O
 
             @Override
             public void onSuccess() {
+                // 登陆成功后，刷新下cid
+                String cid = userManager.getMyCid();
+                if (cid != null) {
+                    userManager.setMyCid(PushMessageReceiver.cid);
+                }
+
                 // 登陆成功，设置成功返回值，结束自己
                 progressDialog.dismiss();
                 end(RESULT_OK);

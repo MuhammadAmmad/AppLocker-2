@@ -5,6 +5,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 
+import com.eeontheway.android.applocker.login.IUserManager;
+import com.eeontheway.android.applocker.login.UserInfo;
+import com.eeontheway.android.applocker.login.UserManagerFactory;
 import com.igexin.sdk.PushConsts;
 
 /**
@@ -14,9 +17,23 @@ import com.igexin.sdk.PushConsts;
  * @Time 2016-12-15
  */
 public class PushMessageReceiver extends BroadcastReceiver {
+    public static String cid;
+    private IUserManager userManager;
+
+    /**
+     * 初始化用户管理器
+     */
+    private void initUserManager (Context context) {
+        userManager = UserManagerFactory.create(context);
+        userManager.init(context);
+    }
+
     @Override
     public void onReceive(Context context, Intent intent) {
         Bundle bundle = intent.getExtras();
+
+        // 初始化用户管理
+        initUserManager(context);
 
         switch (bundle.getInt(PushConsts.CMD_ACTION)) {
             case PushConsts.GET_MSG_DATA:
@@ -29,9 +46,13 @@ public class PushMessageReceiver extends BroadcastReceiver {
                 break;
             case PushConsts.GET_CLIENTID:
                 String cid = bundle.getString("clientid");
-                GetTuiPush.setClientId(cid);
-                break;
 
+                // 更新服务器上的cid
+                boolean ok = userManager.setMyCid(cid);
+                if (ok == false) {
+                    this.cid = cid;
+                }
+                break;
             default:
                 break;
         }

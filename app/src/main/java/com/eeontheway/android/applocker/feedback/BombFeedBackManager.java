@@ -5,8 +5,11 @@ import android.content.Context;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.TreeMap;
 
+import cn.bmob.v3.BmobACL;
 import cn.bmob.v3.BmobQuery;
+import cn.bmob.v3.BmobUser;
 import cn.bmob.v3.datatype.BmobDate;
 import cn.bmob.v3.listener.FindListener;
 import cn.bmob.v3.listener.SaveListener;
@@ -66,6 +69,22 @@ public class BombFeedBackManager extends FeedBackBase {
         // 开始调用
         if (sendListener != null) {
             sendListener.onStart();
+        }
+
+        // 检查用户是否登陆来配置权限
+        BmobUser bmobUser = BmobUser.getCurrentUser(context);
+        BmobACL aCL = new BmobACL();
+        if (bmobUser == null) {
+            // 未注册，所有人可访问
+            aCL.setPublicReadAccess(true);
+            aCL.setPublicWriteAccess(true);
+        } else {
+            // 已注册，只有本人可访问
+            aCL.setPublicReadAccess(false);
+            aCL.setPublicWriteAccess(false);
+            aCL.setReadAccess(bmobUser, true);
+            aCL.setWriteAccess(bmobUser, true);
+            bmobFeedBackInfo.setACL(aCL);
         }
 
         // 将数据保存到服务器

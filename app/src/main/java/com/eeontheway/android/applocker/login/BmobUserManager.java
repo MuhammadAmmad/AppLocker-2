@@ -3,6 +3,7 @@ package com.eeontheway.android.applocker.login;
 import android.content.Context;
 
 import com.eeontheway.android.applocker.R;
+import com.eeontheway.android.applocker.push.PushMessageReceiver;
 import com.eeontheway.android.applocker.updater.BmobUpdateInfo;
 
 import java.util.List;
@@ -308,7 +309,11 @@ public class BmobUserManager extends UserManagerBase {
      * @param userInfo 用户信息
      */
     public void updateMyUserInfo (UserInfo userInfo) {
-        BmobUserInfo info = new BmobUserInfo(userInfo);
+        BmobUserInfo info = new BmobUserInfo();
+
+        // userInfo不包含objectID，只更新这几项，其它不更新
+        info.setObjectId(BmobUser.getCurrentUser(context).getObjectId());
+        info.setCid(userInfo.getCid());
         info.update(context, new UpdateListener() {
             @Override
             public void onSuccess() {
@@ -490,5 +495,35 @@ public class BmobUserManager extends UserManagerBase {
         }
 
         return finaMsg;
+    }
+
+    /**
+     * 获取自己的cid
+     * @return cid
+     */
+    @Override
+    public String getMyCid() {
+        String cid =null;
+        UserInfo userInfo = getMyUserInfo();
+        if (userInfo != null) {
+            cid = userInfo.getCid();
+        }
+        return cid;
+    }
+
+    /**
+     * 设置自己的cid
+     * @return 设置成功或失败。用户未登陆时，失败
+     */
+    public boolean setMyCid (String cid) {
+        // 更新服务器上的cid
+        UserInfo userInfo = getMyUserInfo();
+        if (userInfo != null) {
+            userInfo.setCid(cid);
+            updateMyUserInfo(userInfo);
+            return true;
+        }
+
+        return false;
     }
 }

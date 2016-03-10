@@ -17,17 +17,9 @@ public class GetTuiPush implements IPush {
     private static final String MASTERSECRET = "GWUoVVG4Ub6EoFAxpiRTk1";
 
     private SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    private static String clientId;
-
-    /**
-     * 设置客户端Id
-     */
-    public static void setClientId (Object clientId) {
-        GetTuiPush.clientId = (String)clientId;
-    }
 
     @Override
-    public void pushMsg(PushInfo info) {
+    public void pushMsg(PushInfo info, String clientId) {
         Map<String, Object> param = new HashMap<String, Object>();
         param.put("action", "pushmessage"); // pushmessage为接口名，注意全部小写
                 /*---以下代码用于设定接口相应参数---*/
@@ -38,7 +30,7 @@ public class GetTuiPush implements IPush {
 
         Date curDate = new Date(System.currentTimeMillis());
         param.put("time", formatter.format(curDate)); // 当前请求时间，可选
-        param.put("clientid", GetTuiPush.clientId); // 您获取的ClientID
+        param.put("clientid", clientId); // 您获取的ClientID
         param.put("expire", 3600); // 消息超时时间，单位为秒，可选
 
         // 生成Sign值，用于鉴权

@@ -26,6 +26,7 @@
             android:id="@+id/et_response_content"
             android:layout_weight="1"
             style="@style/FeedBack.EditText"
+            android:hint="@string/no_feedback_response_yet"
             android:layout_marginTop="@dimen/view_common_margin"
             android:layout_marginBottom="@dimen/view_common_margin"
             android:layout_width="match_parent"

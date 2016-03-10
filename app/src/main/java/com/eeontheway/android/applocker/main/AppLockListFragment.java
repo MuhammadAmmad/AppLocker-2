@@ -8,25 +8,22 @@ import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
-import android.view.Gravity;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.eeontheway.android.applocker.R;
-import com.eeontheway.android.applocker.lock.BaseLockCondition;
+import com.eeontheway.android.applocker.lock.AccessLog;
+import com.eeontheway.android.applocker.lock.DataObservable;
 import com.eeontheway.android.applocker.lock.LockConfigManager;
-import com.eeontheway.android.applocker.lock.PositionLockCondition;
-import com.eeontheway.android.applocker.lock.TimeLockCondition;
 import com.eeontheway.android.applocker.ui.ListHeaderView;
 import com.eeontheway.android.applocker.ui.WaitingProgressDialog;
 
@@ -128,7 +125,7 @@ public class AppLockListFragment extends Fragment {
      * 初始化ListView
      */
     private void initListView () {
-        rcv_list.setHasFixedSize(true);
+        rcv_list.setHasFixedSize(false);
         LinearLayoutManager layoutManager = new LinearLayoutManager(parentActivity);
         layoutManager.setOrientation(LinearLayoutManager.VERTICAL);
         rcv_list.setLayoutManager(layoutManager);
@@ -189,7 +186,7 @@ public class AppLockListFragment extends Fragment {
                         showWaitingProgressDialog(true);
 
                         // Bug: 需要注册监听，否则后台线程会操作UI
-                        lockConfigManager.setObserverEnable(false);
+                        lockConfigManager.setObserverEnable(DataObservable.DataType.APP_LIST, false);
                     }
 
                     @Override
@@ -205,7 +202,7 @@ public class AppLockListFragment extends Fragment {
                         showWaitingProgressDialog(false);
 
                         // 删除完毕后，恢复监听，通知数据发生变化
-                        lockConfigManager.setObserverEnable(true);
+                        lockConfigManager.setObserverEnable(DataObservable.DataType.APP_LIST, true);
                     }
                 }.execute();
             }
@@ -253,6 +250,9 @@ public class AppLockListFragment extends Fragment {
                 builder.create().show();
                 return true;
             }
+
+            @Override
+            public void onItemClicked(int pos) {}
         });
     }
 
@@ -263,7 +263,26 @@ public class AppLockListFragment extends Fragment {
         observer = new Observer() {
             @Override
             public void update(Observable observable, Object data) {
-                lockListAdapter.notifyDataSetChanged();
+                // 通知Adapter数据发生变化
+                DataObservable.ObserverInfo info = (DataObservable.ObserverInfo)data;
+                if (info.dataType != DataObservable.DataType.APP_LIST) {
+                    return;
+                } else {
+                    switch (info.changeType) {
+                        case UNKNOWN:
+                            lockListAdapter.notifyDataSetChanged();
+                            break;
+                        case INSERT:
+                            lockListAdapter.notifyItemRangeInserted(info.startPos, info.count);
+                            break;
+                        case UPDATE:
+                            lockListAdapter.notifyItemRangeChanged(info.startPos, info.count);
+                            break;
+                        case REMOVE:
+                            lockListAdapter.notifyItemRangeChanged(info.startPos, info.count);
+                            break;
+                    }
+                }
 
                 // 是否显示空白view?
                 if (lockListAdapter.getItemCount() > 0) {

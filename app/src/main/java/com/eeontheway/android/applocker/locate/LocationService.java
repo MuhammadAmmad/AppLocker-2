@@ -2,8 +2,6 @@ package com.eeontheway.android.applocker.locate;
 
 import android.content.Context;
 import android.location.Location;
-import android.os.Debug;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.baidu.location.BDLocation;
@@ -11,7 +9,17 @@ import com.baidu.location.BDLocationListener;
 import com.baidu.location.LocationClient;
 import com.baidu.location.LocationClientOption;
 import com.baidu.location.LocationClientOption.LocationMode;
+import com.baidu.location.Poi;
+import com.baidu.mapapi.model.LatLng;
+import com.baidu.mapapi.search.core.PoiInfo;
+import com.baidu.mapapi.search.core.SearchResult;
+import com.baidu.mapapi.search.geocode.GeoCodeResult;
+import com.baidu.mapapi.search.geocode.GeoCoder;
+import com.baidu.mapapi.search.geocode.OnGetGeoCoderResultListener;
+import com.baidu.mapapi.search.geocode.ReverseGeoCodeOption;
+import com.baidu.mapapi.search.geocode.ReverseGeoCodeResult;
 import com.eeontheway.android.applocker.R;
+import com.eeontheway.android.applocker.lock.LockService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,11 +37,13 @@ public class LocationService {
 	private LocationClientOption diyOption;
     private MyLocationListener bdListener;
     private List<PositionChangeListener> positionListenerList = new ArrayList<>();
+    private GeoCoder geocoderSearch;
 
 	private static LocationService instance;
 	private static Object objLock = new Object();
 
     private Position lastPosition;
+    private String city;
     private int lastErrorCode = -1;
     private int maxDistance = 10;
 
@@ -89,6 +99,7 @@ public class LocationService {
 				instance.client = new LocationClient(context);
 				instance.bdListener = instance.new MyLocationListener();
 				instance.client.setLocOption(instance.getDefaultLocationClientOption());
+                instance.initGeocoderSearch();
 			}
 		}
 
@@ -123,12 +134,65 @@ public class LocationService {
 	}
 
     /**
+     * 获取所在城市
+     * @return
+     */
+    public String getCity() {
+        return city;
+    }
+
+    /**
      * 返回当前的定位设置
      * @return 当前的定位设置
      */
 	public LocationClientOption getOption(){
 		return diyOption;
 	}
+
+    /**
+     * 初始化反向地址编码
+     */
+    private void initGeocoderSearch() {
+        geocoderSearch = GeoCoder.newInstance();
+        geocoderSearch.setOnGetGeoCodeResultListener(new OnGetGeoCoderResultListener() {
+            @Override
+            public void onGetGeoCodeResult(GeoCodeResult geoCodeResult) {
+            }
+
+            @Override
+            public void onGetReverseGeoCodeResult(ReverseGeoCodeResult reverseGeoCodeResult) {
+                if ((reverseGeoCodeResult == null) ||
+                        (reverseGeoCodeResult.error != SearchResult.ERRORNO.NO_ERROR)) {
+                    return;
+                }
+
+                // 找出最近的一个地址
+                List<PoiInfo> poiList = reverseGeoCodeResult.getPoiList();
+
+                double minDistance = 10000000;      // 设置一个很大的地址
+                LatLng myLocation = reverseGeoCodeResult.getLocation();
+                PoiInfo nearestPoi = null;
+                for (PoiInfo poiInfo : poiList) {
+                    float [] result = new float[1];
+                    Location.distanceBetween(poiInfo.location.latitude, poiInfo.location.longitude,
+                            myLocation.latitude, myLocation.longitude, result);
+                    if (result[0] < minDistance) {
+                        nearestPoi = poiInfo;
+                        minDistance = result[0];
+                    }
+                }
+
+                // 保存找到的地址，如果失败，则使用其原始返回的地址
+                String address;
+                if (nearestPoi != null) {
+                    address = nearestPoi.address + " " + nearestPoi.name;
+                } else {
+                    address = reverseGeoCodeResult.getAddress();
+                }
+                lastPosition.setAddress(address);
+            }
+        });
+    }
 
     /***
 	 * 获取缺省的定位设置
@@ -249,6 +313,12 @@ public class LocationService {
 				lastPosition.setLatitude(location.getLatitude());
 				lastPosition.setLongitude(location.getLongitude());
 				lastPosition.setAddress(location.getAddrStr());
+                city = location.getCity();
+
+                // 通知外界，地点发生了变化
+                for (PositionChangeListener listener : positionListenerList) {
+                    listener.onPositionChanged(null, lastPosition);
+                }
             }else{
                 // 计算之前定位的位置与当前定位间的偏差
                 float[] distance = new float[1];
@@ -263,6 +333,7 @@ public class LocationService {
 					newPosition.setLatitude(location.getLatitude());
 					newPosition.setLongitude(location.getLongitude());
 					newPosition.setAddress(location.getAddrStr());
+                    city = location.getCity();
 
                     // 通知外界，地点发生了变化
                     for (PositionChangeListener listener : positionListenerList) {
@@ -270,8 +341,14 @@ public class LocationService {
                     }
 
 					lastPosition.update(newPosition);
-				}
+				} else {
+                    return;
+                }
             }
+
+            // 反向查找poi地址
+            LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+            geocoderSearch.reverseGeoCode(new ReverseGeoCodeOption().location(latLng));
         }
     }
 }

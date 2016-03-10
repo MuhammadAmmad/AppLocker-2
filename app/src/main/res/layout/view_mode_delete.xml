@@ -2,6 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:descendantFocusability="blocksDescendants"
+    android:background="@drawable/comm_dialog_background"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
     <TextView
@@ -41,9 +42,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:background="@drawable/login_button_selector"
-            android:textColor="@color/white"
+            android:background="@drawable/common_btn_selector"
+            android:textColor="@color/colorSecondTextColor"
             android:text="@string/cancel"/>
     </LinearLayout>
-
 </LinearLayout>

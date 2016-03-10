@@ -1,5 +1,6 @@
 package com.eeontheway.android.applocker.feedback;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.support.design.widget.FloatingActionButton;
@@ -12,10 +13,14 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.eeontheway.android.applocker.R;
+import com.eeontheway.android.applocker.login.IUserManager;
+import com.eeontheway.android.applocker.login.UserInfo;
+import com.eeontheway.android.applocker.login.UserManagerFactory;
 import com.eeontheway.android.applocker.utils.SystemUtils;
 
 import java.util.ArrayList;
@@ -39,6 +44,7 @@ public class FeedBackListActivity extends AppCompatActivity {
     private TextView tv_empty;
 
     private FeedBackListAdapter rcv_adapter;
+    private IUserManager userManager;
     private List<FeedBackTopic> feedBackTopicList = new ArrayList<>();
     private FeedBackBase feedBackManager;
     private Date lastUpdateDate;
@@ -63,6 +69,20 @@ public class FeedBackListActivity extends AppCompatActivity {
         initFeedbackManager();
         initToolBar();
         initViews();
+        initUserManager();
+    }
+
+    /**
+     * 初始化用户管理器
+     */
+    private void initUserManager() {
+        userManager = UserManagerFactory.create(this);
+        userManager.init(this);
+
+        UserInfo userInfo = userManager.getMyUserInfo();
+        if (userInfo == null) {
+            Toast.makeText(this, R.string.feed_back_not_login, Toast.LENGTH_SHORT).show();
+        }
     }
 
     /**
