@@ -12,6 +12,7 @@ public class Position implements Serializable, Cloneable {
     private float radius;
     private double latitude;
     private double longitude;
+    private long time;
     private String address = "unknown";
 
     /**
@@ -99,5 +100,23 @@ public class Position implements Serializable, Cloneable {
      */
     public void setAddress(String address) {
         this.address = address;
+    }
+
+    /**
+     * 获取定位的时间
+     *
+     * @return 定位时间
+     */
+    public long getTime() {
+        return time;
+    }
+
+    /**
+     * 设置定位时间
+     *
+     * @param time 定位时间
+     */
+    public void setTime(long time) {
+        this.time = time;
     }
 }

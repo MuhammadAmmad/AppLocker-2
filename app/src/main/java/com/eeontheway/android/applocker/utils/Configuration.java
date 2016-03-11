@@ -13,7 +13,12 @@ public final class Configuration {
     /**
      * 是否是开发者模式
      */
-    public static final boolean isDevelop = true;
+    public static final boolean isDevelop = false;
+
+    /**
+     * BMOB的APPID
+     */
+    public static final String BMOB_APPID = "46120064d8e98adb870a67247a102485";
 
     /**
      * App官方网站

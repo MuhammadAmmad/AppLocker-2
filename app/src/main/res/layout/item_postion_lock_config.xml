@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/ll_item"
-    android:padding="@dimen/view_common_margin"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
     android:background="@drawable/background_normal_clickable_item"
     android:descendantFocusability="blocksDescendants"
-    android:orientation="horizontal"
     android:gravity="center"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:orientation="horizontal"
+    android:padding="@dimen/view_common_margin">
 
     <CheckBox
         android:id="@+id/cb_selected"
@@ -15,22 +15,22 @@
         android:layout_height="wrap_content" />
     <ImageView
         android:id="@+id/iv_icon"
-        android:src="@drawable/position"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:scaleType="fitCenter"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:src="@drawable/position" />
     <LinearLayout
-        android:orientation="vertical"
-        android:layout_weight="1"
-        android:layout_marginLeft="@dimen/view_common_margin"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="@dimen/view_common_margin"
+        android:layout_weight="1"
+        android:orientation="vertical">
         <TextView
             android:id="@+id/tv_address"
-            android:text="@string/real_address"
             style="@style/Common.MidTextView"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:text="@string/real_address" />
         <TextView
             android:id="@+id/tv_latitude"
             style="@style/Common.TinyTextView"
@@ -41,14 +41,20 @@
             style="@style/Common.TinyTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
+
+        <TextView
+            android:id="@+id/tv_radius"
+            style="@style/Common.TinyTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
     </LinearLayout>
     <CheckBox
         android:id="@+id/cb_enable"
-        android:clickable="false"
-        android:gravity="center"
-        android:button="@null"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
         android:layout_marginLeft="@dimen/view_common_margin"
         android:background="@drawable/applock_background_selector"
-        android:layout_width="20dp"
-        android:layout_height="20dp" />
+        android:button="@null"
+        android:clickable="false"
+        android:gravity="center" />
 </LinearLayout>

@@ -1,20 +1,19 @@
 package com.eeontheway.android.applocker.lock;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 
 import com.eeontheway.android.applocker.R;
 import com.eeontheway.android.applocker.app.AppInfo;
-import com.eeontheway.android.applocker.locate.LocationService;
 import com.eeontheway.android.applocker.locate.Position;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
-import java.util.Observable;
 import java.util.Observer;
 
 /**
@@ -28,13 +27,10 @@ import java.util.Observer;
 public class LockConfigManager {
     private static final String lastModeIdKey = "lastModeIdKey";
     private static final String LOCK_CONFIG_FILE = "lock_config_pref";
-
-    private Context context;
-    private ConditionDatabase conditionDatabase;
-
     private static LockConfigManager instance;
     private static int instanceCount;
-
+    private Context context;
+    private ConditionDatabase conditionDatabase;
     private LockModeInfo currentLockModeInfo;
     private List<LockModeInfo> lockModeInfoList = new ArrayList<>();
     private List<AppLockInfo> appLockInfoList = new ArrayList<>();
@@ -42,6 +38,22 @@ public class LockConfigManager {
     private List<AccessLog> accessLogList = new ArrayList<>();
 
     private DataObservable observable;
+    private BroadcastReceiver packageRemoveReceiver;
+
+    /**
+     * 构造函数
+     *
+     * @param context 上下文
+     */
+    private LockConfigManager(Context context) {
+        this.context = context;
+
+        conditionDatabase = new ConditionDatabase(context);
+        observable = new DataObservable();
+        conditionDatabase.open();
+        loadModeList();
+        registerPackageRemoveListener();
+    }
 
     /**
      * 获取初始实例
@@ -51,8 +63,6 @@ public class LockConfigManager {
     public static LockConfigManager getInstance(Context context) {
         if (instance == null) {
             instance = new LockConfigManager(context);
-            instance.conditionDatabase.open();
-            instance.loadModeList();
         }
         instanceCount++;
         return instance;
@@ -67,20 +77,10 @@ public class LockConfigManager {
                 instanceCount = 0;
                 instance.conditionDatabase.close();
                 instance.observable.deleteObservers();
+                instance.removePackageListener();
                 instance = null;
             }
         }
-    }
-
-    /**
-     * 构造函数
-     *
-     * @param context 上下文
-     */
-    private LockConfigManager(Context context) {
-        this.context = context;
-        conditionDatabase = new ConditionDatabase(context);
-        observable = new DataObservable();
     }
 
     /**
@@ -154,6 +154,9 @@ public class LockConfigManager {
         if (modeInfo == null) {
             throw new IllegalStateException("Add default mode failed");
         }
+
+        // 缺省模式，默认使能
+        modeInfo.setEnabled(true);
         return modeInfo;
     }
 
@@ -198,9 +201,9 @@ public class LockConfigManager {
         LockModeInfo modeInfo = conditionDatabase.addModeInfo(modeName);
         if (modeInfo != null) {
             modeInfo.setEnabled(false);
+            int startPos = lockModeInfoList.size();
             lockModeInfoList.add(modeInfo);
-            observable.notifyItemInserted(DataObservable.DataType.MODE_LIST,
-                                            lockModeInfoList.size() - 1);
+            observable.notifyItemInserted(DataObservable.DataType.MODE_LIST, startPos, 1);
         }
         return modeInfo;
     }
@@ -332,7 +335,9 @@ public class LockConfigManager {
      */
     synchronized public void loadAppInfoList (LockModeInfo modeInfo) {
         appLockInfoList = conditionDatabase.getAppInfoByMode(modeInfo);
-        observable.notifyObservers();
+        if (appLockInfoList.size() > 0) {
+            observable.notifyItemInserted(DataObservable.DataType.APP_LIST, 0, appLockInfoList.size());
+        }
     }
 
     public void loadAppInfoList() {
@@ -342,30 +347,34 @@ public class LockConfigManager {
     /**
      * 将指定的App信息添加到指定模式下边
      *
-     * @param appLockInfo  指定的App锁定信息
+     * @param appInfoList  指定的App锁定信息链表
      * @param lockModeInfo 指定的App信息
      * @return 是否添加成功; true/false
      */
-    synchronized public boolean addAppInfoToMode(AppLockInfo appLockInfo, LockModeInfo lockModeInfo) {
-        for (AppLockInfo lockInfo : appLockInfoList) {
-            // 如果已经在列表中，则无需插入
-            if (lockInfo.getPackageName().equals(appLockInfo.getPackageName())) {
-                return true;
-            }
+    synchronized public boolean addAppInfoToMode(List<AppInfo> appInfoList, LockModeInfo lockModeInfo) {
+        // 转换格式
+        List<AppLockInfo> newLockerList = new ArrayList<>();
+        for (AppInfo appInfo : appInfoList) {
+            AppLockInfo appLockInfo = new AppLockInfo();
+            appLockInfo.setAppInfo(appInfo);
+            appLockInfo.setEnable(true);
+            newLockerList.add(appLockInfo);
         }
 
-        // 插入数据库中
-        boolean ok = conditionDatabase.addAppInfoToMode(appLockInfo, lockModeInfo);
+        // 批量插入数据库中
+        boolean ok = conditionDatabase.addAppInfoListToMode(newLockerList, lockModeInfo);
         if (ok) {
-            appLockInfoList.add(appLockInfo);
+            // 加入缓存队列
+            int startPos = appLockInfoList.size();
+            appLockInfoList.addAll(newLockerList);
             observable.notifyItemInserted(DataObservable.DataType.APP_LIST,
-                                                        appLockInfoList.size() - 1);
+                    startPos, newLockerList.size());
         }
         return ok;
     }
 
-    public boolean addAppInfoToMode(AppLockInfo appLockInfo) {
-        return addAppInfoToMode(appLockInfo, currentLockModeInfo);
+    public boolean addAppInfoToMode(List<AppInfo> appInfoList) {
+        return addAppInfoToMode(appInfoList, currentLockModeInfo);
     }
 
     /**
@@ -419,38 +428,56 @@ public class LockConfigManager {
             }
         }
 
+        // 使用事务处理批量快速批量删除
+        boolean ok = conditionDatabase.deleteAppInfoList(removeList);
+        if (ok) {
+            observable.notifyItemChanged(DataObservable.DataType.APP_LIST);
+        }
+
         // 开始移除操作
+        count = removeList.size();
         for (AppLockInfo lockInfo : removeList) {
-            // 从数据库中移除
-            boolean ok = conditionDatabase.deleteAppInfo(lockInfo);
-            if (ok) {
-                // 再从缓存队列中移除
-                appLockInfoList.remove(lockInfo);
-
-                count++;
-            }
+            appLockInfoList.remove(lockInfo);
         }
-
-        // 通知外界数据发生变化
-        if (count > 0) {
-            observable.notifyObservers();
-        }
-
-        observable.notifyItemChanged(DataObservable.DataType.APP_LIST);
         return count;
     }
 
     /**
      * 删除指定的App信息
+     *
      * @param positon 待删除的App信息序号
      * @return 成功/失败
      */
     synchronized public boolean deleteAppInfo (int positon) {
+        List<AppLockInfo> removeList = new ArrayList<>();
+
         AppLockInfo appLockInfo = appLockInfoList.get(positon);
-        boolean ok = conditionDatabase.deleteAppInfo(appLockInfo);
+        removeList.add(appLockInfo);
+        boolean ok = conditionDatabase.deleteAppInfoList(removeList);
         if (ok) {
-            appLockInfoList.remove(appLockInfo);
+            appLockInfoList.remove(positon);
             observable.notifyItemRangeRemoved(DataObservable.DataType.APP_LIST, positon, 1);
+        }
+
+        return ok;
+    }
+
+    /**
+     * 删除指定的App信息
+     * @param packageName 待删除的App包名
+     * @return 成功/失败
+     */
+    synchronized public boolean deleteAppInfo(String packageName) {
+        boolean ok = conditionDatabase.deleteAppInfo(packageName);
+        if (ok) {
+            for (int i = 0; i < appLockInfoList.size(); i++) {
+                AppLockInfo appLockInfo = appLockInfoList.get(i);
+                if (appLockInfo.getPackageName().equals(packageName)) {
+                    appLockInfoList.remove(i);
+                    observable.notifyItemChanged(DataObservable.DataType.APP_LIST);
+                    break;
+                }
+            }
         }
 
         return ok;
@@ -465,7 +492,9 @@ public class LockConfigManager {
 
     synchronized public void loadLockConditionList(LockModeInfo modeInfo) {
         lockConditionList = conditionDatabase.queryLockCondition(modeInfo);
-        observable.notifyObservers();
+        if (lockConditionList.size() > 0) {
+            observable.notifyItemInserted(DataObservable.DataType.CONDITION_LIST, 0, lockConditionList.size());
+        }
     }
 
     /**
@@ -478,7 +507,6 @@ public class LockConfigManager {
         boolean ok = conditionDatabase.deleteLockCondition(condition);
         if (ok) {
             lockConditionList.remove(condition);
-            observable.notifyObservers();
             observable.notifyItemRangeRemoved(DataObservable.DataType.CONDITION_LIST, positon, 1);
         }
 
@@ -493,30 +521,37 @@ public class LockConfigManager {
         int count = 0;
         List<BaseLockCondition> removeList = new ArrayList<>();
 
-        // 扫描需要移除的App信息
-        for (BaseLockCondition config : lockConditionList) {
-            if (config.isSelected()) {
-                removeList.add(config);
+        try {
+            conditionDatabase.beginTransaction();
+
+            // 扫描需要移除的App信息
+            for (BaseLockCondition config : lockConditionList) {
+                if (config.isSelected()) {
+                    removeList.add(config);
+                }
             }
+
+            // 开始移除操作
+            count = removeList.size();
+            for (BaseLockCondition config : removeList) {
+                // 从数据库中移除, 再从缓存队列中移除
+                conditionDatabase.deleteLockCondition(config);
+            }
+
+            conditionDatabase.setTransactionSuccessful();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return -1;
+        } finally {
+            conditionDatabase.endTransaction();
         }
 
-        // 开始移除操作
-        for (BaseLockCondition config : removeList) {
-            // 从数据库中移除
-            boolean ok = conditionDatabase.deleteLockCondition(config);
-            if (ok) {
-                // 再从缓存队列中移除
-                lockConditionList.remove(config);
-
-                count++;
-            }
+        // 操作成功后，将配置从缓存中移除
+        for (BaseLockCondition condition : removeList) {
+            lockConditionList.remove(condition);
         }
 
         // 通知外界数据发生变化
-        if (count > 0) {
-            observable.notifyObservers();
-        }
-
         observable.notifyItemChanged(DataObservable.DataType.CONDITION_LIST);
         return count;
     }
@@ -580,7 +615,8 @@ public class LockConfigManager {
             int index = 0;
             for (int i = 0; i < lockConditionList.size(); i++) {
                 BaseLockCondition condition = lockConditionList.get(i);
-                if (condition.getId() == config.getId()) {
+                // 注意 ，不能只检查id，还要检查类型(isMatch()中检查)
+                if (condition.isMatch(config)) {
                     condition.copy(config);
                     index = i;
                     break;
@@ -602,9 +638,9 @@ public class LockConfigManager {
     synchronized public boolean addLockConditionIntoMode(BaseLockCondition config, LockModeInfo lockModeInfo) {
         boolean ok = conditionDatabase.addLockConditionIntoMode(config, lockModeInfo);
         if (ok) {
+            int startPos = lockConditionList.size();
             lockConditionList.add(config);
-            observable.notifyItemInserted(DataObservable.DataType.CONDITION_LIST,
-                                                        lockConditionList.size() - 1);
+            observable.notifyItemInserted(DataObservable.DataType.CONDITION_LIST, startPos, 1);
         }
         return ok;
     }
@@ -675,7 +711,7 @@ public class LockConfigManager {
         }
 
         if (accessLogList.size() > 0) {
-            observable.notifyObservers();
+            observable.notifyItemChanged(DataObservable.DataType.LOG_LIST);
         }
     }
 
@@ -689,7 +725,7 @@ public class LockConfigManager {
         if (ok) {
             // 新生成的日志，添加到头部
             accessLogList.add(0, accessLog);
-            observable.notifyItemInserted(DataObservable.DataType.LOG_LIST, accessLogList.size() - 1);
+            observable.notifyItemInserted(DataObservable.DataType.LOG_LIST, 0, 1);
         }
         return ok;
     }
@@ -723,8 +759,11 @@ public class LockConfigManager {
      * @return 成功/失败
      */
     synchronized public boolean deleteAccessLog (int positon) {
+        List<AccessLog> accessLogList = new ArrayList<>();
+
         AccessLog accessLog = accessLogList.get(positon);
-        boolean ok = conditionDatabase.deleteAccessLog(accessLog);
+        accessLogList.add(accessLog);
+        boolean ok = conditionDatabase.deleteAccessLogList(accessLogList);
         if (ok) {
             accessLogList.remove(accessLog);
             observable.notifyItemRangeRemoved(DataObservable.DataType.LOG_LIST, positon, 1);
@@ -748,11 +787,11 @@ public class LockConfigManager {
             }
         }
 
-        // 开始移除操作
-        for (AccessLog log : removeList) {
-            // 从数据库中移除
-            boolean ok = conditionDatabase.deleteAccessLog(log);
-            if (ok) {
+        boolean ok = conditionDatabase.deleteAccessLogList(removeList);
+        if (ok) {
+            // 开始移除操作
+            count = removeList.size();
+            for (AccessLog log : removeList) {
                 // 只删除内部的照片，存储在相册中的不删除
                 if (log.getPhotoPath() != null) {
                     if (log.isPhotoInInternal()) {
@@ -760,16 +799,11 @@ public class LockConfigManager {
                         new File(path).delete();
                     }
                 }
-
                 // 再从缓存队列中移除
                 accessLogList.remove(log);
-
-                count++;
             }
-        }
 
-        // 通知外界数据发生变化
-        if (count > 0) {
+            // 通知外界数据发生变化
             observable.notifyItemChanged(DataObservable.DataType.LOG_LIST);
         }
 
@@ -785,8 +819,9 @@ public class LockConfigManager {
         List<AccessLog> accessLogs = conditionDatabase.queryAccessLog(
                                                 accessLogList.size(), moreCount);
         if (accessLogs.size() > 0) {
+            int pos = accessLogList.size();
             accessLogList.addAll(accessLogs);
-            observable.notifyObservers();
+            observable.notifyItemInserted(DataObservable.DataType.LOG_LIST, pos, accessLogs.size());
         }
         return accessLogs.size();
     }
@@ -795,12 +830,15 @@ public class LockConfigManager {
      * 检查指定的包是否需要锁定
      * @param packageName 待检查的包
      * @param calendar 当前日期
-     * @param locateServiceIsOk 定位服务是否正常工作
      * @param position 当前地址
      * @return true/false
      */
     synchronized public boolean isPackageNeedLock (String packageName, Calendar calendar,
-                                        boolean locateServiceIsOk, Position position) {
+                                                   Position position) {
+        // 首先，必须检查这个包是否是自己，如果是自己，强制要求锁定
+
+
+
         // 遍历App列表，查找其是否在其中
         for (AppLockInfo appLockInfo : appLockInfoList) {
             // 如果找到相应的App信息，则进一步判断是否符合锁定条件
@@ -842,5 +880,31 @@ public class LockConfigManager {
         }
 
         return false;
+    }
+
+    /**
+     * 注册安装包移除的监听器
+     * 该监听器的用处是当包移除时，同时删除数据库中的配置，避免异常
+     */
+    private void registerPackageRemoveListener() {
+        packageRemoveReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                String packageName = intent.getData().getSchemeSpecificPart();
+                deleteAppInfo(packageName);
+            }
+        };
+
+        // 注册监听器
+        IntentFilter intentFilter = new IntentFilter(Intent.ACTION_PACKAGE_REMOVED);
+        intentFilter.addDataScheme("package");
+        context.registerReceiver(packageRemoveReceiver, intentFilter);
+    }
+
+    /**
+     * 取消安装包移除的监听器
+     */
+    private void removePackageListener() {
+        context.unregisterReceiver(packageRemoveReceiver);
     }
 }

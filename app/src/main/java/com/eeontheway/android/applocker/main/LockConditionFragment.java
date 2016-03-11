@@ -2,36 +2,34 @@ package com.eeontheway.android.applocker.main;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Fragment;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.app.Fragment;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
-import android.view.ContextMenu;
 import android.view.Gravity;
 import android.view.LayoutInflater;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.eeontheway.android.applocker.R;
+import com.eeontheway.android.applocker.locate.LocationService;
 import com.eeontheway.android.applocker.lock.BaseLockCondition;
 import com.eeontheway.android.applocker.lock.DataObservable;
-import com.eeontheway.android.applocker.lock.PositionLockCondition;
 import com.eeontheway.android.applocker.lock.LockConfigManager;
+import com.eeontheway.android.applocker.lock.PositionLockCondition;
 import com.eeontheway.android.applocker.lock.TimeLockCondition;
 import com.eeontheway.android.applocker.ui.ListHeaderView;
 import com.eeontheway.android.applocker.ui.WaitingProgressDialog;
@@ -146,7 +144,10 @@ public class LockConditionFragment extends Fragment {
 
                     @Override
                     protected Void doInBackground(Void... params) {
-                        lockListAdapter.removeSelectedLockConfig();
+                        int size = lockListAdapter.removeSelectedLockConfig();
+                        if (size < 0) {
+                            Toast.makeText(parentActivity, R.string.delete_failed, Toast.LENGTH_SHORT).show();
+                        }
                         return null;
                     }
 
@@ -253,6 +254,12 @@ public class LockConditionFragment extends Fragment {
         } else {
             // 新建数据
             lockConfigManager.addLockConditionIntoMode(condition);
+        }
+
+        if (requestCode == REQUEST_EDIT_POS) {
+            // 配置完成后，立即请求一次定位服务，以便反映位置变化
+            LocationService locationService = LocationService.getInstance(parentActivity);
+            locationService.requestLocation();
         }
     }
 
@@ -366,7 +373,7 @@ public class LockConditionFragment extends Fragment {
                             lockListAdapter.notifyItemRangeChanged(info.startPos, info.count);
                             break;
                         case REMOVE:
-                            lockListAdapter.notifyItemRangeChanged(info.startPos, info.count);
+                            lockListAdapter.notifyDataSetChanged();
                             break;
                     }
                 }

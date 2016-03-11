@@ -2,11 +2,11 @@ package com.eeontheway.android.applocker.main;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Fragment;
 import android.content.DialogInterface;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -16,12 +16,10 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.eeontheway.android.applocker.R;
-import com.eeontheway.android.applocker.lock.AccessLog;
 import com.eeontheway.android.applocker.lock.DataObservable;
 import com.eeontheway.android.applocker.lock.LockConfigManager;
 import com.eeontheway.android.applocker.ui.ListHeaderView;
@@ -191,7 +189,10 @@ public class AppLockListFragment extends Fragment {
 
                     @Override
                     protected Void doInBackground(Void... params) {
-                        lockListAdapter.removeSelectedApp();
+                        int size = lockListAdapter.removeSelectedApp();
+                        if (size < 0) {
+                            Toast.makeText(parentActivity, R.string.delete_failed, Toast.LENGTH_SHORT).show();
+                        }
                         return null;
                     }
 
@@ -279,7 +280,7 @@ public class AppLockListFragment extends Fragment {
                             lockListAdapter.notifyItemRangeChanged(info.startPos, info.count);
                             break;
                         case REMOVE:
-                            lockListAdapter.notifyItemRangeChanged(info.startPos, info.count);
+                            lockListAdapter.notifyDataSetChanged();
                             break;
                     }
                 }

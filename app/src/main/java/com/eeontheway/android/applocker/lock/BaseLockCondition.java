@@ -1,6 +1,7 @@
 package com.eeontheway.android.applocker.lock;
 
 import android.content.ContentValues;
+
 import java.io.Serializable;
 
 /**
@@ -37,6 +38,19 @@ public abstract class BaseLockCondition implements Cloneable, Serializable {
             e.printStackTrace();
         }
         return object;
+    }
+
+    /**
+     * 判断两个对像否匹配
+     *
+     * @param o 判断的对像
+     * @return true/false
+     */
+    public boolean isMatch(BaseLockCondition condition) {
+        if (condition.getId() == getId()) {
+            return true;
+        }
+        return false;
     }
 
     /**

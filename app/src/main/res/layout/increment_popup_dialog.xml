@@ -130,12 +130,12 @@
 				<!-- style="@style/progressbarStyle_Horizontal_Blue" -->
                 <ProgressBar
                     android:id="@+id/app_progress"
+                    style="?android:attr/progressBarStyleHorizontal"
                     android:layout_width="fill_parent"
                     android:layout_height="8dip"
                     android:layout_marginTop="5dip"
-                    android:secondaryProgress="100"
-                    style="?android:attr/progressBarStyleHorizontal"
-                    android:max="100" />
+                    android:max="100"
+                    android:secondaryProgress="100" />
                 <!--
                          <ImageView 
 	                    android:id="@+id/click_download"
@@ -216,8 +216,8 @@
             android:layout_height="wrap_content"
             android:layout_marginLeft="5dip"
             android:layout_marginRight="5dip"
-            android:orientation="vertical"
             android:gravity="center_vertical"
+            android:orientation="vertical"
             android:paddingBottom="5dip"
             android:visibility="gone"
              >
@@ -243,11 +243,11 @@
                     android:id="@+id/manage_app"
                     android:layout_width="fill_parent"
                     android:layout_height="40dip"
-                    android:gravity="center"
                     android:layout_margin="8dip"
                     android:layout_weight="1"
-                    android:paddingTop="2dip"
+                    android:gravity="center"
                     android:paddingBottom="5dip"
+                    android:paddingTop="2dip"
                     android:textColor="#191919"
                     android:textSize="14sp" />
 
@@ -255,11 +255,11 @@
                     android:id="@+id/wifi_download"
                     android:layout_width="fill_parent"
                     android:layout_height="40dip"
-                    android:gravity="center"
                     android:layout_margin="8dip"
                     android:layout_weight="1"
-                    android:paddingTop="2dip"
+                    android:gravity="center"
                     android:paddingBottom="5dip"
+                    android:paddingTop="2dip"
                     android:textColor="#ffffffff"
                     android:textSize="14sp" />
             </LinearLayout>
@@ -284,9 +284,9 @@
         <LinearLayout
             android:id="@+id/click_down"
             android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
             android:layout_marginLeft="5dip"
             android:layout_marginRight="5dip"
-            android:layout_height="wrap_content"
             android:gravity="center" >
 
             <ImageView
@@ -311,9 +311,9 @@
             android:id="@+id/maybe_list"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="10dip"
             android:layout_marginLeft="10dip"
             android:layout_marginRight="10dip"
-            android:layout_marginBottom="10dip"
             android:orientation="horizontal" >
 
             <LinearLayout
@@ -347,13 +347,13 @@
 
                     <ProgressBar
                         android:id="@+id/recommend_pro1"
+                        style="?android:attr/progressBarStyleHorizontal"
                         android:layout_width="41dip"
                         android:layout_height="11dip"
                         android:layout_marginLeft="4dip"
                         android:layout_marginTop="32dip"
                         android:max="100"
                         android:secondaryProgress="100"
-                        style="?android:attr/progressBarStyleHorizontal"
                         android:visibility="gone" />
 
                     <TextView
@@ -372,8 +372,8 @@
                     android:id="@+id/recommend1"
                     android:layout_width="60dip"
                     android:layout_height="wrap_content"
-                    android:singleLine="true"
                     android:gravity="center"
+                    android:singleLine="true"
                     android:text=""
                     android:textColor="#191919"
                     android:textSize="12dip" />
@@ -410,13 +410,13 @@
 
                     <ProgressBar
                         android:id="@+id/recommend_pro2"
+                        style="?android:attr/progressBarStyleHorizontal"
                         android:layout_width="41dip"
                         android:layout_height="11dip"
                         android:layout_marginLeft="4dip"
                         android:layout_marginTop="32dip"
                         android:max="100"
                         android:secondaryProgress="100"
-                        style="?android:attr/progressBarStyleHorizontal"
                         android:visibility="gone" />
 
                     <TextView
@@ -435,8 +435,8 @@
                     android:id="@+id/recommend2"
                     android:layout_width="60dip"
                     android:layout_height="wrap_content"
-                    android:singleLine="true"
                     android:gravity="center"
+                    android:singleLine="true"
                     android:text=""
                     android:textColor="#191919"
                     android:textSize="12dip" />
@@ -473,13 +473,13 @@
 
                     <ProgressBar
                         android:id="@+id/recommend_pro3"
+                        style="?android:attr/progressBarStyleHorizontal"
                         android:layout_width="41dip"
                         android:layout_height="11dip"
                         android:layout_marginLeft="4dip"
                         android:layout_marginTop="32dip"
                         android:max="100"
                         android:secondaryProgress="100"
-                        style="?android:attr/progressBarStyleHorizontal"
                         android:visibility="gone" />
 
                     <TextView
@@ -498,8 +498,8 @@
                     android:id="@+id/recommend3"
                     android:layout_width="60dip"
                     android:layout_height="wrap_content"
-                    android:singleLine="true"
                     android:gravity="center"
+                    android:singleLine="true"
                     android:text=""
                     android:textColor="#191919"
                     android:textSize="12dip" />
@@ -536,13 +536,13 @@
 
                     <ProgressBar
                         android:id="@+id/recommend_pro4"
+                        style="?android:attr/progressBarStyleHorizontal"
                         android:layout_width="41dip"
                         android:layout_height="11dip"
                         android:layout_marginLeft="4dip"
                         android:layout_marginTop="32dip"
                         android:max="100"
                         android:secondaryProgress="100"
-                        style="?android:attr/progressBarStyleHorizontal"
                         android:visibility="gone" />
 
                     <TextView
@@ -561,8 +561,8 @@
                     android:id="@+id/recommend4"
                     android:layout_width="60dip"
                     android:layout_height="wrap_content"
-                    android:singleLine="true"
                     android:gravity="center"
+                    android:singleLine="true"
                     android:text=""
                     android:textColor="#191919"
                     android:textSize="12dip" />

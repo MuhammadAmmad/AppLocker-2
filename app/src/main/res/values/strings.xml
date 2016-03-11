@@ -37,6 +37,7 @@
     <string name="addOk">添加完毕</string>
     <string name="updateOk">更新完毕</string>
     <string name="deleteOk">删除完毕</string>
+    <string name="delete_failed">删除失败</string>
 
     <string name="alterDialogTitle">请确认</string>
     <string name="confirmDeleteBlackInfo">一旦删除将不可恢复！</string>
@@ -59,7 +60,7 @@
     <string name="unlocked">已解锁</string>
     <string name="unlock">解锁</string>
     <string name="please_select_lock_apps">请选择需要锁定的应用</string>
-    <string name="app_somebody_access">注意，这个人试图访问您的 %s ！</string>
+    <string name="app_somebody_access">注意，有人试图访问您的 %s ！</string>
     <string name="see_more_applock_log">查看所有的App访问纪录</string>
     <string name="wait_delay_to_retry">错误，请%d秒后重试!</string>
 
@@ -89,6 +90,38 @@
     <string name="unlock_failed_capture_location_summary">将照片保存到相册</string>
     <string name="add_tag_to_photo">添加拍摄标记到照片</string>
 
+    <string-array name="locate_interval_list_erntries">
+        <item>5秒</item>
+        <item>30秒</item>
+        <item>1分钟</item>
+        <item>10分钟</item>
+        <item>30分钟</item>
+    </string-array>
+    <string-array name="locate_interval_list_values">
+        <item>5</item>
+        <item>30</item>
+        <item>60</item>
+        <item>600</item>
+        <item>1800</item>
+    </string-array>
+
+    <string-array name="locate_default_distance_list_erntries">
+        <item>50米</item>
+        <item>100米</item>
+        <item>200米</item>
+        <item>300米</item>
+        <item>500米</item>
+        <item>1000米</item>
+    </string-array>
+    <string-array name="locate_default_distance_list_values">
+        <item>50</item>
+        <item>100</item>
+        <item>200</item>
+        <item>300</item>
+        <item>500</item>
+        <item>1000</item>
+    </string-array>
+
     <string name="lock_mode">锁定模式</string>
     <string-array name="screen_lock_mode_name">
         <item>锁屏后不重新锁定所有应用</item>
@@ -104,7 +137,9 @@
     <string name="autolock_on_app_quit_summary">发现应用退出再次打开需要重新解锁</string>
     <string name="one_password_unlock_all">一次解锁全部</string>
     <string name="one_password_unlock_all_summary">输入一次密码解锁全部应用</string>
-    <string name="assitant_tools">辅助设置</string>
+    <string name="locate_config">定位设置</string>
+    <string name="locate_interval">定位时间间隔</string>
+    <string name="locate_default_distance">缺省距离偏差</string>
     <string name="alert_lock_unlock">显示锁定提示</string>
     <string name="appLocker_password_err_detect" formatted="false">这个人想访问您的%s, 密码输错:%d次, 时间:%s</string>
     <string name="error_logs">访问纪录</string>
@@ -162,7 +197,7 @@
     <string name="mode_rename_ok">模式重命名成功</string>
     <string name="mode_rename_failed">模式重命名失败</string>
     <string name="add_mode">[[点击添加模式]]</string>
-    <string name="input_mode">请输入模式名</string>
+    <string name="input_mode">请输入模式名，例如公司/家里</string>
     <string name="mode_add">添加模式</string>
     <string name="confirmDelete_modeinfo">是否确认删除模式%s?一旦删除将无法恢复!</string>
     <string name="finish_select">完成选择</string>
@@ -176,6 +211,7 @@
     <string name="select_end_time">结束时间</string>
     <string name="longitude">经度:%s</string>
     <string name="latitude">纬度:%s</string>
+    <string name="radius">有效半径:%s米</string>
     <string name="real_address">地址：%s</string>
     <string name="repeat">重复</string>
     <string name="empty_lock_time_config">请添加何时锁定配置项</string>
@@ -210,6 +246,7 @@
     <string name="deleting">正在删除</string>
     <string name="adding">正在添加</string>
     <string name="use_this_location">选择此地</string>
+    <string name="select_location">请直接在地图上选取地点或者搜索查询</string>
 
     <string name="copyright">Copyright@2015-2016 \n eeontheway.com 版本所有</string>
     <string name="about_version">版本 %s</string>

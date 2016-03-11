@@ -2,10 +2,10 @@ package com.eeontheway.android.applocker.main;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Fragment;
 import android.content.DialogInterface;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -218,7 +218,10 @@ public class AccessLogsFragment extends Fragment implements View.OnClickListener
 
                     @Override
                     protected Void doInBackground(Void... params) {
-                        lockConfigManager.deleteSelectedAccessLogs();
+                        int size = lockConfigManager.deleteSelectedAccessLogs();
+                        if (size < 0) {
+                            Toast.makeText(parentActivity, R.string.delete_failed, Toast.LENGTH_SHORT).show();
+                        }
                         return null;
                     }
 
@@ -401,7 +404,7 @@ public class AccessLogsFragment extends Fragment implements View.OnClickListener
                             logListAdapter.notifyItemRangeChanged(info.startPos, info.count);
                             break;
                         case REMOVE:
-                            logListAdapter.notifyItemRangeChanged(info.startPos, info.count);
+                            logListAdapter.notifyDataSetChanged();
                             break;
                     }
                 }

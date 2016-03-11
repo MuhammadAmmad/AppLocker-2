@@ -1,13 +1,12 @@
 package com.eeontheway.android.applocker.main;
 
+import android.app.Fragment;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.database.DataSetObservable;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.app.Fragment;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -24,7 +23,6 @@ import com.eeontheway.android.applocker.R;
 import com.eeontheway.android.applocker.app.AppInfo;
 import com.eeontheway.android.applocker.app.AppInfoManager;
 import com.eeontheway.android.applocker.app.BaseAppInfo;
-import com.eeontheway.android.applocker.lock.AppLockInfo;
 import com.eeontheway.android.applocker.lock.DataObservable;
 import com.eeontheway.android.applocker.lock.LockConfigManager;
 import com.eeontheway.android.applocker.ui.ListHeaderView;
@@ -317,30 +315,27 @@ public class AppSelectActivity extends AppCompatActivity {
      * @return 总共选择的App总数
      */
     private int saveSelectedApps () {
-        int count = 0;
+        List<AppInfo> itemWaitToAdd = new ArrayList<>();
 
         // 链表合并
         List<List<AppSelectInfo>> totalList = new ArrayList<>();
         totalList.add(userInfoList);
         totalList.add(systemInfoList);
 
+        // 筛选出其中选择的项
         for (List<AppSelectInfo> infoList : totalList) {
             for (AppSelectInfo appSelectInfo : infoList) {
                 if (appSelectInfo.isSelected()) {
-                    AppLockInfo appLockInfo = new AppLockInfo();
-                    appLockInfo.setAppInfo(appSelectInfo.getAppInfo());
-
-                    // 默认是使能状态
-                    appLockInfo.setEnable(true);
-
-                    // 保存至数据库中
-                    boolean ok = lockConfigManager.addAppInfoToMode(appLockInfo);
-                    if (ok) count++;
+                    itemWaitToAdd.add(appSelectInfo.getAppInfo());
                 }
             }
         }
 
-        return count;
+        // 将队列批量保存至数据库中
+        boolean ok = lockConfigManager.addAppInfoToMode(itemWaitToAdd);
+        if (ok) return itemWaitToAdd.size();
+
+        return 0;
     }
 
     /**

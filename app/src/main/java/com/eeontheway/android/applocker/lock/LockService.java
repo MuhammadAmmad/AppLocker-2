@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
-import android.location.LocationListener;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
@@ -16,7 +15,6 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.eeontheway.android.applocker.R;
 import com.eeontheway.android.applocker.app.AppInfo;
 import com.eeontheway.android.applocker.app.AppInfoManager;
 import com.eeontheway.android.applocker.app.BaseAppInfo;
@@ -40,28 +38,24 @@ import java.util.List;
  * @Time 2016-12-15
  */
 public class LockService extends Service {
+    private static final String ACTION_NEW_APP_UNLOCKED = "LockService.newAppUnlocked";
+    private static final String PARAM_APP_NAME = "packagename";
     private Thread thread;
     private WatchThreadRunnable watchThreadRunnable;
     private Handler screenUnlockAllHandler;
     private Runnable clearAppLockedRunnable;
     private SettingsManager settingsManager;
-
     private AppInfoManager appInfoManager;
     private LockConfigManager lockConfigManager;
     private Calendar calendar;
     private LocationService locationService;
     private LocationService.PositionChangeListener positionChangeListener;
     private boolean locateServiceIsOk;
-
     private BroadcastReceiver screenLockReceiver;
     private BroadcastReceiver screenUnLockReceiver;
     private BroadcastReceiver appUnlockReceiver;
     private BroadcastReceiver packageRemoveReceiver;
     private BroadcastReceiver packageInstallReceiver;
-
-    private static final String ACTION_NEW_APP_UNLOCKED = "LockService.newAppUnlocked";
-    private static final String PARAM_APP_NAME = "packagename";
-
     private List<BaseAppInfo> appInfoList = new ArrayList<>();
     private UnlockedList unlockedList;
 
@@ -83,6 +77,20 @@ public class LockService extends Service {
             Intent intent = new Intent(context, LockService.class);
             context.stopService(intent);
         }
+    }
+
+    /**
+     * 发广播消息告知服务有新的应用已经解除锁定
+     * @param packageName 已经解锁的app包名
+     */
+    public static void broadcastAppUnlocked(Context context, String packageName) {
+        // 纪录应用的包名
+        Intent intent = new Intent(ACTION_NEW_APP_UNLOCKED);
+        intent.putExtra(PARAM_APP_NAME, packageName);
+
+        // 发送本地广播告知服务，有应用已经解锁
+        LocalBroadcastManager lm = LocalBroadcastManager.getInstance(context);
+        lm.sendBroadcast(intent);
     }
 
     /**
@@ -138,7 +146,7 @@ public class LockService extends Service {
     /**
      * 初始化定位
      */
-    private void initLocation () {
+    private void initLocation() {
         locationService = LocationService.getInstance(this);
         positionChangeListener = new LocationService.PositionChangeListener() {
             @Override
@@ -193,21 +201,21 @@ public class LockService extends Service {
     /**
      * 启动观察线程
      */
-    private void startWatchThread () {
+    private void startWatchThread() {
         thread.start();
     }
 
     /**
      * 停止观察线程
      */
-    private void suspendThread () {
+    private void suspendThread() {
         watchThreadRunnable.suspend();
     }
 
     /**
      * 启动观察线程
      */
-    private void resumeWatchThread () {
+    private void resumeWatchThread() {
         watchThreadRunnable.resume();
         synchronized (thread) {
             thread.notifyAll();
@@ -217,7 +225,7 @@ public class LockService extends Service {
     /**
      * 停止观察线程
      */
-    private void stopWatchThread () {
+    private void stopWatchThread() {
         watchThreadRunnable.stop();
 
         // 清除可能的延时操作
@@ -227,24 +235,9 @@ public class LockService extends Service {
     /**
      * 创建应用锁定观察线程
      */
-    private void createWatchThread () {
+    private void createWatchThread() {
         watchThreadRunnable = new WatchThreadRunnable();
         thread = new Thread(watchThreadRunnable);
-    }
-
-
-    /**
-     * 发广播消息告知服务有新的应用已经解除锁定
-     * @param packageName 已经解锁的app包名
-     */
-    public static void broadcastAppUnlocked (Context context, String packageName) {
-        // 纪录应用的包名
-        Intent intent = new Intent(ACTION_NEW_APP_UNLOCKED);
-        intent.putExtra(PARAM_APP_NAME, packageName);
-
-        // 发送本地广播告知服务，有应用已经解锁
-        LocalBroadcastManager lm = LocalBroadcastManager.getInstance(context);
-        lm.sendBroadcast(intent);
     }
 
     /**
@@ -487,13 +480,19 @@ public class LockService extends Service {
                 return false;
             }
 
+            // 如果是自己，必须锁定，即每次重新打开界面，都会锁定，提高安全度
+            // 前面的代码已经包含了判断解锁队列操作，所以没有关系
+            if (packageName.equals(getPackageName())) {
+                Log.d("AppLocker", "lock myself");
+                return true;
+            }
+
             // 其它情况，由配置管理器决定是否需要锁定
             // 获取当前时间及位置后判断
             calendar.setTime(new Date());
             calendar.set(0, 0, 0);
             Position position = locationService.getLastPosition();
-            boolean lock = lockConfigManager.isPackageNeedLock(packageName, calendar,
-                    locateServiceIsOk, position);
+            boolean lock = lockConfigManager.isPackageNeedLock(packageName, calendar, position);
             if (lock) {
                 Log.d("AppLocker", packageName + ":lockConfigManager lock");
             }

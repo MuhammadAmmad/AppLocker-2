@@ -32,6 +32,23 @@ public class PositionLockCondition extends BaseLockCondition {
     }
 
     /**
+     * 判断两个对像否判断
+     * @param condition 判断的对像
+     * @return true/false
+     */
+    public boolean isMatch(BaseLockCondition condition) {
+        boolean match = super.isMatch(condition);
+        if (match) {
+            if (condition instanceof PositionLockCondition) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+        return false;
+    }
+
+    /**
      * 复制锁定信息
      * 只复制应用层的信息
      * @param lockConfig 锁定信息
@@ -59,11 +76,11 @@ public class PositionLockCondition extends BaseLockCondition {
      * @return true/false
      */
     public boolean isMatch (Position cmpPosition) {
-        float[] distance = new float[1];
+        float[] result = new float[1];
 
         Location.distanceBetween(position.getLatitude(), position.getLongitude(),
-                cmpPosition.getLatitude(), cmpPosition.getLongitude(), distance);
-        if(distance[0] >= 200){
+                cmpPosition.getLatitude(), cmpPosition.getLongitude(), result);
+        if (result[0] >= position.getRadius()) {
             return false;
         }
 

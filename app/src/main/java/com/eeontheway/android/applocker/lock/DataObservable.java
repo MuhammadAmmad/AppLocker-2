@@ -12,18 +12,6 @@ import java.util.Observable;
  */
 public class DataObservable extends Observable {
     private boolean enable = true;
-    public enum ChangeType {
-        UNKNOWN,            // 未知，只知是有变化
-        UPDATE,             // 更新操作
-        INSERT,             // 插入操作
-        REMOVE,             // 删除操作
-    }
-    public enum DataType {
-        MODE_LIST,          // 模式列表
-        APP_LIST,           // App列表
-        CONDITION_LIST,     // 锁定条件列表
-        LOG_LIST            // 消息列表
-    }
 
     /**
      * 设置是否使能监听器
@@ -67,12 +55,12 @@ public class DataObservable extends Observable {
      * @param dataType 数据类型
      * @param position 插入的位置
      */
-    void notifyItemInserted(DataType dataType, int position) {
+    void notifyItemInserted(DataType dataType, int position, int itemCount) {
         ObserverInfo observerInfo = new ObserverInfo();
         observerInfo.dataType = dataType;
         observerInfo.changeType = ChangeType.INSERT;
         observerInfo.startPos = position;
-        observerInfo.count = 1;
+        observerInfo.count = itemCount;
 
         notify(observerInfo);
     }
@@ -93,7 +81,6 @@ public class DataObservable extends Observable {
         notify(observerInfo);
     }
 
-
     /**
      * 通知各个监听器
      * @param info 监听的消息
@@ -103,6 +90,21 @@ public class DataObservable extends Observable {
             setChanged();
             super.notifyObservers(info);
         }
+    }
+
+    public enum ChangeType {
+        UNKNOWN,            // 未知，只知是有变化
+        UPDATE,             // 更新操作
+        INSERT,             // 插入操作
+        REMOVE,             // 删除操作
+    }
+
+
+    public enum DataType {
+        MODE_LIST,          // 模式列表
+        APP_LIST,           // App列表
+        CONDITION_LIST,     // 锁定条件列表
+        LOG_LIST            // 消息列表
     }
 
     /**

@@ -7,7 +7,6 @@ import com.eeontheway.android.applocker.R;
 import com.eeontheway.android.applocker.utils.SystemUtils;
 
 import java.util.Calendar;
-import java.util.Date;
 
 /**
  * 时间锁定配置
@@ -52,6 +51,23 @@ public class TimeLockCondition extends BaseLockCondition {
         timeLockCondition.startTime = new String(startTime);
         timeLockCondition.endTime = new String(endTime);
         return timeLockCondition;
+    }
+
+    /**
+     * 判断两个对像否判断
+     * @param condition 判断的对像
+     * @return true/false
+     */
+    public boolean isMatch(BaseLockCondition condition) {
+        boolean match = super.isMatch(condition);
+        if (match) {
+            if (condition instanceof TimeLockCondition) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+        return false;
     }
 
     /**
@@ -192,8 +208,7 @@ public class TimeLockCondition extends BaseLockCondition {
                 break;
         }
 
-        // 比较时/分
-        Date date = calendar.getTime();
+        // 只比较时/分
         Calendar startCalendar = Calendar.getInstance();
         startCalendar.setTime(SystemUtils.formatDate(getStartTime(), "HH:mm"));
         startCalendar.set(0, 0, 0);
@@ -202,9 +217,27 @@ public class TimeLockCondition extends BaseLockCondition {
         endCalendar.setTime(SystemUtils.formatDate(getEndTime(), "HH:mm"));
         endCalendar.set(0, 0, 0);
 
-        if (startCalendar.compareTo(calendar) <= 0) {
-            if (endCalendar.compareTo(calendar) >= 0) {
+        // 超始时间比结束时间早，正常方式比较
+        if (startCalendar.compareTo(endCalendar) <= 0) {
+            // 在start_time ~ end_time之间？匹配
+            if ((calendar.compareTo(startCalendar) >= 0) && (calendar.compareTo(endCalendar) <= 0)) {
                 return true;
+            }
+        } else {
+            // 判断当前时间是否在0点之前
+            Calendar zeroCalendra = Calendar.getInstance();
+            zeroCalendra.set(0, 0, 23, 59, 59);
+
+            // 在0点之前，比起始时间大，比结束时间也要大
+            if (calendar.compareTo(zeroCalendra) <= 0) {
+                if ((calendar.compareTo(startCalendar) >= 0) || (calendar.compareTo(endCalendar) >= 0)) {
+                    return true;
+                }
+            } else {
+                // 0点之后，比起始时间小，比结束时间也要小
+                if ((calendar.compareTo(startCalendar) <= 0) || (calendar.compareTo(endCalendar) <= 0)) {
+                    return true;
+                }
             }
         }
 

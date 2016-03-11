@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+
 import com.eeontheway.android.applocker.app.AppInfo;
 import com.eeontheway.android.applocker.app.AppInfoManager;
 
@@ -21,6 +22,7 @@ public class ConditionDatabase {
     private SQLiteDatabase db;
     private ConditionDatabaseOpenHelper lockListDatabase;
     private AppInfoManager appInfoManager;
+    private List<AppNameInfo> appNameInfoList = new ArrayList<>();
 
     /**
      * 构造函数
@@ -37,6 +39,7 @@ public class ConditionDatabase {
      */
     public void open () {
         db = lockListDatabase.getWritableDatabase();
+        loadAppNameInfoList();
     }
 
     /**
@@ -44,6 +47,62 @@ public class ConditionDatabase {
      */
     public void close () {
         db.close();
+    }
+
+    /**
+     * 开始批量写操作
+     */
+    public void beginTransaction() {
+        db.beginTransaction();
+    }
+
+    /**
+     * 提交所有的批量写操作
+     */
+    public void setTransactionSuccessful() {
+        db.setTransactionSuccessful();
+    }
+
+
+    /**
+     * 结束批量写操作
+     */
+    public void endTransaction() {
+        db.endTransaction();
+    }
+
+    /**
+     * 获取指定packageName在数据库中对应的id
+     *
+     * @param packageName
+     * @return id 数据找不到，则返回-1
+     */
+    private long getAppNameId(String packageName) {
+        for (AppNameInfo info : appNameInfoList) {
+            if (info.getPackageName().equals(packageName)) {
+                return info.getId();
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * 获取所有的App信息列表
+     *
+     * @return App信息列表
+     */
+    public void loadAppNameInfoList() {
+        Cursor cursor = db.query("app_list", new String[]{"id", "package_name"},
+                null, null, null, null, null);
+
+        boolean ok = cursor.moveToFirst();
+        while (ok) {
+            AppNameInfo info = new AppNameInfo(cursor.getInt(0), cursor.getString(1));
+            appNameInfoList.add(info);
+
+            ok = cursor.moveToNext();
+        }
+        cursor.close();
     }
 
     /**
@@ -107,6 +166,9 @@ public class ConditionDatabase {
      */
     public void deleteModeInfo (LockModeInfo modeInfo) {
         db.delete("mode_list", "id = ?", new String[] {modeInfo.getId() + ""});
+
+        // 重新加载App列表
+        loadAppNameInfoList();
     }
 
     /**
@@ -140,38 +202,58 @@ public class ConditionDatabase {
 
     /**
      * 在指定模式下添加一个App锁定信息
-     * @param appInfo 待添加的App信息，部分信息在插入过程中会自动完善
+     * @param appLockInfoList 待添加的App信息，部分信息在插入过程中会自动完善
      * @param modeInfo 指定模式
      * @return true 成功; false 失败
      */
-    public boolean addAppInfoToMode (AppLockInfo appInfo, LockModeInfo modeInfo) {
-        // 插入新项至app_list表
-        String packageName = appInfo.getAppInfo().getPackageName();
-        ContentValues values = new ContentValues();
-        values.put("package_name", packageName);
-        long rowId = db.insert("app_list", null, values);
-        if (rowId > 0) {
-            // 表中之前没有该App，获取新插入的id
-            appInfo.setId((int)rowId);
-        } else {
-            // 表中已有该App项，查询其ID
-            Cursor cursor = db.query("app_list", new String[]{"id"}, "package_name=?",
-                                        new String[]{packageName}, null, null, null);
-            if (cursor.moveToFirst()) {
-                appInfo.setId(cursor.getInt(0));
-            } else {
-                return false;
+    public boolean addAppInfoListToMode(List<AppLockInfo> appLockInfoList, LockModeInfo modeInfo) {
+        try {
+            // 开始事务处理
+            db.beginTransaction();
+
+            // 插入新项至app_list表
+            for (AppLockInfo appLockInfo : appLockInfoList) {
+                ContentValues values = new ContentValues();
+
+                // 生成app_list中的id,如果已经有了，则不用生成
+                String packageName = appLockInfo.getAppInfo().getPackageName();
+                long id = getAppNameId(packageName);
+                if (id < 0) {
+                    // 如果表中没有，插入表中，再获取新id，再缓存起来
+                    values.put("package_name", packageName);
+                    long rowId = db.insert("app_list", null, values);
+                    if (rowId > 0) {
+                        appLockInfo.setId((int) rowId);
+                        appNameInfoList.add(new AppNameInfo(rowId, packageName));
+                    } else {
+                        return false;
+                    }
+                } else {
+                    appLockInfo.setId(id);
+                }
+
+                // 插入新项至app_lock_config表
+                values.clear();
+                values.put("app_id", appLockInfo.getId());
+                values.put("mode_id", modeInfo.getId());
+                values.put("enable", appLockInfo.isEnable() ? 1 : 0);
+                long rowId = db.insert("app_lock_config", null, values);
+                if (rowId < 0) {
+                    return false;
+                } else {
+                    appLockInfo.setId(rowId);
+                }
             }
+            // 提交事务
+            db.setTransactionSuccessful();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            db.endTransaction();
         }
 
-        // 插入新项至app_lock_config表
-        values.clear();
-        values.put("app_id", appInfo.getId());
-        values.put("mode_id", modeInfo.getId());
-        values.put("enable", appInfo.isEnable() ? 1 : 0);
-        rowId = db.insert("app_lock_config", null, values);
-
-        return (rowId == -1) ? false : true;
+        return true;
     }
 
     /**
@@ -184,7 +266,7 @@ public class ConditionDatabase {
         ContentValues contentValues = new ContentValues();
         contentValues.put("enable", enable);
 
-        int row = db.update("app_lock_config", contentValues, "app_id=?",
+        int row = db.update("app_lock_config", contentValues, "id=?",
                             new String[]{appInfo.getId() + ""});
         return (row > 0);
     }
@@ -192,11 +274,43 @@ public class ConditionDatabase {
     /**
      * 删除App信息
      * 所有依赖app_list的表项将会自动由数据库删除，无需编码
-     * @param appInfo 待删除的信息
+     * @param appLockInfoList 待删除的信息列表
      */
-    public boolean deleteAppInfo (AppLockInfo appInfo) {
-        int row = db.delete("app_lock_config", "id=?", new String[]{appInfo.getId() + ""});
-        return (row > 0);
+    public boolean deleteAppInfoList(List<AppLockInfo> appLockInfoList) {
+        try {
+            db.beginTransaction();
+
+            for (AppLockInfo appLockInfo : appLockInfoList) {
+                db.delete("app_lock_config", "id=?", new String[]{appLockInfo.getId() + ""});
+            }
+
+            db.setTransactionSuccessful();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            db.endTransaction();
+        }
+
+        // 重新加载App列表
+        loadAppNameInfoList();
+        return true;
+    }
+
+    /**
+     * 删除App信息
+     * 所有依赖app_list的表项将会自动由数据库删除，无需编码
+     *
+     * @param packageName 包名
+     */
+    public boolean deleteAppInfo(String packageName) {
+        int row = db.delete("app_list", "package_name=?", new String[]{packageName});
+        if (row > 0) {
+            // 重新加载App列表
+            loadAppNameInfoList();
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -332,13 +446,27 @@ public class ConditionDatabase {
     }
 
     /**
-     * 删除一条锁定日志
-     * @param logInfo 锁定日志
+     * 删除锁定日志
+     * @param logInfoList 锁定日志
      * @return true 操作成功; false 操作失败
      */
-    public boolean deleteAccessLog (AccessLog logInfo) {
-        int row = db.delete("app_log_list", "id=?", new String[]{logInfo.getId() + ""});
-        return (row > 0);
+    public boolean deleteAccessLogList(List<AccessLog> logInfoList) {
+        try {
+            db.beginTransaction();
+
+            for (AccessLog accessLog : logInfoList) {
+                db.delete("app_log_list", "id=?", new String[]{accessLog.getId() + ""});
+            }
+
+            db.setTransactionSuccessful();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            db.endTransaction();
+        }
+
+        return true;
     }
 
     /**

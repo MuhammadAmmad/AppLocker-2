@@ -27,7 +27,10 @@ public class SettingsManager {
     public static final String one_password_unlock_all_key = "one_password_unlock_all";
     public static final String alert_lock_unlock_key = "alert_lock_unlock";
     public static final String add_tag_to_photo_key = "add_tag_to_photo";
-
+    public static final String locate_interval_key = "locate_interval";
+    public static final String locate_default_distance_key = "locate_default_distance";
+    private static SettingsManager instance;
+    SharedPreferences sharedPref;
     // 各个配置项
     private String applock_password;
     private boolean unlock_failed_capture_enable;
@@ -38,49 +41,90 @@ public class SettingsManager {
     private boolean one_password_unlock_all;
     private boolean alert_lock_unlock;
     private boolean add_tag_to_photo;
-
+    private int locate_interval;
+    private int locate_default_distance;
     // 更新配置
     private boolean updateOnlyWhenWifiConntected;
-
     private Context context;
-    private static SettingsManager instance;
+
+    /**
+     * 构造函数
+     */
+    protected SettingsManager(Context context) {
+        sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
+
+        // 检查是否存在缺省配置文件，不存在则创建一个
+        // 因为SettingsFragment只有打开才会创建，第一次启动应用时，配置文件是空的！！！
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
+        if (!sharedPref.contains("locate_default_distance_key")) {
+            createDefaultConfigFile();
+        }
+
+        // 加载所有配置
+        reloadAllPreferences();
+    }
 
     /**
      * 获取实例：单例模式
      */
     public static SettingsManager getInstance (Context context) {
         if (instance == null) {
-            instance = new SettingsManager();
+            instance = new SettingsManager(context);
             instance.context = context;
-
-            // 加载所有配置
-            instance.reLoadAllPreferences();
         }
 
         return instance;
     }
 
-    public static void freeInstance (Context context) {
+    public static void freeInstance() {
 
     }
 
-    protected SettingsManager() {}
+    /**
+     * 创建缺省的配置文件
+     */
+    private void createDefaultConfigFile() {
+        // 配置文件不存在时，加载出来的都是缺省配置，原样写入
+        reloadAllPreferences();
+        writeAllPreferences();
+    }
 
     /**
      * 加载所有的配置项
+     * 这里的缺省值，覆盖了xml配置文件中的缺省值
      */
-    public void reLoadAllPreferences () {
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(instance.context);
+    private void reloadAllPreferences() {
+        updateSetting(applock_password_key, sharedPref);
+        updateSetting(unlock_failed_capture_enable_key, sharedPref);
+        updateSetting(unlock_failed_capture_errcount_key, sharedPref);
+        updateSetting(unlock_failed_capture_location_key, sharedPref);
+        updateSetting(screen_lock_mode_key, sharedPref);
+        updateSetting(autolock_on_app_quit_key, sharedPref);
+        updateSetting(one_password_unlock_all_key, sharedPref);
+        updateSetting(alert_lock_unlock_key, sharedPref);
+        updateSetting(add_tag_to_photo_key, sharedPref);
+        updateSetting(locate_default_distance_key, sharedPref);
+        updateSetting(locate_interval_key, sharedPref);
+    }
 
-        instance.applock_password = sharedPref.getString(applock_password_key, "");
-        instance.unlock_failed_capture_enable = sharedPref.getBoolean(unlock_failed_capture_enable_key, false);
-        instance.unlock_failed_capture_errcount = Integer.parseInt(sharedPref.getString(unlock_failed_capture_errcount_key, "1"));
-        instance.unlock_failed_capture_location = sharedPref.getBoolean(unlock_failed_capture_location_key, false);
-        instance.screen_lock_mode = Integer.parseInt(sharedPref.getString(screen_lock_mode_key, "0"));
-        instance.autolock_on_app_quit = sharedPref.getBoolean(autolock_on_app_quit_key, false);
-        instance.one_password_unlock_all = sharedPref.getBoolean(one_password_unlock_all_key, false);
-        instance.alert_lock_unlock = sharedPref.getBoolean(alert_lock_unlock_key, false);
-        instance.add_tag_to_photo = sharedPref.getBoolean(add_tag_to_photo_key, false);
+    /**
+     * 写入所有的缺省配置
+     */
+    private void writeAllPreferences() {
+        SharedPreferences.Editor editor = sharedPref.edit();
+
+        editor.putString(applock_password_key, applock_password);
+        editor.putBoolean(unlock_failed_capture_enable_key, unlock_failed_capture_enable);
+        editor.putString(unlock_failed_capture_errcount_key, unlock_failed_capture_errcount + "");
+        editor.putBoolean(unlock_failed_capture_location_key, unlock_failed_capture_location);
+        editor.putString(screen_lock_mode_key, screen_lock_mode + "");
+        editor.putBoolean(autolock_on_app_quit_key, autolock_on_app_quit);
+        editor.putBoolean(one_password_unlock_all_key, one_password_unlock_all);
+        editor.putBoolean(alert_lock_unlock_key, alert_lock_unlock);
+        editor.putBoolean(add_tag_to_photo_key, add_tag_to_photo);
+        editor.putString(locate_default_distance_key, locate_default_distance + "");
+        editor.putString(locate_interval_key, locate_interval + "");
+        editor.commit();
     }
 
     /**
@@ -90,7 +134,6 @@ public class SettingsManager {
     public void savePassword (String password) {
         applock_password = password;
 
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(instance.context);
         SharedPreferences.Editor editor = sharedPref.edit();
         editor.putString(applock_password_key, password);
         editor.commit();
@@ -102,24 +145,40 @@ public class SettingsManager {
      * @param preferences 配置项数据
      */
     public void updateSetting (String key, SharedPreferences preferences) {
-        if (key.equals(applock_password_key)) {
-            instance.applock_password = preferences.getString(applock_password_key, "");
-        } else if (key.equals(unlock_failed_capture_enable_key)) {
-            instance.unlock_failed_capture_enable = preferences.getBoolean(unlock_failed_capture_enable_key, true);
-        } else if (key.equals(unlock_failed_capture_errcount_key)) {
-            instance.unlock_failed_capture_errcount = Integer.parseInt(preferences.getString(unlock_failed_capture_errcount_key, "5"));
-        } else if (key.equals(unlock_failed_capture_location_key)) {
-            instance.unlock_failed_capture_location = preferences.getBoolean(unlock_failed_capture_location_key, false);
-        } else if (key.equals(screen_lock_mode_key)) {
-            instance.screen_lock_mode = Integer.parseInt(preferences.getString(screen_lock_mode_key, "1"));
-        } else if (key.equals(autolock_on_app_quit_key)) {
-            instance.autolock_on_app_quit = preferences.getBoolean(autolock_on_app_quit_key, true);
-        } else if (key.equals(one_password_unlock_all_key)) {
-            instance.one_password_unlock_all = preferences.getBoolean(one_password_unlock_all_key, false);
-        } else if (key.equals(alert_lock_unlock_key)) {
-            instance.alert_lock_unlock = preferences.getBoolean(alert_lock_unlock_key, true);
-        } else if (key.equals(add_tag_to_photo_key)) {
-            instance.add_tag_to_photo = preferences.getBoolean(add_tag_to_photo_key, true);
+        switch (key) {
+            case applock_password_key:
+                applock_password = preferences.getString(applock_password_key, "");
+                break;
+            case unlock_failed_capture_enable_key:
+                unlock_failed_capture_enable = preferences.getBoolean(unlock_failed_capture_enable_key, true);
+                break;
+            case unlock_failed_capture_errcount_key:
+                unlock_failed_capture_errcount = Integer.parseInt(preferences.getString(unlock_failed_capture_errcount_key, "3"));
+                break;
+            case unlock_failed_capture_location_key:
+                unlock_failed_capture_location = preferences.getBoolean(unlock_failed_capture_location_key, false);
+                break;
+            case screen_lock_mode_key:
+                screen_lock_mode = Integer.parseInt(preferences.getString(screen_lock_mode_key, "1"));
+                break;
+            case autolock_on_app_quit_key:
+                autolock_on_app_quit = preferences.getBoolean(autolock_on_app_quit_key, true);
+                break;
+            case one_password_unlock_all_key:
+                one_password_unlock_all = preferences.getBoolean(one_password_unlock_all_key, false);
+                break;
+            case alert_lock_unlock_key:
+                alert_lock_unlock = preferences.getBoolean(alert_lock_unlock_key, true);
+                break;
+            case add_tag_to_photo_key:
+                add_tag_to_photo = preferences.getBoolean(add_tag_to_photo_key, true);
+                break;
+            case locate_default_distance_key:
+                locate_default_distance = Integer.parseInt(preferences.getString(locate_default_distance_key, "200"));
+                break;
+            case locate_interval_key:
+                locate_interval = Integer.parseInt(preferences.getString(locate_interval_key, "60"));
+                break;
         }
     }
 
@@ -202,6 +261,24 @@ public class SettingsManager {
     public boolean isUpdateOnlyWhenWifiConntected () {
         updateOnlyWhenWifiConntected = true;
         return updateOnlyWhenWifiConntected;
+    }
+
+    /**
+     * 获取缺省的定位偏差距离
+     *
+     * @return 偏差距离
+     */
+    public int getLocateDefaultDistance() {
+        return locate_default_distance;
+    }
+
+    /**
+     * 获取定位时间间隔
+     *
+     * @return 时间间隔
+     */
+    public int getLocateInterval() {
+        return locate_interval;
     }
 }
 

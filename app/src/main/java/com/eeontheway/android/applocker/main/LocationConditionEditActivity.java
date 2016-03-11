@@ -3,8 +3,8 @@ package com.eeontheway.android.applocker.main;
 import android.app.Fragment;
 import android.content.Intent;
 import android.location.Location;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -20,6 +20,7 @@ import android.widget.Toast;
 import com.baidu.mapapi.map.BaiduMap;
 import com.baidu.mapapi.map.BitmapDescriptor;
 import com.baidu.mapapi.map.BitmapDescriptorFactory;
+import com.baidu.mapapi.map.CircleOptions;
 import com.baidu.mapapi.map.InfoWindow;
 import com.baidu.mapapi.map.MapPoi;
 import com.baidu.mapapi.map.MapStatus;
@@ -27,6 +28,8 @@ import com.baidu.mapapi.map.MapStatusUpdateFactory;
 import com.baidu.mapapi.map.MapView;
 import com.baidu.mapapi.map.MarkerOptions;
 import com.baidu.mapapi.map.MyLocationData;
+import com.baidu.mapapi.map.OverlayOptions;
+import com.baidu.mapapi.map.Stroke;
 import com.baidu.mapapi.model.LatLng;
 import com.baidu.mapapi.overlayutil.PoiOverlay;
 import com.baidu.mapapi.search.core.PoiInfo;
@@ -39,7 +42,6 @@ import com.baidu.mapapi.search.geocode.ReverseGeoCodeResult;
 import com.baidu.mapapi.search.poi.OnGetPoiSearchResultListener;
 import com.baidu.mapapi.search.poi.PoiCitySearchOption;
 import com.baidu.mapapi.search.poi.PoiDetailResult;
-import com.baidu.mapapi.search.poi.PoiDetailSearchOption;
 import com.baidu.mapapi.search.poi.PoiResult;
 import com.baidu.mapapi.search.poi.PoiSearch;
 import com.baidu.mapapi.search.sug.OnGetSuggestionResultListener;
@@ -87,6 +89,7 @@ public class LocationConditionEditActivity extends AppCompatActivity
     private MapMakerWindow mapMakerWindow;
 
     private boolean editMode;
+    private int maxDistance;
 
     /**
      * 以编辑模式启动Activity
@@ -140,9 +143,12 @@ public class LocationConditionEditActivity extends AppCompatActivity
 
         setTitle(R.string.select_time);
 
+        readDefaultMaxDistance();
         initView ();
         initMap();
         initLocation();
+
+        Toast.makeText(this, R.string.select_location, Toast.LENGTH_LONG).show();
     }
 
     /**
@@ -152,6 +158,8 @@ public class LocationConditionEditActivity extends AppCompatActivity
     protected void onDestroy() {
         super.onDestroy();
 
+        // 退出后，恢复监听间隔
+        locationService.setLocateInterval(-1);
         locationService.removePositionListener(positionChangeListener);
         mapView.onDestroy();
     }
@@ -204,6 +212,15 @@ public class LocationConditionEditActivity extends AppCompatActivity
     }
 
     /**
+     * 从配置文件中读取缺省的最大距离间隔
+     */
+    private void readDefaultMaxDistance() {
+        SettingsManager manager = SettingsManager.getInstance(this);
+        maxDistance = manager.getLocateDefaultDistance();
+        manager.freeInstance();
+    }
+
+    /**
      * 初始化View
      */
     private void initView () {
@@ -216,6 +233,10 @@ public class LocationConditionEditActivity extends AppCompatActivity
         mapMakerWindow.SetUsePostionListener(new MapMakerWindow.OnSetUsePostionListener() {
             @Override
             public void useMarkerPostion() {
+                // 退出前，保存radius
+                position.setRadius(maxDistance);
+
+                // 结束自己
                 Intent intent = getIntent();
                 intent.putExtra(PARAM_POS_CONFIG, positionLockCondition);
                 setResult(RESULT_OK, intent);
@@ -384,6 +405,9 @@ public class LocationConditionEditActivity extends AppCompatActivity
         baiduMap.setOnMapClickListener(new BaiduMap.OnMapClickListener() {
             @Override
             public void onMapClick(LatLng latLng) {
+                // 点击事件，重新选点
+                baiduMap.clear();
+
                 // 添加标记
                 showMarker(latLng, null);
 
@@ -397,6 +421,9 @@ public class LocationConditionEditActivity extends AppCompatActivity
 
             @Override
             public boolean onMapPoiClick(MapPoi mapPoi) {
+                // 点击事件，重新选点
+                baiduMap.clear();
+
                 LatLng pos = mapPoi.getPosition();
 
                 // 添加标记
@@ -416,8 +443,7 @@ public class LocationConditionEditActivity extends AppCompatActivity
      * @param latLng 显示的位置
      */
     private void showMarker (LatLng latLng, String address) {
-        baiduMap.clear();
-
+        // 添加图标及Info窗口
         MarkerOptions option = new MarkerOptions().title("hello").icon(markerIcon).position(latLng);
         baiduMap.addOverlay(option);
         if (address != null) {
@@ -425,6 +451,14 @@ public class LocationConditionEditActivity extends AppCompatActivity
             InfoWindow win = new InfoWindow(mapMakerWindow.getView(), latLng, -47);
             baiduMap.showInfoWindow(win);
         }
+
+        // 再添加一个距离圆，表示范围偏差
+        int strokeFillColor = getResources().getColor(R.color.map_distance_stroke_fill_color);
+        int strokeLineColor = getResources().getColor(R.color.map_distance_stroke_line_color);
+        OverlayOptions ooCircle = new CircleOptions().fillColor(strokeFillColor)
+                .center(latLng).stroke(new Stroke(5, strokeLineColor))
+                .radius(maxDistance);
+        baiduMap.addOverlay(ooCircle);
     }
 
     /**
@@ -543,6 +577,9 @@ public class LocationConditionEditActivity extends AppCompatActivity
         };
         locationService.addPositionListener(positionChangeListener);
 
+        // 打开该页面后，每隔5s立刻刷新
+        locationService.setLocateInterval(5000);
+
         // 读取配置参数，根据模式来加载当前位置
         Intent intent = getIntent();
         editMode = intent.getBooleanExtra(PARAM_EDIT_MODE, false);
@@ -610,7 +647,12 @@ public class LocationConditionEditActivity extends AppCompatActivity
         public boolean onPoiClick(int index) {
             super.onPoiClick(index);
             PoiInfo poi = getPoiResult().getAllPoi().get(index);
-            mPoiSearch.searchPoiDetail((new PoiDetailSearchOption()).poiUid(poi.uid));
+
+
+            // 添加图标及Info窗口
+            mapMakerWindow.setTitle(poi.address + " " + poi.name);
+            InfoWindow win = new InfoWindow(mapMakerWindow.getView(), poi.location, -47);
+            baiduMap.showInfoWindow(win);
             return true;
         }
     }

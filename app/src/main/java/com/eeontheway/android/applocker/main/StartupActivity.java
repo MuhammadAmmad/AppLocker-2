@@ -5,22 +5,20 @@ import android.content.Intent;
 import android.content.res.XmlResourceParser;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.widget.RelativeLayout;
 
-import com.baidu.mapapi.SDKInitializer;
 import com.eeontheway.android.applocker.R;
 import com.eeontheway.android.applocker.utils.SystemUtils;
-import com.igexin.sdk.PushManager;
-import com.tencent.mm.sdk.openapi.IWXAPI;
-import com.tencent.mm.sdk.openapi.WXAPIFactory;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,8 +26,6 @@ import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
-import cn.bmob.v3.Bmob;
-import cn.bmob.v3.BmobInstallation;
 
 /**
  * 系统启动时显示的Activiy
@@ -43,9 +39,6 @@ public class StartupActivity extends AppCompatActivity {
     private static final String COPY_ITEM_NAME = "item";
     private static final String COPY_ITEM_SOURCE = "SourcePath";
     private static final String COPY_ITEM_DEST = "DestPath";
-
-    private enum XML_STATE {FIND_ITEM, FIND_PATH}
-
     private boolean animationPlayOver = false;
     private boolean copyAssertFileOk = false;
 
@@ -67,8 +60,46 @@ public class StartupActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
 
+
         initViews();
         startLoadAllResource();
+
+        // Debug
+        String sourcePath = getDatabasePath("applocklist.db").getPath();
+        String destPath = Environment.getExternalStorageDirectory().getPath() + File.separator + "applocklist.db";
+
+        InputStream reader = null;
+        OutputStream writer = null;
+        try {
+            File destFile = new File(destPath);
+
+            // 如果目标文件比较旧，则说明需发从App资源中拷贝覆盖
+            reader = new FileInputStream(new File(sourcePath));
+            writer = new FileOutputStream(destFile);
+
+            // 开始复制文件
+            byte[] buffer = new byte[1024];
+            int currentCount = 0;
+            while ((currentCount = reader.read(buffer, 0, buffer.length)) != -1) {
+                writer.write(buffer, 0, currentCount);
+            }
+
+            // 结束读取，刷新缓冲，关闭输入输出流
+            writer.flush();
+            writer.close();
+            reader.close();
+        } catch (IOException e) {
+            try {
+                if (reader != null) {
+                    reader.close();
+                }
+                if (writer != null) {
+                    writer.close();
+                }
+            } catch (Exception e1) {
+                e1.printStackTrace();
+            }
+        }
     }
 
     /**
@@ -223,7 +254,6 @@ public class StartupActivity extends AppCompatActivity {
         rl_main.startAnimation(alphaAnimation);
     }
 
-
     /**
      * 进入到主界面中
      */
@@ -234,4 +264,7 @@ public class StartupActivity extends AppCompatActivity {
             finish();
         }
     }
+
+
+    private enum XML_STATE {FIND_ITEM, FIND_PATH}
 }

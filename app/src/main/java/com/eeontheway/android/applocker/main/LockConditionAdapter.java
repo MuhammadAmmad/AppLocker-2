@@ -6,14 +6,13 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
-import android.widget.CompoundButton;
 import android.widget.TextView;
 
 import com.eeontheway.android.applocker.R;
 import com.eeontheway.android.applocker.locate.Position;
 import com.eeontheway.android.applocker.lock.BaseLockCondition;
-import com.eeontheway.android.applocker.lock.PositionLockCondition;
 import com.eeontheway.android.applocker.lock.LockConfigManager;
+import com.eeontheway.android.applocker.lock.PositionLockCondition;
 import com.eeontheway.android.applocker.lock.TimeLockCondition;
 
 /**
@@ -166,6 +165,7 @@ class LockConditionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
         public TextView tv_address;
         public TextView tv_latitude;
         public TextView tv_longitude;
+        public TextView tv_radius;
 
         public PositionConditionViewHolder(View itemView) {
             super(itemView);
@@ -173,6 +173,7 @@ class LockConditionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
             tv_latitude = (TextView) itemView.findViewById(R.id.tv_latitude);
             tv_longitude = (TextView) itemView.findViewById(R.id.tv_longitude);
             tv_address = (TextView) itemView.findViewById(R.id.tv_address);
+            tv_radius = (TextView) itemView.findViewById(R.id.tv_radius);
         }
 
         public void setConfig (BaseLockCondition config) {
@@ -182,6 +183,7 @@ class LockConditionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
             tv_address.setText(pos.getAddress());
             tv_latitude.setText(context.getString(R.string.latitude, pos.getLatitude()));
             tv_longitude.setText(context.getString(R.string.longitude, pos.getLongitude()));
+            tv_radius.setText(context.getString(R.string.radius, pos.getRadius()));
             cb_enable.setChecked(positionLockCondition.isEnable());
             cb_selected.setChecked(positionLockCondition.isSelected());
         }

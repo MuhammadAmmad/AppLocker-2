@@ -2,14 +2,12 @@ package com.eeontheway.android.applocker.locate;
 
 import android.content.Context;
 import android.location.Location;
-import android.widget.Toast;
 
 import com.baidu.location.BDLocation;
 import com.baidu.location.BDLocationListener;
 import com.baidu.location.LocationClient;
 import com.baidu.location.LocationClientOption;
 import com.baidu.location.LocationClientOption.LocationMode;
-import com.baidu.location.Poi;
 import com.baidu.mapapi.model.LatLng;
 import com.baidu.mapapi.search.core.PoiInfo;
 import com.baidu.mapapi.search.core.SearchResult;
@@ -19,9 +17,10 @@ import com.baidu.mapapi.search.geocode.OnGetGeoCoderResultListener;
 import com.baidu.mapapi.search.geocode.ReverseGeoCodeOption;
 import com.baidu.mapapi.search.geocode.ReverseGeoCodeResult;
 import com.eeontheway.android.applocker.R;
-import com.eeontheway.android.applocker.lock.LockService;
+import com.eeontheway.android.applocker.main.SettingsManager;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -31,6 +30,8 @@ import java.util.List;
  * @Time 2016-2-8
  */
 public class LocationService {
+    private static LocationService instance;
+    private static Object objLock = new Object();
     private Context context;
 	private LocationClient client;
 	private LocationClientOption mOption;
@@ -38,21 +39,43 @@ public class LocationService {
     private MyLocationListener bdListener;
     private List<PositionChangeListener> positionListenerList = new ArrayList<>();
     private GeoCoder geocoderSearch;
+    private LinkedList<Position> locationList = new LinkedList<>();
+    private SettingsManager settingsManager;
 
-	private static LocationService instance;
-	private static Object objLock = new Object();
-
+    private Position currentPosition;
     private Position lastPosition;
     private String city;
     private int lastErrorCode = -1;
     private int maxDistance = 10;
 
-    /**
-     * 位置状态监听器
+    /***
+     * 构造函数
      */
-    public interface PositionChangeListener {
-        void onLocateResult (int errorCode, String errorMsg);
-        void onPositionChanged (Position oldPosition, Position newPosition);
+    private LocationService(Context context) {
+        this.context = context;
+
+
+        client = new LocationClient(context);
+        bdListener = new MyLocationListener();
+        settingsManager = SettingsManager.getInstance(context);
+        client.setLocOption(getDefaultLocationClientOption());
+        initGeocoderSearch();
+    }
+
+    /**
+     * 获取实例，单例化
+     * @param context 上下文
+     * @return
+     */
+
+    public static LocationService getInstance(Context context) {
+        synchronized (objLock) {
+            if (instance == null) {
+                instance = new LocationService(context);
+            }
+        }
+
+        return instance;
     }
 
     /**
@@ -72,38 +95,11 @@ public class LocationService {
 	 * @return 上一次位置，如果之前没有定位，返回null
      */
 	public Position getLastPosition() {
-		if (lastPosition != null) {
-			return lastPosition.clone();
-		} else {
-			return null;
+        if (currentPosition != null) {
+            return currentPosition.clone();
+        } else {
+            return null;
 		}
-	}
-
-	/***
-	 * 构造函数
-	 */
-	public LocationService(Context context) {
-        this.context = context;
-	}
-
-    /**
-     * 获取实例，单例化
-     * @param context 上下文
-     * @return
-     */
-
-	public static LocationService getInstance (Context context) {
-		synchronized (objLock) {
-			if(instance == null){
-				instance = new LocationService(context);
-				instance.client = new LocationClient(context);
-				instance.bdListener = instance.new MyLocationListener();
-				instance.client.setLocOption(instance.getDefaultLocationClientOption());
-                instance.initGeocoderSearch();
-			}
-		}
-
-		return instance;
 	}
 
     /**
@@ -189,7 +185,12 @@ public class LocationService {
                 } else {
                     address = reverseGeoCodeResult.getAddress();
                 }
-                lastPosition.setAddress(address);
+                currentPosition.setAddress(address);
+
+                // 通知外界，地点发生了变化
+                for (PositionChangeListener listener : positionListenerList) {
+                    listener.onPositionChanged(lastPosition, currentPosition);
+                }
             }
         });
     }
@@ -209,8 +210,7 @@ public class LocationService {
 			mOption.setCoorType("bd09ll");
 
             //可选，默认0，即仅定位一次，设置发起定位请求的间隔需要大于等于1000ms才是有效的
-			// 做成可配置的!!
-			mOption.setScanSpan(3000);
+            mOption.setScanSpan(settingsManager.getLocateInterval() * 1000);
 
             //可选，设置是否需要地址信息，默认不需要
 		    mOption.setIsNeedAddress(true);
@@ -244,7 +244,8 @@ public class LocationService {
      */
 	public void start(){
 		synchronized (objLock) {
-			if(client != null && !client.isStarted()){
+            if (client != null && !client.isStarted()) {
+                client.setLocOption(instance.getDefaultLocationClientOption());
                 client.registerLocationListener(bdListener);
 				client.requestLocation();
 				client.start();
@@ -265,6 +266,27 @@ public class LocationService {
 	}
 
     /**
+     * 立即请求一次定位操作
+     */
+    public void requestLocation() {
+        client.requestLocation();
+    }
+
+    /**
+     * 设置定位的时间间隔，以ms为单位
+     *
+     * @param interval 时间间隔，如果值为0或-1，则使用缺省值
+     */
+    public void setLocateInterval(int interval) {
+        if (interval <= 0) {
+            mOption.setScanSpan(settingsManager.getLocateInterval() * 1000);
+        } else {
+            mOption.setScanSpan(interval);
+        }
+        client.setLocOption(mOption);
+    }
+
+    /**
      * 显示定位结果
      * @param errorCode 错误码，非0表示有错误发生
      * @param errorMsg 定位结果消息
@@ -277,6 +299,15 @@ public class LocationService {
                 listener.onLocateResult(errorCode, errorMsg);
             }
         }
+    }
+
+    /**
+     * 位置状态监听器
+     */
+    public interface PositionChangeListener {
+        void onLocateResult(int errorCode, String errorMsg);
+
+        void onPositionChanged(Position oldPosition, Position newPosition);
     }
 
     /**
@@ -306,42 +337,79 @@ public class LocationService {
             }
 
             // 定位成功时的处理
-			if(lastPosition == null){
+            if (currentPosition == null) {
                 // 保存当前位置
-				lastPosition = new Position();
-				lastPosition.setRadius(location.getRadius());
-				lastPosition.setLatitude(location.getLatitude());
-				lastPosition.setLongitude(location.getLongitude());
-				lastPosition.setAddress(location.getAddrStr());
+                currentPosition = new Position();
+                currentPosition.setRadius(location.getRadius());
+                currentPosition.setLatitude(location.getLatitude());
+                currentPosition.setLongitude(location.getLongitude());
+                currentPosition.setAddress(location.getAddrStr());
+                currentPosition.setTime(System.currentTimeMillis());
                 city = location.getCity();
+            } else {
+                // 平滑策略代码实现方法，主要通过对新定位和历史定位结果进行速度评分，
+                // 来判断新定位结果的抖动幅度，如果超过经验值，则判定为过大抖动，进行平滑处理,若速度过快，
+                // 则推测有可能是由于运动速度本身造成的，则不进行低速平滑处理 ╭(●｀∀´●)╯
+                Position newPosition = new Position();
+                if (locationList.isEmpty() || locationList.size() < 2) {
+                    newPosition.setRadius(location.getRadius());
+                    newPosition.setLatitude(location.getLatitude());
+                    newPosition.setLongitude(location.getLongitude());
+                    newPosition.setAddress(location.getAddrStr());
+                    newPosition.setTime(System.currentTimeMillis());
 
-                // 通知外界，地点发生了变化
-                for (PositionChangeListener listener : positionListenerList) {
-                    listener.onPositionChanged(null, lastPosition);
+                    locationList.add(newPosition);
+                } else {
+                    // 只保留5个值
+                    if (locationList.size() > 5) {
+                        locationList.removeFirst();
+                    }
+
+                    // 计算某种速度？
+                    double score = 0;
+                    for (int i = 0; i < locationList.size(); ++i) {
+                        LatLng lastPoint = new LatLng(locationList.get(i).getLatitude(),
+                                locationList.get(i).getLongitude());
+                        LatLng curPoint = new LatLng(location.getLatitude(), location.getLongitude());
+
+                        float[] dis = new float[1];
+                        Location.distanceBetween(lastPoint.latitude, lastPoint.longitude,
+                                curPoint.latitude, curPoint.longitude, dis);
+                        double distance = dis[0];
+                        double curSpeed = distance / (System.currentTimeMillis() - locationList.get(i).getTime()) / 1000;
+                        score += curSpeed * Utils.EARTH_WEIGHT[i];
+                    }
+
+                    // 经验值,开发者可根据业务自行调整，也可以不使用这种算法
+                    if (score > 0.00000999 && score < 0.00005) {
+                        location.setLongitude((locationList.get(locationList.size() - 1).getLongitude() + location.getLongitude()) / 2);
+                        location.setLatitude((locationList.get(locationList.size() - 1).getLatitude() + location.getLatitude()) / 2);
+                    }
+
+                    // 保存起来
+                    newPosition.setRadius(location.getRadius());
+                    newPosition.setLatitude(location.getLatitude());
+                    newPosition.setLongitude(location.getLongitude());
+                    newPosition.setAddress(location.getAddrStr());
+                    newPosition.setTime(System.currentTimeMillis());
+                    locationList.add(newPosition);
                 }
-            }else{
+
                 // 计算之前定位的位置与当前定位间的偏差
                 float[] distance = new float[1];
-
-                Location.distanceBetween(lastPosition.getLatitude(), lastPosition.getLongitude(),
+                Location.distanceBetween(currentPosition.getLatitude(), currentPosition.getLongitude(),
                                         location.getLatitude(), location.getLongitude(), distance);
 
                 // 如果偏差较大，则说明切换了地点(考虑到定位本身存在偏差)
                 if(distance[0] >= maxDistance){
-					Position newPosition = new Position();
 					newPosition.setRadius(location.getRadius());
 					newPosition.setLatitude(location.getLatitude());
 					newPosition.setLongitude(location.getLongitude());
 					newPosition.setAddress(location.getAddrStr());
                     city = location.getCity();
 
-                    // 通知外界，地点发生了变化
-                    for (PositionChangeListener listener : positionListenerList) {
-                        listener.onPositionChanged(lastPosition, newPosition);
-                    }
-
-					lastPosition.update(newPosition);
-				} else {
+                    currentPosition.update(newPosition);
+                } else {
                     return;
                 }
             }

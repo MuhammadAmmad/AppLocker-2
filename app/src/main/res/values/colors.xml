@@ -153,11 +153,14 @@
     <color name="colorAccent">#00bcd5</color>
     <color name="colorFirstBackground">@color/white</color>
     <color name="colorSecondaryBackground">@color/whitesmoke</color>
+    <color name="colorFirstTextColor">@color/black</color>
     <color name="colorSecondTextColor">@color/dimgrey</color>
     <color name="colorPressBackground">#c0c4cc</color>
     <color name="light_blue">#6892da</color>
     <color name="tooBarBackgroud">#e3e4e7</color>
 
+    <color name="map_distance_stroke_fill_color">#59e181a7</color>
+    <color name="map_distance_stroke_line_color">#8f0f0096</color>
     <color name="main_background">#ffffff</color>
 
     <color name="color_tab_text_selected">@color/colorAccent</color>

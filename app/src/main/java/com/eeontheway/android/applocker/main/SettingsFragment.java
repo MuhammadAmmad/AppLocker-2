@@ -21,9 +21,6 @@ import com.eeontheway.android.applocker.lock.PasswordSetActivity;
  * @Time 2016-2-8
  */
 public class SettingsFragment extends PreferenceFragment {
-    private static final String unlockFailedCaptureErrcountKey = "unlock_failed_capture_errcount";
-    private static final String screenLockModeKey = "screen_lock_mode";
-
     private Activity parentActivity;
     private ListPreferenceChangeListener listPreferenceChangeListener;
     private PreferenceChangedListener preferenceChangedListener;
@@ -71,14 +68,41 @@ public class SettingsFragment extends PreferenceFragment {
         listPreferenceChangeListener = new ListPreferenceChangeListener();
 
         // 配置解锁密码失败次数的summary，以便能显示出当前的选择
-        ListPreference listPreference = (ListPreference)findPreference(unlockFailedCaptureErrcountKey);
+        ListPreference listPreference = (ListPreference) findPreference(SettingsManager.unlock_failed_capture_errcount_key);
         listPreference.setSummary(listPreference.getEntry());
         listPreference.setOnPreferenceChangeListener(listPreferenceChangeListener);
 
         // 配置锁定模式的summary，以便能显示出当前的选择
-        listPreference = (ListPreference)findPreference(screenLockModeKey);
+        listPreference = (ListPreference) findPreference(SettingsManager.screen_lock_mode_key);
         listPreference.setSummary(listPreference.getEntry());
         listPreference.setOnPreferenceChangeListener(listPreferenceChangeListener);
+
+        // 配置GPS定位时间间隔的summary，以便能显示出当前选择
+        listPreference = (ListPreference) findPreference(SettingsManager.locate_interval_key);
+        listPreference.setSummary(listPreference.getEntry());
+        listPreference.setOnPreferenceChangeListener(listPreferenceChangeListener);
+
+        // 配置GPS定位偏差的summary，以便能显示出当前选择
+        listPreference = (ListPreference) findPreference(SettingsManager.locate_default_distance_key);
+        listPreference.setSummary(listPreference.getEntry());
+        listPreference.setOnPreferenceChangeListener(listPreferenceChangeListener);
+    }
+
+    /**
+     * 任何项目被点击时的处理
+     *
+     * @param preferenceScreen
+     * @param preference
+     * @return
+     */
+    @Override
+    public boolean onPreferenceTreeClick(PreferenceScreen preferenceScreen, Preference preference) {
+        if (preference.getKey().equals(SettingsManager.applock_password_key)) {
+            PasswordSetActivity.statActivity(parentActivity, MainActivity.REQUEST_SET_PASS);
+            return true;
+        } else {
+            return super.onPreferenceTreeClick(preferenceScreen, preference);
+        }
     }
 
     /**
@@ -117,22 +141,6 @@ public class SettingsFragment extends PreferenceFragment {
             CharSequence[] entries = ((ListPreference) preference).getEntries();
             preference.setSummary(entries[index]);
             return true;
-        }
-    }
-
-    /**
-     * 任何项目被点击时的处理
-     * @param preferenceScreen
-     * @param preference
-     * @return
-     */
-    @Override
-    public boolean onPreferenceTreeClick(PreferenceScreen preferenceScreen, Preference preference) {
-        if (preference.getKey().equals(SettingsManager.applock_password_key)) {
-            PasswordSetActivity.statActivity(parentActivity, MainActivity.REQUEST_SET_PASS);
-            return true;
-        } else {
-            return super.onPreferenceTreeClick(preferenceScreen, preference);
         }
     }
 }

@@ -7,7 +7,6 @@ import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.PopupMenu;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -347,8 +346,7 @@ public class MainLeftFragment extends Fragment {
      * 更新时间和地址等其它头部信息
      */
     public void updateHeaderView (Date date, Position position) {
-        tv_current_time.setText(getString(R.string.current_date,
-                SystemUtils.formatDate(date, "yyyy-MM-dd"), date.getDay()));
+        tv_current_time.setText(SystemUtils.formatDate(date, "yyyy年MM月dd日 EEEE"));
         if ((position == null) || (position.getAddress() == null)) {
             tv_current_address.setText(getString(R.string.current_location,
                                                 getString(R.string.unknwon_location)));
@@ -600,6 +598,11 @@ public class MainLeftFragment extends Fragment {
             if (groupPosition == MODE_LIST_ROW) {
                 LockModeInfo lockModeInfo = lockConfigManager.getLockModeInfo(childPosition);
                 tv_title.setText(lockModeInfo.getName());
+                if (lockModeInfo.isEnabled()) {
+                    tv_title.setTextColor(getResources().getColor(R.color.colorFirstTextColor));
+                } else {
+                    tv_title.setTextColor(getResources().getColor(R.color.colorSecondTextColor));
+                }
                 cb_enable.setChecked(lockModeInfo.isEnabled());
             }
 

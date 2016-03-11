@@ -1,11 +1,11 @@
 package com.eeontheway.android.applocker.main;
 
+import android.app.Fragment;
 import android.content.Intent;
 import android.os.Build;
-import android.app.Fragment;
+import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -13,7 +13,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.TimePicker;
-import android.widget.Toast;
 
 import com.eeontheway.android.applocker.R;
 import com.eeontheway.android.applocker.lock.TimeLockCondition;
@@ -188,6 +187,15 @@ public class TimeConditionEditActivity extends AppCompatActivity {
             cb_day5.setChecked(timeLockCondition.isDaySet(TimeLockCondition.DAY5));
             cb_day6.setChecked(timeLockCondition.isDaySet(TimeLockCondition.DAY6));
             cb_day7.setChecked(timeLockCondition.isDaySet(TimeLockCondition.DAY7));
+        } else {
+            Calendar calendar = Calendar.getInstance();
+            calendar.set(Calendar.HOUR_OF_DAY, 0);
+            calendar.set(Calendar.MINUTE, 0);
+            setTimePickTime(tp_start_time, calendar);
+
+            calendar.set(Calendar.HOUR_OF_DAY, 23);
+            calendar.set(Calendar.MINUTE, 59);
+            setTimePickTime(tp_end_time, calendar);
         }
 
         // 取消键的处理
@@ -236,37 +244,35 @@ public class TimeConditionEditActivity extends AppCompatActivity {
      * 主要作用是检查起始时间和结束时间的合理性，保证起始时间<=结束时间
      */
     private void initTimePicker () {
-        // 检查开始时间的变化
-        tp_start_time.setOnTimeChangedListener(new TimePicker.OnTimeChangedListener() {
-            @Override
-            public void onTimeChanged(TimePicker view, int hourOfDay, int minute) {
-                int endHourOfDay = tp_end_time.getCurrentHour();
-                int endMinute = tp_end_time.getCurrentMinute();
-                if ((hourOfDay > endHourOfDay)     // 时大于结束时
-                    || (hourOfDay == endHourOfDay) && (minute > endMinute)) { // 时相同但分更大
-
-                    // 提示错误，同时进行纠正
-                    tp_start_time.setCurrentHour(endHourOfDay);
-                    tp_start_time.setCurrentMinute(endMinute);
-                }
-            }
-        });
-
-        // 检查结束时间的变化
-        tp_end_time.setOnTimeChangedListener(new TimePicker.OnTimeChangedListener() {
-            @Override
-            public void onTimeChanged(TimePicker view, int hourOfDay, int minute) {
-                int startHourOfDay = tp_start_time.getCurrentHour();
-                int startMinute = tp_start_time.getCurrentMinute();
-                if ((startHourOfDay > hourOfDay)     // 结束时比超始时更小
-                        || (startHourOfDay == hourOfDay) && (minute < startMinute)) { // 时相同但分更小
-
-                    // 提示错误，同时进行纠正
-                    tp_end_time.setCurrentHour(startHourOfDay);
-                    tp_end_time.setCurrentMinute(startMinute);
-                }
-            }
-        });
+//        // 检查开始时间的变化，不检查，认为是合理的
+//        tp_start_time.setOnTimeChangedListener(new TimePicker.OnTimeChangedListener() {
+//            @Override
+//            public void onTimeChanged(TimePicker view, int hourOfDay, int minute) {
+//                int endHourOfDay = tp_end_time.getCurrentHour();
+//                int endMinute = tp_end_time.getCurrentMinute();
+//                if ((hourOfDay > endHourOfDay)     // 时大于结束时
+//                    || (hourOfDay == endHourOfDay) && (minute > endMinute)) { // 时相同但分更大
+//                    // 提示错误，但不进行纠正
+//                    Toast.makeText(TimeConditionEditActivity.this,
+//                                        R.string.start_time_greater, Toast.LENGTH_SHORT).show();
+//                }
+//            }
+//        });
+//
+//        // 检查结束时间的变化
+//        tp_end_time.setOnTimeChangedListener(new TimePicker.OnTimeChangedListener() {
+//            @Override
+//            public void onTimeChanged(TimePicker view, int hourOfDay, int minute) {
+//                int startHourOfDay = tp_start_time.getCurrentHour();
+//                int startMinute = tp_start_time.getCurrentMinute();
+//                if ((startHourOfDay > hourOfDay)     // 结束时比超始时更小
+//                        || (startHourOfDay == hourOfDay) && (minute < startMinute)) { // 时相同但分更小
+//                    // 提示错误，但不进行纠正
+//                    Toast.makeText(TimeConditionEditActivity.this,
+//                            R.string.end_time_less, Toast.LENGTH_SHORT).show();
+//                }
+//            }
+//        });
     }
 
     /**

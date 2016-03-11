@@ -10,7 +10,7 @@ import com.eeontheway.android.applocker.app.AppInfo;
  * @Time 2016-12-15
  */
 public class AppLockInfo {
-    private int id;
+    private long id;
     private AppInfo appInfo;
     private LockModeInfo modeInfo;
     private boolean enable;
@@ -20,7 +20,7 @@ public class AppLockInfo {
      * 获取模式ID
      * @return ID
      */
-    public int getId() {
+    public long getId() {
         return id;
     }
 
@@ -28,7 +28,7 @@ public class AppLockInfo {
      * 设置模式ID
      * @param id 模式ID
      */
-    public void setId(int id) {
+    public void setId(long id) {
         this.id = id;
     }
 

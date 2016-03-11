@@ -23,6 +23,9 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.config
+            proguardFile '/home/lishutong/workspace/applocker/app/proguard-rules.pro'
+            zipAlignEnabled true
         }
         debug {
             signingConfig signingConfigs.config
@@ -47,7 +50,6 @@ dependencies {
     compile files('libs/MobTools.jar')
     compile files('src/main/libs/MobCommons.jar')
     compile files('src/main/libs/MobTools.jar')
-    compile files('libs/Bmob_Push_V0.6beta_20150408.jar')
     compile files('libs/BmobSDK_V3.4.5_1111.jar')
     compile files('libs/okhttp-2.4.0.jar')
     compile files('libs/okio-1.4.0.jar')

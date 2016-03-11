@@ -16,17 +16,31 @@
 #   public *;
 #}
 
-# 保证微信SDK能正常使用
+############# 微信SDK ###################
 -keep class com.tencent.mm.sdk.** {
    *;
 }
 
-# 保证支付宝SDK能正常使用
+############# 支付宝SDK ##################
 -keep class  com.alipay.share.sdk.** {
    *;
 }
 
-# 保证百度地图可用
+############ 百度地图 ##################
 -keep class com.baidu.** {*;}
 -keep class vi.com.** {*;}
 -dontwarn com.baidu.**
+
+-ignorewarnings
+
+############## BMOB #####################
+# 这里根据具体的SDK版本修改
+
+-keepattributes Signature
+-keep class cn.bmob.v3.** {*;}
+
+# 保证继承自BmobObject、BmobUser类的JavaBean不被混淆
+-keep class com.eeontheway.android.applocker.feedback.BmobFeedBackInfo{*;}
+-keep class com.eeontheway.android.applocker.login.BmobUserInfo{*;}
+-keep class com.eeontheway.android.applocker.updater.BmobUpdateInfo{*;}
+-keep class com.eeontheway.android.applocker.updater.BmobUpdateLog{*;}

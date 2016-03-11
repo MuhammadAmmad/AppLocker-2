@@ -7,7 +7,6 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.design.widget.TabLayout;
-import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
@@ -50,32 +49,13 @@ import java.util.Observer;
 public class MainActivity extends AppCompatActivity {
     public static final int REQUEST_SET_PASS = 0;
     public static final int REQUEST_INSTALL_APP = 1;
-
-    private Toolbar tb_main;
-    private DrawerLayout dl_main;
-    private ActionBarDrawerToggle actionBarDrawerToggle;
-
-    private long lastBackKeyPressTime = 0;
-    private SettingsManager settingsManager;
-    private MainLeftFragment mainLeftFragment;
-    private UpdaterManager updaterManager;
-    private FragmentPagerViewAdapter fragmentPagerAdapter;
-    private List<FragmentPagerViewInfo> fragmentList = new ArrayList<>();
-    private LockConfigManager lockConfigManager;
-    private Observer observer;
-
     // Fragment信息数组
     private final FragmentPagerViewInfo[] fragmentInfoArray = {
-            new FragmentPagerViewInfo(
-                    new AccessLogsFragment(),
-                    R.string.access_logs,
-                    R.drawable.ic_app_defense_logs_selected,
-                    R.drawable.ic_app_defense_logs_normal),
-            new FragmentPagerViewInfo(
-                    new SummaryFragment(),
-                    R.string.app_start,
-                    R.drawable.ic_app_home_selected,
-                    R.drawable.ic_app_home_normal),
+//            new FragmentPagerViewInfo(
+//                    new SummaryFragment(),
+//                    R.string.app_start,
+//                    R.drawable.ic_app_home_selected,
+//                    R.drawable.ic_app_home_normal),
             new FragmentPagerViewInfo(
                     new AppLockListFragment(),
                     R.string.applock_list,
@@ -85,9 +65,25 @@ public class MainActivity extends AppCompatActivity {
                     new LockConditionFragment(),
                     R.string.lock_condition,
                     R.drawable.ic_app_lock_cond_selected,
-                    R.drawable.ic_app_lock_cond_normal)
+                    R.drawable.ic_app_lock_cond_normal),
 
+            new FragmentPagerViewInfo(
+                    new AccessLogsFragment(),
+                    R.string.access_logs,
+                    R.drawable.ic_app_defense_logs_selected,
+                    R.drawable.ic_app_defense_logs_normal)
     };
+    private Toolbar tb_main;
+    private DrawerLayout dl_main;
+    private ActionBarDrawerToggle actionBarDrawerToggle;
+    private long lastBackKeyPressTime = 0;
+    private SettingsManager settingsManager;
+    private MainLeftFragment mainLeftFragment;
+    private UpdaterManager updaterManager;
+    private FragmentPagerViewAdapter fragmentPagerAdapter;
+    private List<FragmentPagerViewInfo> fragmentList = new ArrayList<>();
+    private LockConfigManager lockConfigManager;
+    private Observer observer;
 
     /**
      * 启动该Activity
