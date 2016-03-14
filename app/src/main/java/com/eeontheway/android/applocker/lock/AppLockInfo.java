@@ -16,6 +16,7 @@ public class AppLockInfo {
     private boolean enable;
     private boolean selected;
 
+
     /**
      * 获取模式ID
      * @return ID

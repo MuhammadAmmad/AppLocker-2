@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Observer;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * 锁定配置管理器
@@ -39,6 +40,7 @@ public class LockConfigManager {
 
     private DataObservable observable;
     private BroadcastReceiver packageRemoveReceiver;
+    private ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
     /**
      * 构造函数
@@ -833,12 +835,8 @@ public class LockConfigManager {
      * @param position 当前地址
      * @return true/false
      */
-    synchronized public boolean isPackageNeedLock (String packageName, Calendar calendar,
+    public boolean isPackageNeedLock (String packageName, Calendar calendar,
                                                    Position position) {
-        // 首先，必须检查这个包是否是自己，如果是自己，强制要求锁定
-
-
-
         // 遍历App列表，查找其是否在其中
         for (AppLockInfo appLockInfo : appLockInfoList) {
             // 如果找到相应的App信息，则进一步判断是否符合锁定条件

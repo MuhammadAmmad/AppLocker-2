@@ -8,7 +8,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
-        app:checkAll_text="@string/clear_list"
+        app:checkAll_text="@string/select_all"
         app:textColor="@color/colorSecondTextColor" />
 
     <android.support.v7.widget.RecyclerView

@@ -158,7 +158,11 @@ public class NumberPasswordView extends FrameLayout implements View.OnClickListe
             case R.id.bt_9: et_input.append("9"); break;
             case R.id.bt_del:
                 String text = et_input.getText().toString();
+                int cursorPos = et_input.getSelectionEnd();
                 et_input.setText(text.length() > 0 ? text.subSequence(0, text.length() - 1) : "");
+                if (cursorPos > 0) {
+                    et_input.setSelection(cursorPos - 1);
+                }
                 break;
             case R.id.bt_ok:
                 String password = et_input.getText().toString();

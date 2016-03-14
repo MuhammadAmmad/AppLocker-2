@@ -54,9 +54,6 @@ public class LockService extends Service {
     private BroadcastReceiver screenLockReceiver;
     private BroadcastReceiver screenUnLockReceiver;
     private BroadcastReceiver appUnlockReceiver;
-    private BroadcastReceiver packageRemoveReceiver;
-    private BroadcastReceiver packageInstallReceiver;
-    private List<BaseAppInfo> appInfoList = new ArrayList<>();
     private UnlockedList unlockedList;
 
     /**
@@ -111,7 +108,6 @@ public class LockService extends Service {
     public void onCreate() {
         // 获取所有的包信息
         appInfoManager = new AppInfoManager(this);
-        appInfoList = appInfoManager.queryAllAppInfo(AppInfoManager.AppType.ALL_APP);
         calendar = Calendar.getInstance();
 
         lockConfigManager = LockConfigManager.getInstance(this);
@@ -136,8 +132,6 @@ public class LockService extends Service {
         registerAppUnlockReceiver();
         registerScreenLockReceiver();
         registerScreenUnLockReceiver();
-        registerPackageInstallListener();
-        registerPackageRemoveListener();
 
         // 创建监控线程
         createWatchThread();
@@ -191,7 +185,6 @@ public class LockService extends Service {
         // 停止监听器和线程
         unregisterAppUnlockReceiver();
         unregisterScreenLockReceiver();
-        removePackageRemoveListener();
 
         stopWatchThread();
 
@@ -332,62 +325,6 @@ public class LockService extends Service {
     private void unregisterScreenLockReceiver () {
         unregisterReceiver(screenLockReceiver);
         unregisterReceiver(screenUnLockReceiver);
-    }
-
-    /**
-     * 注册安装包移除的监听器
-     */
-    private void registerPackageRemoveListener() {
-        // 注册安装包移除监听器
-        packageRemoveReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                // 有安装包移除，从缓存队列中删除相应的项
-                String packageName = intent.getData().getSchemeSpecificPart();
-                synchronized (appInfoList) {
-                    for (BaseAppInfo appInfo : appInfoList) {
-                        if (appInfo.getPackageName().equals(packageName)) {
-                            appInfoList.remove(appInfo);
-                        }
-                        return;
-                    }
-                }
-            }
-        };
-
-        // 注册监听器
-        IntentFilter intentFilter = new IntentFilter(Intent.ACTION_PACKAGE_REMOVED);
-        intentFilter.addDataScheme("package");
-        registerReceiver(packageRemoveReceiver, intentFilter);
-    }
-
-    /**
-     * 注册安装包安装的监听器
-     */
-    private void registerPackageInstallListener() {
-        // 注册安装包移除监听器
-        packageInstallReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                // 有新包安装，重新加载整个缓存队列
-                synchronized (appInfoList) {
-                    appInfoList = appInfoManager.queryAllAppInfo(AppInfoManager.AppType.ALL_APP);
-                }
-            }
-        };
-
-        // 注册监听器
-        IntentFilter intentFilter = new IntentFilter(Intent.ACTION_PACKAGE_ADDED);
-        intentFilter.addDataScheme("package");
-        registerReceiver(packageInstallReceiver, intentFilter);
-    }
-
-    /**
-     * 取消安装包移除的监听器
-     */
-    private void removePackageRemoveListener() {
-        unregisterReceiver(packageRemoveReceiver);
-        unregisterReceiver(packageInstallReceiver);
     }
 
     /**
