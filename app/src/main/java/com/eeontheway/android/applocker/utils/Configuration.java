@@ -13,7 +13,7 @@ public final class Configuration {
     /**
      * 是否是开发者模式
      */
-    public static final boolean isDevelop = false;
+    public static final boolean isDevelop = true;
 
     /**
      * BMOB的APPID
