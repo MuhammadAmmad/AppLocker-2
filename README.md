@@ -40,7 +40,7 @@ Android应用锁 - App保护的锁屏软件
 总体而言，我对这个App还是比较满意的，像个样子。但是仍有一些不足之处，是我单靠自学看书解决速度较慢的。  
 
 * 布局优化和性能优化：这一块基本没有做；
-* 功能还不够完善：解锁眲在漏洞，未添加防卸载功能，代码还存在一些Bug；
+* 功能还不够完善：解锁还存在漏洞，未添加防卸载功能，代码还存在一些Bug；
 
 ##联系我
 Email:527676163@qq.com   
@@ -85,7 +85,7 @@ Email:527676163@qq.com
 ![image](https://github.com/tongban/AppLocker/raw/master/app/screenshot/device-2016-03-14-163548.png)   
 
 ###应用锁定
-当发现有需发锁定的地，后台服务会间出锁定同。   
+当发现有需要锁定的App时，且锁定条件满足，后台服务会弹出锁屏窗口。   
 ![image](https://github.com/tongban/AppLocker/raw/master/app/screenshot/device-2016-03-14-110658.png)   
 ![image](https://github.com/tongban/AppLocker/raw/master/app/screenshot/device-2016-03-14-110722.png)   
 
