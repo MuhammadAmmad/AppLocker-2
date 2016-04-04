@@ -3,9 +3,9 @@ apply plugin: 'com.android.application'
 android {
     signingConfigs {
         config {
-            keyPassword '9835624'
+            keyPassword '123456'
             storeFile file('/home/lishutong/workspace/app.lks.jks')
-            storePassword '9835624'
+            storePassword '123456'
             keyAlias 'keykey'
         }
     }
